@@ -14,9 +14,9 @@ import ru.kuznetsov.pitstop.ui.format.parseDisplayDate
 
 /**
  * Drives the add-car form: the car fields and a list of task blocks filled by hand or from presets.
+ * The form opens without task blocks; one appears on the add-task button or a preset chip.
  * Blocks without a name or an interval are skipped on save; when none is left, the car gets
  * a default oil-change task counted from its current mileage, as in the design mockup.
- * The form always keeps at least one block: removing the last one clears it instead.
  */
 class AddCarViewModel(
     private val addCar: AddCarUseCase,
@@ -25,7 +25,7 @@ class AddCarViewModel(
     private val _state = MutableStateFlow(AddCarUiState())
     val state: StateFlow<AddCarUiState> = _state.asStateFlow()
 
-    private var nextKey = 1
+    private var nextKey = 0
 
     fun onBrandChange(value: String) = _state.update { it.copy(brand = value) }
 
@@ -57,8 +57,7 @@ class AddCarViewModel(
     }
 
     fun onRemoveTask(key: Int) = _state.update { state ->
-        val remaining = state.tasks.filterNot { it.key == key }
-        state.copy(tasks = remaining.ifEmpty { listOf(TaskBlockState(key = nextKey++)) })
+        state.copy(tasks = state.tasks.filterNot { it.key == key })
     }
 
     fun onSave(defaultTaskName: String) {

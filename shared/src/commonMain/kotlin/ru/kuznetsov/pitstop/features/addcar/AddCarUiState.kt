@@ -9,7 +9,7 @@ data class AddCarUiState(
     val brand: String = "",
     val mileageKm: String = "",
     val vin: String = "",
-    val tasks: List<TaskBlockState> = listOf(TaskBlockState(key = 0)),
+    val tasks: List<TaskBlockState> = emptyList(),
     val isSaved: Boolean = false,
 ) {
     val canSave: Boolean get() = brand.isNotBlank() && (mileageKm.toIntOrNull() ?: 0) > 0
