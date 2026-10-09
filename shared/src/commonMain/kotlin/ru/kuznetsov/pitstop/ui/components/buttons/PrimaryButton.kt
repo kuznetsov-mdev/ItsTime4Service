@@ -34,9 +34,9 @@ fun PrimaryButton(
     val dimens = PitStopTheme.dimens
     Box(
         modifier = modifier
+            .alpha(if (enabled) 1f else 0.5f)
             .clip(RoundedCornerShape(dimens.radiusL))
             .background(colors.accent)
-            .alpha(if (enabled) 1f else 0.5f)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(PaddingValues(horizontal = 22.dp, vertical = 15.dp)),
         contentAlignment = Alignment.Center,

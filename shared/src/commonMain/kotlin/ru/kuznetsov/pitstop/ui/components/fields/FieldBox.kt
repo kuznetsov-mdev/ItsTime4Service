@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -55,7 +56,7 @@ internal fun FieldBox(
             BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
-                modifier = Modifier,
+                modifier = Modifier.fillMaxWidth(),
                 enabled = enabled,
                 textStyle = textStyle.copy(color = colors.ink),
                 singleLine = true,
