@@ -4,7 +4,7 @@ package ru.kuznetsov.pitstop.features.navigation
 sealed class Destination(val route: String) {
     data object Cars : Destination("cars")
 
-    data object AddCar : Destination("cars/new")
+    data object AddCar : Destination("add-car")
 
     data object CarDetail : Destination("cars/{$ARG_CAR_ID}") {
         fun createRoute(carId: String) = "cars/$carId"
