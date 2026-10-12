@@ -34,7 +34,7 @@ ru.kuznetsov.pitstop/
 │   └── repository/    # интерфейсы: CarRepository, ServiceHistoryRepository, SettingsRepository
 ├── data/
 │   ├── local/          # SQLDelight driver (expect/actual), .sq-схемы
-│   ├── repository/     # Fake*RepositoryImpl (этап 5) → *RepositoryImpl на SQLDelight (этап 7)
+│   ├── repository/     # *RepositoryImpl на SQLDelight (этап 7; до него — Fake*RepositoryImpl)
 │   └── mapper/         # маппинг SQLDelight-строк ↔ domain-модели
 ├── AppViewModel.kt    # тема из настроек для корневого `App`
 ├── di/                # Koin: FeatureModule.kt, DomainModule.kt, DataModule.kt (по модулю на файл) + Koin.kt (initKoin)
@@ -136,12 +136,12 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 - ✅ Проверка: ручной прогон на Android-эмуляторе (и по возможности iOS-симуляторе) по всем 5 экранам и окну подтверждения удаления на фейковых данных — соответствует этапам 3–7 исходного `План_разработки_Одометр.md`. *Пройдено на iOS-симуляторе (iPhone 17 Pro, iOS 26.5) UI-тестом `iosApp/iosAppUITests/ScreensWalkthroughUITests` в светлой и тёмной теме; на Android — только сборка `assembleDebug`, прогон на эмуляторе не делался. По ходу исправлено: маршрут формы `cars/new` перехватывался маршрутом деталей `cars/{carId}`, из-за чего «+» на списке авто не открывал форму (теперь `add-car`); форма добавления открывается без блоков работ; выключенная `PrimaryButton` бледнеет целиком; поле ввода занимает всю ширину `FieldBox`.*
 
 ### Этап 7 — Реальное хранилище (SQLDelight) и связка presentation ↔ data через domain
-- ⬜ Подключить `app.cash.sqldelight` plugin `2.4.0` (`apply false` в корневом `build.gradle.kts`, применяется в `shared/build.gradle.kts`) + `app.cash.sqldelight:runtime`, `coroutines-extensions` (`commonMain`), `android-driver` (`androidMain`), `native-driver` (`iosMain`).
-- ⬜ `.sq`-схемы в `data/local/` по схеме из README: `cars`, `maintenance_tasks`, `service_history` (+ таблица/key-value для настроек из этапа 6).
-- ⬜ `expect/actual DatabaseDriverFactory` (Android: `AndroidSqliteDriver` с `Context` из Koin; iOS: `NativeSqliteDriver`).
-- ⬜ `data/repository/*RepositoryImpl` на SQLDelight + `data/mapper/` для маппинга строк в domain-модели.
-- ⬜ Подменить binding'и в `dataModule` (этап 4): `Fake*RepositoryImpl` → реальные `*RepositoryImpl` — `ViewModel`/экраны из этапа 6 не меняются вообще, потому что изначально зависели от `domain`-интерфейсов, а не от конкретной реализации. Это и есть прямая реализация "свяжем presentation и data слои через domain" из исходного запроса.
-- ⬜ Проверка: тот же ручной прогон, что в этапе 6, но с проверкой, что данные переживают перезапуск приложения.
+- ✅ Подключить `app.cash.sqldelight` plugin `2.4.0` (`apply false` в корневом `build.gradle.kts`, применяется в `shared/build.gradle.kts`) + `app.cash.sqldelight:runtime`, `coroutines-extensions` (`commonMain`), `android-driver` (`androidMain`), `native-driver` (`iosMain`). *Дополнительно: `koin-android` (нужен `androidContext()` для драйвера) и `-lsqlite3` в `OTHER_LDFLAGS` таргета `iosApp` — без него статический фреймворк с native-драйвером не линкуется.*
+- ✅ `.sq`-схемы в `data/local/` по схеме из README: `cars`, `maintenance_tasks`, `service_history` (+ таблица/key-value для настроек из этапа 6). *Лежат в `shared/src/commonMain/sqldelight/ru/kuznetsov/pitstop/data/local/`; настройки — таблица `settings` из одной строки. Внешних ключей нет: связанные строки удаляются явно в транзакции. Даты и время хранятся как ISO-текст.*
+- ✅ `expect/actual DatabaseDriverFactory` (Android: `AndroidSqliteDriver` с `Context` из Koin; iOS: `NativeSqliteDriver`).
+- ✅ `data/repository/*RepositoryImpl` на SQLDelight + `data/mapper/` для маппинга строк в domain-модели. *`id` — случайные UUID; `markTaskDone` читает пробег и обновляет работу в одной транзакции.*
+- ✅ Подменить binding'и в `dataModule` (этап 4): `Fake*RepositoryImpl` → реальные `*RepositoryImpl` — `ViewModel`/экраны из этапа 6 не меняются вообще, потому что изначально зависели от `domain`-интерфейсов, а не от конкретной реализации. Это и есть прямая реализация "свяжем presentation и data слои через domain" из исходного запроса. *Фейковые репозитории и `FakeSeed` удалены — приложение стартует с пустой базой; `DatabaseDriverFactory` регистрируется в новом `expect/actual platformModule`.*
+- ✅ Проверка: тот же ручной прогон, что в этапе 6, но с проверкой, что данные переживают перезапуск приложения. *iOS: UI-тест `ScreensWalkthroughUITests` переписан под пустую базу и дважды перезапускает приложение — машины, работы, пробег, история и настройки сохраняются, удалённое авто не возвращается. Android: на эмуляторе проверен только запуск с пустой базой и сохранение добавленного авто после перезапуска.*
 
 ### Этап 8 — Локальные уведомления
 - ⬜ Android: `WorkManager`/`AlarmManager` для периодической проверки статусов (опц. `androidx.work:work-runtime-ktx`, только `androidMain`).
