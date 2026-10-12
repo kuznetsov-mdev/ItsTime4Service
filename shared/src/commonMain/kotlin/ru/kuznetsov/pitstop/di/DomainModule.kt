@@ -11,6 +11,7 @@ import ru.kuznetsov.pitstop.domain.usecase.DeleteTaskUseCase
 import ru.kuznetsov.pitstop.domain.usecase.GetTaskRemindersUseCase
 import ru.kuznetsov.pitstop.domain.usecase.GetTodayUseCase
 import ru.kuznetsov.pitstop.domain.usecase.MarkTaskDoneUseCase
+import ru.kuznetsov.pitstop.domain.usecase.NormalizeTaskUseCase
 import ru.kuznetsov.pitstop.domain.usecase.ObserveCarByIdUseCase
 import ru.kuznetsov.pitstop.domain.usecase.ObserveCarsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.ObserveHistoryUseCase
@@ -29,6 +30,7 @@ val domainModule = module {
     factoryOf(::GetTodayUseCase)
     factoryOf(::ObserveCarsUseCase)
     factoryOf(::ObserveCarByIdUseCase)
+    factoryOf(::NormalizeTaskUseCase)
     factoryOf(::AddCarUseCase)
     factoryOf(::DeleteCarUseCase)
     factoryOf(::UpdateMileageUseCase)
