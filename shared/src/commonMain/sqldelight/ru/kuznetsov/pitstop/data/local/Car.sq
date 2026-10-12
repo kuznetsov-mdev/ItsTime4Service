@@ -1,0 +1,24 @@
+CREATE TABLE cars (
+    id TEXT NOT NULL PRIMARY KEY,
+    brand TEXT NOT NULL,
+    mileage_km INTEGER NOT NULL,
+    vin TEXT
+);
+
+selectAll:
+SELECT * FROM cars ORDER BY rowid;
+
+selectById:
+SELECT * FROM cars WHERE id = ?;
+
+insert:
+INSERT INTO cars (id, brand, mileage_km, vin) VALUES (?, ?, ?, ?);
+
+updateMileage:
+UPDATE cars SET mileage_km = ? WHERE id = ?;
+
+updateDetails:
+UPDATE cars SET brand = ?, vin = ? WHERE id = ?;
+
+deleteById:
+DELETE FROM cars WHERE id = ?;

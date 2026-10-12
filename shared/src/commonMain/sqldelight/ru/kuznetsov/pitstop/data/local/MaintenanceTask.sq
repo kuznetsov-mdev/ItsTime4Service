@@ -1,0 +1,39 @@
+CREATE TABLE maintenance_tasks (
+    id TEXT NOT NULL PRIMARY KEY,
+    car_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    interval_km INTEGER NOT NULL,
+    last_done_km INTEGER NOT NULL,
+    reminder_window_km INTEGER NOT NULL,
+    interval_months INTEGER,
+    last_done_date TEXT
+);
+
+CREATE INDEX maintenance_tasks_car_id ON maintenance_tasks (car_id);
+
+selectAll:
+SELECT * FROM maintenance_tasks ORDER BY rowid;
+
+selectByCar:
+SELECT * FROM maintenance_tasks WHERE car_id = ? ORDER BY rowid;
+
+selectById:
+SELECT * FROM maintenance_tasks WHERE id = ? AND car_id = ?;
+
+insert:
+INSERT INTO maintenance_tasks (id, car_id, name, interval_km, last_done_km, reminder_window_km, interval_months, last_done_date)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+update:
+UPDATE maintenance_tasks
+SET name = ?, interval_km = ?, last_done_km = ?, reminder_window_km = ?, interval_months = ?, last_done_date = ?
+WHERE id = ? AND car_id = ?;
+
+markDone:
+UPDATE maintenance_tasks SET last_done_km = ?, last_done_date = ? WHERE id = ? AND car_id = ?;
+
+deleteById:
+DELETE FROM maintenance_tasks WHERE id = ? AND car_id = ?;
+
+deleteByCar:
+DELETE FROM maintenance_tasks WHERE car_id = ?;

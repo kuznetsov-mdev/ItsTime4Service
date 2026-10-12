@@ -1,9 +1,13 @@
 package ru.kuznetsov.pitstop.di
 
 import org.koin.core.context.startKoin
+import org.koin.dsl.KoinAppDeclaration
 
-fun initKoin() {
+fun initKoin() = initKoin {}
+
+fun initKoin(appDeclaration: KoinAppDeclaration) {
     startKoin {
-        modules(featureModule, domainModule, dataModule)
+        appDeclaration()
+        modules(featureModule, domainModule, dataModule, platformModule)
     }
 }
