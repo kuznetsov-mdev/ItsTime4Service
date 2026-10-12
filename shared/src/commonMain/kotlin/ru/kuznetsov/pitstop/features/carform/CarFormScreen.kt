@@ -1,4 +1,4 @@
-package ru.kuznetsov.pitstop.features.addcar
+package ru.kuznetsov.pitstop.features.carform
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -101,16 +101,16 @@ private val TaskPreset.taskName: StringResource
     }
 
 @Composable
-fun AddCarScreen(
+fun CarFormScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: AddCarViewModel = koinViewModel(),
+    viewModel: CarFormViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.isSaved) {
         if (state.isSaved) onBack()
     }
-    AddCarContent(
+    CarFormContent(
         state = state,
         onBack = onBack,
         onBrandChange = viewModel::onBrandChange,
@@ -127,8 +127,8 @@ fun AddCarScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun AddCarContent(
-    state: AddCarUiState,
+internal fun CarFormContent(
+    state: CarFormUiState,
     onBack: () -> Unit,
     onBrandChange: (String) -> Unit,
     onMileageChange: (String) -> Unit,
@@ -370,7 +370,7 @@ private fun AddTaskButton(onClick: () -> Unit) {
     }
 }
 
-private val previewState = AddCarUiState(
+private val previewState = CarFormUiState(
     brand = "Kia Rio",
     mileageKm = "84300",
     vin = "XWEPC811BB0012345",
@@ -380,8 +380,8 @@ private val previewState = AddCarUiState(
 )
 
 @Composable
-private fun AddCarPreviewContent() {
-    AddCarContent(
+private fun CarFormPreviewContent() {
+    CarFormContent(
         state = previewState,
         onBack = {},
         onBrandChange = {},
@@ -397,12 +397,12 @@ private fun AddCarPreviewContent() {
 
 @Preview
 @Composable
-private fun AddCarContentLightPreview() = ScreenPreview(darkTheme = false) {
-    AddCarPreviewContent()
+private fun CarFormContentLightPreview() = ScreenPreview(darkTheme = false) {
+    CarFormPreviewContent()
 }
 
 @Preview
 @Composable
-private fun AddCarContentDarkPreview() = ScreenPreview(darkTheme = true) {
-    AddCarPreviewContent()
+private fun CarFormContentDarkPreview() = ScreenPreview(darkTheme = true) {
+    CarFormPreviewContent()
 }

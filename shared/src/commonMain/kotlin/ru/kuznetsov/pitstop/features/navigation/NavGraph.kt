@@ -29,7 +29,7 @@ import org.jetbrains.compose.resources.stringResource
 import pitstop.shared.generated.resources.Res
 import pitstop.shared.generated.resources.tab_cars
 import pitstop.shared.generated.resources.tab_settings
-import ru.kuznetsov.pitstop.features.addcar.AddCarScreen
+import ru.kuznetsov.pitstop.features.carform.CarFormScreen
 import ru.kuznetsov.pitstop.features.cardetail.CarDetailScreen
 import ru.kuznetsov.pitstop.features.cars.CarsScreen
 import ru.kuznetsov.pitstop.features.history.HistoryScreen
@@ -68,7 +68,7 @@ fun PitStopNavGraph(modifier: Modifier = Modifier) {
                 )
             }
             composable(Destination.AddCar.route) {
-                AddCarScreen(onBack = { navController.popBackStack() })
+                CarFormScreen(onBack = { navController.popBackStack() })
             }
             composable(Destination.CarDetail.route, arguments = carIdArgument) { entry ->
                 val carId = entry.carId

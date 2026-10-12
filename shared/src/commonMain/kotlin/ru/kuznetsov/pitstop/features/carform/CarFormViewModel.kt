@@ -1,4 +1,4 @@
-package ru.kuznetsov.pitstop.features.addcar
+package ru.kuznetsov.pitstop.features.carform
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,12 +18,12 @@ import ru.kuznetsov.pitstop.ui.format.parseDisplayDate
  * Blocks without a name or an interval are skipped on save; when none is left, the car gets
  * a default oil-change task counted from its current mileage, as in the design mockup.
  */
-class AddCarViewModel(
+class CarFormViewModel(
     private val addCar: AddCarUseCase,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(AddCarUiState())
-    val state: StateFlow<AddCarUiState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(CarFormUiState())
+    val state: StateFlow<CarFormUiState> = _state.asStateFlow()
 
     private var nextKey = 0
 

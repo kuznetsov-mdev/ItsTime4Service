@@ -1,11 +1,11 @@
-package ru.kuznetsov.pitstop.features.addcar
+package ru.kuznetsov.pitstop.features.carform
 
 /**
  * State of the add-car form.
  * Every field is kept as the text the user typed; numbers and dates are parsed only on save.
  * [isSaved] flips to `true` once the car is stored and tells the screen to close.
  */
-data class AddCarUiState(
+data class CarFormUiState(
     val brand: String = "",
     val mileageKm: String = "",
     val vin: String = "",
