@@ -29,8 +29,8 @@ import org.jetbrains.compose.resources.stringResource
 import pitstop.shared.generated.resources.Res
 import pitstop.shared.generated.resources.tab_cars
 import pitstop.shared.generated.resources.tab_settings
-import ru.kuznetsov.pitstop.features.carform.CarFormScreen
 import ru.kuznetsov.pitstop.features.cardetail.CarDetailScreen
+import ru.kuznetsov.pitstop.features.carform.CarFormScreen
 import ru.kuznetsov.pitstop.features.cars.CarsScreen
 import ru.kuznetsov.pitstop.features.history.HistoryScreen
 import ru.kuznetsov.pitstop.features.settings.SettingsScreen
@@ -76,7 +76,11 @@ fun PitStopNavGraph(modifier: Modifier = Modifier) {
                     carId = carId,
                     onBack = { navController.popBackStack(Destination.Cars.route, inclusive = false) },
                     onOpenHistory = { navController.navigate(Destination.History.createRoute(carId)) },
+                    onEditCar = { navController.navigate(Destination.EditCar.createRoute(carId)) },
                 )
+            }
+            composable(Destination.EditCar.route, arguments = carIdArgument) { entry ->
+                CarFormScreen(onBack = { navController.popBackStack() }, carId = entry.carId)
             }
             composable(Destination.History.route, arguments = carIdArgument) { entry ->
                 HistoryScreen(carId = entry.carId, onBack = { navController.popBackStack() })

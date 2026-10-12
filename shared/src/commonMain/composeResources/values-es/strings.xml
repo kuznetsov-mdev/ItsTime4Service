@@ -27,6 +27,7 @@
     <string name="notification_sample_text">Es hora de cambiar el filtro</string>
     <string name="screen_cars">Mis coches</string>
     <string name="screen_add_car">Nuevo coche</string>
+    <string name="screen_edit_car">Editar coche</string>
     <string name="screen_car_detail">Mantenimiento</string>
     <string name="screen_history">Historial de servicio</string>
     <string name="screen_settings">Ajustes</string>

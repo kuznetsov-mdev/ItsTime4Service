@@ -1,15 +1,19 @@
 package ru.kuznetsov.pitstop.features.carform
 
 /**
- * State of the add-car form.
+ * State of the car form, which both adds a new car and edits an existing one ([isEditing]).
  * Every field is kept as the text the user typed; numbers and dates are parsed only on save.
- * [isSaved] flips to `true` once the car is stored and tells the screen to close.
+ * [isLoading] is `true` while the edited car is being read; [isMissing] means it no longer exists.
+ * [isSaved] flips to `true` once the car is stored; either of the last two tells the screen to close.
  */
 data class CarFormUiState(
     val brand: String = "",
     val mileageKm: String = "",
     val vin: String = "",
     val tasks: List<TaskBlockState> = emptyList(),
+    val isEditing: Boolean = false,
+    val isLoading: Boolean = false,
+    val isMissing: Boolean = false,
     val isSaved: Boolean = false,
 ) {
     val canSave: Boolean get() = brand.isNotBlank() && (mileageKm.toIntOrNull() ?: 0) > 0
@@ -18,9 +22,11 @@ data class CarFormUiState(
 /**
  * One maintenance task block of the form.
  * [key] identifies the block while others are added and removed around it.
+ * [taskId] is the id of the stored task the block edits, `null` for a block added in the form.
  */
 data class TaskBlockState(
     val key: Int,
+    val taskId: String? = null,
     val name: String = "",
     val intervalKm: String = "",
     val intervalMonths: String = "",

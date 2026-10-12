@@ -42,9 +42,11 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import pitstop.shared.generated.resources.Res
 import pitstop.shared.generated.resources.action_add_custom_task
 import pitstop.shared.generated.resources.action_remove_task
+import pitstop.shared.generated.resources.action_save
 import pitstop.shared.generated.resources.action_save_car
 import pitstop.shared.generated.resources.car_name_placeholder
 import pitstop.shared.generated.resources.date_placeholder
@@ -62,6 +64,7 @@ import pitstop.shared.generated.resources.preset_oil
 import pitstop.shared.generated.resources.preset_pads
 import pitstop.shared.generated.resources.preset_timing_belt
 import pitstop.shared.generated.resources.screen_add_car
+import pitstop.shared.generated.resources.screen_edit_car
 import pitstop.shared.generated.resources.section_tasks
 import pitstop.shared.generated.resources.task_block_title
 import pitstop.shared.generated.resources.task_name_air_filter
@@ -104,11 +107,12 @@ private val TaskPreset.taskName: StringResource
 fun CarFormScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: CarFormViewModel = koinViewModel(),
+    carId: String? = null,
+    viewModel: CarFormViewModel = koinViewModel { parametersOf(carId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(state.isSaved) {
-        if (state.isSaved) onBack()
+    LaunchedEffect(state.isSaved, state.isMissing) {
+        if (state.isSaved || state.isMissing) onBack()
     }
     CarFormContent(
         state = state,
@@ -144,7 +148,10 @@ internal fun CarFormContent(
     val typography = PitStopTheme.typography
     Column(modifier.fillMaxSize()) {
         ScreenTopBar(onBack = onBack)
-        ScreenTitle(title = stringResource(Res.string.screen_add_car))
+        ScreenTitle(
+            title = stringResource(if (state.isEditing) Res.string.screen_edit_car else Res.string.screen_add_car),
+        )
+        if (state.isLoading) return@Column
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -218,7 +225,7 @@ internal fun CarFormContent(
         }
         val defaultTaskName = stringResource(Res.string.task_name_oil)
         PrimaryButton(
-            text = stringResource(Res.string.action_save_car),
+            text = stringResource(if (state.isEditing) Res.string.action_save else Res.string.action_save_car),
             onClick = { onSave(defaultTaskName) },
             enabled = state.canSave,
             modifier = Modifier

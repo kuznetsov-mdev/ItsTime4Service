@@ -27,6 +27,7 @@
     <string name="notification_sample_text">Пора заменить фильтр</string>
     <string name="screen_cars">Мои авто</string>
     <string name="screen_add_car">Добавление авто</string>
+    <string name="screen_edit_car">Редактирование авто</string>
     <string name="screen_car_detail">Регламентные работы</string>
     <string name="screen_history">История ТО</string>
     <string name="screen_settings">Настройки</string>

@@ -27,6 +27,7 @@
     <string name="notification_sample_text">Time to replace the filter</string>
     <string name="screen_cars">My cars</string>
     <string name="screen_add_car">New car</string>
+    <string name="screen_edit_car">Edit car</string>
     <string name="screen_car_detail">Maintenance</string>
     <string name="screen_history">Service history</string>
     <string name="screen_settings">Settings</string>

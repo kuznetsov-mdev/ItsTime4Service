@@ -81,6 +81,7 @@ fun CarDetailScreen(
     carId: String,
     onBack: () -> Unit,
     onOpenHistory: () -> Unit,
+    onEditCar: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CarDetailViewModel = koinViewModel { parametersOf(carId) },
 ) {
@@ -92,6 +93,7 @@ fun CarDetailScreen(
         state = state,
         onBack = onBack,
         onOpenHistory = onOpenHistory,
+        onEditCar = onEditCar,
         onEditMileage = viewModel::onEditMileage,
         onSaveMileage = viewModel::onSaveMileage,
         onMarkTaskDone = viewModel::onMarkTaskDone,
@@ -107,6 +109,7 @@ internal fun CarDetailContent(
     state: CarDetailUiState,
     onBack: () -> Unit,
     onOpenHistory: () -> Unit,
+    onEditCar: () -> Unit,
     onEditMileage: () -> Unit,
     onSaveMileage: (String) -> Unit,
     onMarkTaskDone: (taskId: String) -> Unit,
@@ -125,7 +128,7 @@ internal fun CarDetailContent(
             )
             AppIconButton(
                 icon = PitStopIcons.Pencil,
-                onClick = {},
+                onClick = onEditCar,
                 contentDescription = stringResource(Res.string.action_edit_car),
             )
             AppIconButton(
@@ -364,6 +367,7 @@ private fun CarDetailPreviewContent() {
         state = previewState,
         onBack = {},
         onOpenHistory = {},
+        onEditCar = {},
         onEditMileage = {},
         onSaveMileage = {},
         onMarkTaskDone = {},
