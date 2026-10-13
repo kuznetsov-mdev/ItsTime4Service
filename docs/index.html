@@ -304,6 +304,11 @@
     margin: 12px 18px 20px; background: var(--accent); color: var(--on-accent); border: none; border-radius: 12px;
     padding: 15px; font-size: 14px; font-weight: 700; text-align: center; cursor: pointer; width: calc(100% - 36px);
   }
+  .outline-btn {
+    margin: 12px 18px 0; background: var(--bg); color: var(--accent); border: 1.5px solid var(--accent); border-radius: 12px;
+    padding: 13.5px; font-size: 14px; font-weight: 700; text-align: center; cursor: pointer; width: calc(100% - 36px); font-family: inherit;
+  }
+  .outline-btn + .save-btn { margin-top: 10px; }
   .section-divider { padding: 14px 18px 0; display: flex; align-items: baseline; justify-content: space-between; }
   .section-divider .st { font-size: 11.5px; font-weight: 700; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; }
   .section-divider .sc { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
@@ -1342,6 +1347,10 @@
     var lastKmError = opts.showErrors && blockLastKmMissing(form);
     var backAttr = opts.interactive ? ' data-back="detail"' : '';
     var deleteBtn = editing ? '<div class="icon-row"><button class="icon-btn"' + (opts.interactive ? ' data-delete-task' : '') + '>' + icon('trash', 16) + '</button></div>' : '<span></span>';
+    /* «Добавить ещё» есть только у новой работы: сохраняет её и открывает пустую форму для следующей */
+    var addMoreBtn = editing ? '' : (opts.interactive
+      ? '<button class="outline-btn" id="addMoreTaskBtn">Добавить ещё</button>'
+      : '<div class="outline-btn">Добавить ещё</div>');
     var saveBtn = opts.interactive ? '<button class="save-btn" id="saveTaskBtn">Сохранить</button>' : '<div class="save-btn">Сохранить</div>';
     return '<div class="view task-form" data-view="task">' +
       '<div class="s-topbar"><button class="icon-btn"' + backAttr + '>' + icon('chevronLeft', 16) + '</button>' + deleteBtn + '</div>' +
@@ -1361,7 +1370,7 @@
       '</div>' +
       '<span class="field-label">Напоминать за N км до срока</span>' +
       field('num', 'taskReminder', '1500', form.reminderKm) +
-      '</div>' + saveBtn +
+      '</div>' + addMoreBtn + saveBtn +
       (opts.confirmDeleteTask ? taskDeleteDialogHtml(form, opts) : '') +
       '</div>';
   }
@@ -1479,7 +1488,8 @@
     });
     var view = root.querySelector('.view.active');
     var scroller = view ? view.querySelector(SCROLLABLE) : null;
-    if (scroller && prevScroll && prevScroll.screen === istate.screen) scroller.scrollTop = prevScroll.top;
+    if (scroller && prevScroll && prevScroll.screen === istate.screen && !istate.resetScroll) scroller.scrollTop = prevScroll.top;
+    istate.resetScroll = false;
     /* новый блок работы в форме авто: список прокручивается к нему */
     if (scroller && istate.scrollToBlock) {
       var newBlock = view.querySelector('.task-block[data-block="' + istate.scrollToBlock + '"]');
@@ -1596,10 +1606,10 @@
       });
     });
     var saveTaskBtn = root.querySelector('#saveTaskBtn');
-    if (saveTaskBtn) saveTaskBtn.addEventListener('click', function () {
+    function storeTaskForm() {
       syncTaskForm();
       var f = istate.taskForm, car = currentDetailCar();
-      if (blockInvalid(f)) { istate.taskFormErrors = true; paintInteractive(); return; }
+      if (blockInvalid(f)) { istate.taskFormErrors = true; paintInteractive(); return false; }
       var name = String(f.name).trim();
       var intervalKm = parseInt(f.intervalKm, 10);
       var intervalMonths = f.intervalMonths ? parseInt(f.intervalMonths, 10) : undefined;
@@ -1614,10 +1624,19 @@
         if (existing.lastKm !== values.lastKm) existing.doneMark = null;
         Object.keys(values).forEach(function (key) { existing[key] = values[key]; });
       } else {
-        values.id = 'nt' + Date.now();
+        values.id = 'nt' + Date.now() + car.tasks.length;
         car.tasks.push(values);
       }
+      return true;
+    }
+    if (saveTaskBtn) saveTaskBtn.addEventListener('click', function () {
+      if (!storeTaskForm()) return;
       istate.taskForm = null; istate.taskFormErrors = false; istate.screen = 'detail'; paintInteractive();
+    });
+    var addMoreTaskBtn = root.querySelector('#addMoreTaskBtn');
+    if (addMoreTaskBtn) addMoreTaskBtn.addEventListener('click', function () {
+      if (!storeTaskForm()) return;
+      istate.taskForm = emptyTaskForm(); istate.taskFormErrors = false; istate.resetScroll = true; paintInteractive();
     });
     var deleteTaskBtn = root.querySelector('[data-delete-task]');
     if (deleteTaskBtn) deleteTaskBtn.addEventListener('click', function () { syncTaskForm(); istate.confirmDeleteTask = true; paintInteractive(); });
