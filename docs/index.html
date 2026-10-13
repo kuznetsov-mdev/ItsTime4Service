@@ -351,6 +351,14 @@
   .car-option .radio { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--ink-faint); margin-left: auto; flex-shrink: 0; position: relative; }
   .car-option.selected .radio { border-color: var(--accent); }
   .car-option.selected .radio::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--accent); }
+  .purge-list { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; margin-top: 8px; padding: 0 14px; }
+  .purge-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+  .purge-row:last-child { border-bottom: none; }
+  .purge-row .t1 { font-size: 13px; font-weight: 600; }
+  .purge-row .t2 { font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); margin-top: 1px; }
+  .purge-row .icon-btn { margin-left: auto; color: var(--tier-due); background: color-mix(in srgb, var(--tier-due) 12%, transparent); flex-shrink: 0; }
+  .settings-note { font-size: 11.5px; color: var(--ink-faint); line-height: 1.45; }
+  .form-body.show-end { display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
   .relaunch-btn { font-family: var(--mono); font-size: 12px; color: var(--accent); background: none; border: 1px solid var(--accent); border-radius: 999px; padding: 6px 14px; margin: -6px 0 16px; cursor: pointer; }
   .setting-text { flex: 1; min-width: 0; }
   .setting-text .t1 { font-size: 13px; font-weight: 600; }
@@ -1059,7 +1067,7 @@
     return '<div class="dialog-scrim"' + scrimAttr + '><div class="dialog" role="alertdialog" aria-modal="true">' +
       '<div class="dialog-icon">' + icon('trash', 19) + '</div>' +
       '<div class="dialog-title">Удалить ' + car.brand + '?</div>' +
-      '<div class="dialog-text">Авто и его регламентные работы будут удалены. История ТО сохранится в разделе «История» с пометкой «продано».</div>' +
+      '<div class="dialog-text">Авто и его регламентные работы будут удалены. История ТО сохранится в разделе «История» с пометкой «продано». Полностью удалить авто вместе с историей можно в настройках.</div>' +
       '<div class="dialog-actions"><button class="dialog-btn"' + cancelAttr + '>Отмена</button><button class="dialog-btn danger"' + confirmAttr + '>Удалить</button></div>' +
       '</div></div>';
   }
@@ -1492,6 +1500,22 @@
       }).join('') + '</div>';
     }
     var tabbar = tabbarHtml('settings', opts);
+    /* «Удаление авто»: полное удаление авто вместе с историей, в том числе уже проданных; раздела нет, если удалять нечего */
+    var purgeOwners = (opts.cars || []).map(function (c) { return { id: c.id, brand: c.brand, sub: fmtKm(c.mileageKm), sold: false }; })
+      .concat((opts.sold || []).map(function (c) { return { id: c.id, brand: c.brand, sub: 'продано', sold: true }; }));
+    var purgeGroup = purgeOwners.length ? '<div class="settings-group"><div class="settings-group-title">Удаление авто</div>' +
+      '<div class="settings-note">Авто удаляется полностью — вместе с работами и всей историей ТО. Восстановить данные будет нельзя.</div>' +
+      '<div class="purge-list">' + purgeOwners.map(function (o) {
+        return '<div class="purge-row"><div><div class="t1' + (o.sold ? ' sold-car' : '') + '">' + o.brand + '</div><div class="t2">' + o.sub + '</div></div>' +
+          '<button class="icon-btn"' + (opts.interactive ? ' data-purge-car="' + o.id + '"' : '') + ' aria-label="Удалить ' + o.brand + ' с историей">' + icon('trash', 15) + '</button></div>';
+      }).join('') + '</div></div>' : '';
+    var purgeTarget = state.purgeCarId ? purgeOwners.find(function (o) { return o.id === state.purgeCarId; }) : null;
+    var purgeDialog = purgeTarget ? '<div class="dialog-scrim"' + (opts.interactive ? ' data-cancel-purge' : '') + '><div class="dialog" role="alertdialog" aria-modal="true">' +
+      '<div class="dialog-icon">' + icon('trash', 19) + '</div>' +
+      '<div class="dialog-title">Удалить ' + purgeTarget.brand + ' полностью?</div>' +
+      '<div class="dialog-text">Авто, его регламентные работы и вся история ТО будут удалены без возможности восстановления.</div>' +
+      '<div class="dialog-actions"><button class="dialog-btn"' + (opts.interactive ? ' data-cancel-purge' : '') + '>Отмена</button><button class="dialog-btn danger"' + (opts.interactive ? ' data-confirm-purge' : '') + '>Удалить</button></div>' +
+      '</div></div>' : '';
     var pushAttr = opts.interactive ? ' id="pushSwitch"' : '';
     var decAttr = opts.interactive ? ' data-step="-1"' : '';
     var incAttr = opts.interactive ? ' data-step="1"' : '';
@@ -1514,7 +1538,7 @@
     return '<div class="view" data-view="settings">' +
       '<div class="s-topbar"><span></span><span></span></div>' +
       '<div class="s-title">Настройки</div>' +
-      '<div class="form-body">' +
+      '<div class="form-body' + (opts.showEnd ? ' show-end' : '') + '">' +
       '<div class="settings-group"><div class="settings-group-title">Тема</div>' + seg('theme', themeOpts, state.themeIdx) + '</div>' +
       '<div class="settings-group"><div class="settings-group-title">Единицы измерения</div>' + seg('units', unitOpts, state.unitsIdx) + '</div>' +
       launchGroup +
@@ -1534,7 +1558,8 @@
       '<div class="setting-text"><div class="t1">Время напоминаний</div><div class="t2">Ежедневная проверка пробега</div></div>' +
       '<span style="font-family:var(--mono);font-size:12px;color:var(--ink-muted)">' + state.reminderTime + '</span></div>' +
       '</div>' +
-      '</div>' + tabbar +
+      purgeGroup +
+      '</div>' + tabbar + purgeDialog +
       (state.timeDraft ? timeDialogHtml(state.timeDraft, opts) : '') +
       '</div>';
   }
@@ -1576,7 +1601,11 @@
       phoneWrap('16', 'История: выбор авто', historyScreenHtml(cars, sold, { carId: null, carsOpen: true }, { interactive: false })) +
       phoneWrap('17', 'История: фильтр', historyScreenHtml(cars, sold,
         { carId: 'c1', filterOpen: true, filters: { from: '01.01.2025', to: '31.12.2025', query: 'масл', kmFrom: '', kmTo: '' } }, { interactive: false })) +
-      phoneWrap('18', 'История проданного авто', historyScreenHtml(cars, sold, { carId: 's1' }, { interactive: false }));
+      phoneWrap('18', 'История проданного авто', historyScreenHtml(cars, sold, { carId: 's1' }, { interactive: false })) +
+      phoneWrap('19', 'Настройки: удаление авто', settingsScreenHtml(settingsState, { interactive: false, cars: cars, sold: sold, showEnd: true })) +
+      phoneWrap('20', 'Полное удаление авто', settingsScreenHtml(
+        { themeIdx: settingsState.themeIdx, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00', purgeCarId: 's1' },
+        { interactive: false, cars: cars, sold: sold, showEnd: true }));
   }
   renderStaticGallery('galleryLight');
   renderStaticGallery('galleryDark');
@@ -1614,7 +1643,7 @@
       }, { interactive: true }) +
       (detailCar && istate.taskForm ? taskScreenHtml(detailCar, istate.taskForm, { interactive: true, showErrors: istate.taskFormErrors, confirmDeleteTask: istate.confirmDeleteTask }) : '') +
       newScreenHtml({ interactive: true, form: istate.form, showErrors: istate.formErrors }, istate.taskBlocks) +
-      settingsScreenHtml(istate.settings, { interactive: true, cars: cars });
+      settingsScreenHtml(istate.settings, { interactive: true, cars: cars, sold: soldCars });
     root.parentElement.classList.add('interactive');
     wireInteractive();
     document.querySelectorAll('#interactiveScreen .view').forEach(function (v) {
@@ -1841,6 +1870,10 @@
       /* авто удаляется вместе с работами, но его история остаётся в разделе «История» */
       soldCars.unshift({ id: deleted.id, brand: deleted.brand, history: deleted.history || [] });
       cars = cars.filter(function (c) { return c.id !== id; });
+      forgetCar(id);
+      istate.confirmDelete = false; istate.detailId = null; istate.screen = 'cars'; paintInteractive();
+    });
+    function forgetCar(id) {
       /* удалённое авто больше не открывается при запуске */
       if (istate.lastOpenedCarId === id) istate.lastOpenedCarId = null;
       /* удалили авто «по умолчанию»: выбирается другое, а если авто не осталось — настройка выключается */
@@ -1849,7 +1882,27 @@
         istate.settings.defaultCarId = fallback ? fallback.id : null;
         if (!fallback) istate.settings.openDefault = false;
       }
-      istate.confirmDelete = false; istate.detailId = null; istate.screen = 'cars'; paintInteractive();
+    }
+
+    /* --- settings: delete a car together with its history --- */
+    root.querySelectorAll('[data-purge-car]').forEach(function (b) {
+      b.addEventListener('click', function () { istate.settings.purgeCarId = b.getAttribute('data-purge-car'); paintInteractive(); });
+    });
+    root.querySelectorAll('[data-cancel-purge]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        if (e.target !== el) return;
+        istate.settings.purgeCarId = null; paintInteractive();
+      });
+    });
+    var confirmPurgeBtn = root.querySelector('[data-confirm-purge]');
+    if (confirmPurgeBtn) confirmPurgeBtn.addEventListener('click', function () {
+      var id = istate.settings.purgeCarId;
+      cars = cars.filter(function (c) { return c.id !== id; });
+      soldCars = soldCars.filter(function (c) { return c.id !== id; });
+      forgetCar(id);
+      if (istate.history.carId === id) istate.history.carId = null;
+      if (istate.detailId === id) istate.detailId = null;
+      istate.settings.purgeCarId = null; paintInteractive();
     });
 
     /* --- quick mileage edit --- */
@@ -2048,7 +2101,7 @@
     var target = carById(st.openDefault ? st.defaultCarId : istate.lastOpenedCarId);
     istate.editingMileage = false; istate.editingBrand = false; istate.editingVin = false; istate.brandError = false;
     istate.confirmDelete = false; istate.doneTaskId = null; istate.unmarkTaskId = null; istate.historyEntryId = null;
-    istate.taskForm = null; st.timeDraft = null; istate.history.carsOpen = false; istate.history.filterOpen = false;
+    istate.taskForm = null; st.timeDraft = null; st.purgeCarId = null; istate.history.carsOpen = false; istate.history.filterOpen = false;
     istate.detailId = target ? target.id : null;
     istate.screen = target ? 'detail' : 'cars';
     paintInteractive();
