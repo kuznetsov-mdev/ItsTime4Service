@@ -204,6 +204,7 @@
     flex: 1; min-width: 0; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 8px;
     padding: 7px 8px; font-family: var(--mono); font-size: 13px; color: var(--ink);
   }
+  .stat-edit-row button:disabled { opacity: 0.35; cursor: default; }
   .stat-edit-row button { width: 27px; height: 27px; border-radius: 8px; background: var(--accent); color: var(--on-accent); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
 
   .task-list { flex: 1; overflow-y: auto; padding: 6px 18px 18px; }
@@ -1229,11 +1230,27 @@
       '<div class="dialog-title">Фильтр</div>' +
       '<div class="dialog-fields">' +
       '<div><span class="mini-label">Период, с — по</span><div class="filter-pair">' + field('text', 'fltFrom', 'дд.мм.гггг', filters.from) + field('text', 'fltTo', 'дд.мм.гггг', filters.to) + '</div></div>' +
-      '<div><span class="mini-label">Поиск по названию работы</span>' + field('text', 'fltQuery', 'Например, масл', filters.query) + '</div>' +
+      '<div><span class="mini-label">Поиск по названию работы</span>' + field('text', 'fltQuery', 'Например, масло', filters.query) + '</div>' +
       '<div><span class="mini-label">Пробег, км, с — по</span><div class="filter-pair">' + field('num', 'fltKmFrom', '0', filters.kmFrom) + field('num', 'fltKmTo', '100000', filters.kmTo) + '</div></div>' +
       '</div>' +
       '<div class="dialog-actions"><button class="dialog-btn"' + (opts.interactive ? ' data-reset-filter' : '') + '>Сбросить</button><button class="dialog-btn primary"' + (opts.interactive ? ' data-apply-filter' : '') + '>Применить</button></div>' +
       '</div></div>';
+  }
+  /* Поиск по названию работы с учётом словоформ, без словарей: у слова запроса не учитываются две последние буквы
+     (но остаётся не меньше трёх), и ищутся слова названия с таким же началом («масло» находит «масла» и «масел»,
+     «тормоз» — «тормозные»). Все слова запроса должны найтись в названии. */
+  function searchWords(text) {
+    return String(text || '').toLowerCase().replace(/ё/g, 'е').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .split(/[^a-zа-я0-9]+/).filter(Boolean);
+  }
+  function wordsMatch(queryWord, titleWord) {
+    var common = 0;
+    while (common < queryWord.length && common < titleWord.length && queryWord[common] === titleWord[common]) common++;
+    return common >= Math.min(queryWord.length, Math.max(3, queryWord.length - 2));
+  }
+  function titleMatchesQuery(title, query) {
+    var titleWords = searchWords(title);
+    return searchWords(query).every(function (q) { return titleWords.some(function (w) { return wordsMatch(q, w); }); });
   }
   function historyFiltersActive(f) { return !!(f.from || f.to || String(f.query || '').trim() || f.kmFrom || f.kmTo); }
 
@@ -1252,13 +1269,13 @@
     });
     var total = entries.length;
     var fromIso = isoFromRu(filters.from), toIso = isoFromRu(filters.to);
-    var query = String(filters.query || '').trim().toLowerCase();
+    var query = String(filters.query || '').trim();
     var kmFrom = parseInt(filters.kmFrom, 10), kmTo = parseInt(filters.kmTo, 10);
     entries = entries.filter(function (x) {
       var e = x.e;
       if (fromIso && e.date < fromIso) return false;
       if (toIso && e.date > toIso) return false;
-      if (query && e.taskName.toLowerCase().indexOf(query) === -1) return false;
+      if (query && !titleMatchesQuery(e.taskName, query)) return false;
       if (kmFrom >= 0 && e.mileageKm < kmFrom) return false;
       if (kmTo >= 0 && e.mileageKm > kmTo) return false;
       return true;
@@ -1600,7 +1617,7 @@
         { interactive: false, cars: cars })) +
       phoneWrap('16', 'История: выбор авто', historyScreenHtml(cars, sold, { carId: null, carsOpen: true }, { interactive: false })) +
       phoneWrap('17', 'История: фильтр', historyScreenHtml(cars, sold,
-        { carId: 'c1', filterOpen: true, filters: { from: '01.01.2025', to: '31.12.2025', query: 'масл', kmFrom: '', kmTo: '' } }, { interactive: false })) +
+        { carId: 'c1', filterOpen: true, filters: { from: '01.01.2025', to: '31.12.2025', query: 'масло', kmFrom: '', kmTo: '' } }, { interactive: false })) +
       phoneWrap('18', 'История проданного авто', historyScreenHtml(cars, sold, { carId: 's1' }, { interactive: false })) +
       phoneWrap('19', 'Настройки: удаление авто', settingsScreenHtml(settingsState, { interactive: false, cars: cars, sold: sold, showEnd: true })) +
       phoneWrap('20', 'Полное удаление авто', settingsScreenHtml(
@@ -1762,6 +1779,14 @@
     }
     var editBrandBtn = root.querySelector('[data-edit-brand]');
     if (editBrandBtn) editBrandBtn.addEventListener('click', function () { commitEditing(); istate.editingBrand = true; paintInteractive(); });
+    /* у обязательных полей (название, пробег) галочка неактивна, пока поле пустое */
+    [['#brandEditInput', '#saveBrandBtn', function (v) { return !!v.trim(); }],
+     ['#mileageEditInput', '#saveMileageBtn', function (v) { return parseInt(v, 10) > 0; }]].forEach(function (pair) {
+      var input = root.querySelector(pair[0]), button = root.querySelector(pair[1]);
+      if (!input || !button) return;
+      var sync = function () { button.disabled = !pair[2](input.value); };
+      input.addEventListener('input', sync); sync();
+    });
     var saveBrandBtn = root.querySelector('#saveBrandBtn');
     if (saveBrandBtn) saveBrandBtn.addEventListener('click', function () {
       var value = root.querySelector('#brandEditInput').value.trim();
