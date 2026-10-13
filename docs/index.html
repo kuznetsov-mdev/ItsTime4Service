@@ -1027,6 +1027,8 @@
     var value = parseInt(typed, 10);
     return (originalKm !== undefined && originalKm !== null && value === toUnit(originalKm)) ? originalKm : fromUnit(value);
   }
+  /* шаг «напоминать заранее» хранится в тысячах км, а показывается в тысячах выбранных единиц, от 1 до 9 */
+  function reminderSteps(state) { return Math.max(1, Math.min(9, Math.round(toUnit(state.reminderDefault * 1000) / 1000))); }
   function fmtKm(n) { return Math.round(toUnit(n)).toLocaleString('ru-RU') + ' ' + unitWord(); }
   /* каждая часть сводки — «осталось…», «или…», «каждые…» — с новой строки */
   function taskMetaHtml(st, task) {
@@ -1580,11 +1582,11 @@
       '<button class="switch' + (state.pushOn ? ' on' : '') + '"' + pushAttr + '></button></div>' +
       '<div class="notif-preview"><div class="notif-icon">' + icon('bell', 14) + '</div>' +
       '<div class="notif-body"><div class="notif-head"><span class="notif-title">Одометр</span><span class="notif-time">сейчас</span></div>' +
-      '<div class="notif-text">Kia Rio: пора заменить воздушный фильтр — осталось 700 км</div>' +
+      '<div class="notif-text">Kia Rio: пора заменить воздушный фильтр — осталось ' + fmtKm(700) + '</div>' +
       '<div class="notif-caption">Повторно напомним не раньше чем через 3 дня — чтобы не спамить одной и той же работой</div></div></div>' +
       '<div class="setting-row"><button class="icon-btn">' + icon('gauge', 16) + '</button>' +
       '<div class="setting-text"><div class="t1">Напоминать заранее</div><div class="t2">тыс. ' + unitWord() + ' до срока по умолчанию</div></div>' +
-      '<div class="stepper"><button' + decAttr + '>' + icon('minus', 12) + '</button><span class="val">' + state.reminderDefault + '</span><button' + incAttr + '>' + icon('plus', 12) + '</button></div></div>' +
+      '<div class="stepper"><button' + decAttr + '>' + icon('minus', 12) + '</button><span class="val">' + reminderSteps(state) + '</span><button' + incAttr + '>' + icon('plus', 12) + '</button></div></div>' +
       '<div class="setting-row tappable"' + (opts.interactive ? ' data-open-time' : '') + '><button class="icon-btn">' + icon('gear', 16) + '</button>' +
       '<div class="setting-text"><div class="t1">Время напоминаний</div><div class="t2">Ежедневная проверка пробега</div></div>' +
       '<span style="font-family:var(--mono);font-size:12px;color:var(--ink-muted)">' + state.reminderTime + '</span></div>' +
@@ -2141,7 +2143,8 @@
     root.querySelectorAll('[data-step]').forEach(function (b) {
       b.addEventListener('click', function () {
         var d = +b.getAttribute('data-step');
-        istate.settings.reminderDefault = Math.max(1, Math.min(9, istate.settings.reminderDefault + d));
+        var steps = Math.max(1, Math.min(9, reminderSteps(istate.settings) + d));
+        istate.settings.reminderDefault = fromUnit(steps * 1000) / 1000;
         paintInteractive();
       });
     });
