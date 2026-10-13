@@ -244,7 +244,8 @@
   .car-menu { position: absolute; left: 18px; right: 18px; top: calc(100% - 6px); background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; box-shadow: var(--shadow); z-index: 6; padding: 4px 0; max-height: 250px; overflow-y: auto; }
   .car-menu button { display: block; width: 100%; padding: 11px 14px; background: none; border: none; font-size: 13px; text-align: left; color: var(--ink); cursor: pointer; font-family: inherit; }
   .car-menu button.selected { color: var(--accent); font-weight: 700; }
-  .car-menu button.sold-car.selected { color: var(--ink-muted); }
+  .car-menu button.sold-car { color: var(--ink-faint); }
+  .car-menu button.sold-car.selected { color: var(--ink-muted); font-weight: 700; }
   .history-car { color: var(--ink); font-weight: 600; font-family: var(--sans, inherit); }
   .history-car.sold-car { color: var(--ink-faint); font-weight: 500; }
   .filter-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
