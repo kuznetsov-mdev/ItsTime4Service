@@ -10,8 +10,11 @@ sealed class Destination(val route: String) {
         fun createRoute(carId: String) = "cars/$carId"
     }
 
-    data object EditCar : Destination("cars/{$ARG_CAR_ID}/edit") {
-        fun createRoute(carId: String) = "cars/$carId/edit"
+    data object NewTask : Destination("cars/{$ARG_CAR_ID}/new-task") {
+        fun createRoute(carId: String) = "cars/$carId/new-task"
+    }
+    data object EditTask : Destination("cars/{$ARG_CAR_ID}/tasks/{$ARG_TASK_ID}") {
+        fun createRoute(carId: String, taskId: String) = "cars/$carId/tasks/$taskId"
     }
     data object History : Destination("cars/{$ARG_CAR_ID}/history") {
         fun createRoute(carId: String) = "cars/$carId/history"
@@ -21,5 +24,6 @@ sealed class Destination(val route: String) {
 
     companion object {
         const val ARG_CAR_ID = "carId"
+        const val ARG_TASK_ID = "taskId"
     }
 }

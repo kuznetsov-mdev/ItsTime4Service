@@ -7,16 +7,26 @@ import ru.kuznetsov.pitstop.domain.model.TaskStatus
  * State of the car screen.
  * [car] is `null` while loading and after the car has been deleted; [isMissing] tells the two apart
  * and is the signal for the screen to close itself.
+ * [editingField] is the one header value currently edited in place, if any.
+ * [taskDoneDialog] is the task whose "task done" window is open; [isConfirmingUnmark] means the window
+ * asking to remove a done mark is open.
  */
 data class CarDetailUiState(
     val isLoading: Boolean = true,
     val car: CarDetails? = null,
     val distanceUnit: DistanceUnit = DistanceUnit.KILOMETERS,
-    val isEditingMileage: Boolean = false,
+    val editingField: EditableField? = null,
     val isConfirmingDelete: Boolean = false,
+    val taskDoneDialog: TaskItem? = null,
+    val isConfirmingUnmark: Boolean = false,
 ) {
     val isMissing: Boolean get() = !isLoading && car == null
 }
+
+/**
+ * The header values of the car screen that are edited in place, one at a time.
+ */
+enum class EditableField { BRAND, VIN, MILEAGE }
 
 /**
  * The car as shown in the screen header and its tasks, most urgent first.
@@ -35,6 +45,7 @@ data class CarDetails(
 /**
  * One maintenance task row.
  * [remainingKm] is negative once overdue; [remainingMonths] is `null` for tasks without a time interval.
+ * [isDone] is `true` while the task counts as just marked done, which turns its button into "done".
  */
 data class TaskItem(
     val id: String,
@@ -44,4 +55,5 @@ data class TaskItem(
     val remainingMonths: Int?,
     val status: TaskStatus,
     val progress: Float,
+    val isDone: Boolean = false,
 )

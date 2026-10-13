@@ -21,6 +21,8 @@ fun AppTextField(
     modifier: Modifier = Modifier,
     placeholder: String? = null,
     enabled: Boolean = true,
+    isError: Boolean = false,
+    minLines: Int = 1,
 ) {
     FieldBox(
         value = value,
@@ -31,6 +33,8 @@ fun AppTextField(
         modifier = modifier,
         placeholder = placeholder,
         enabled = enabled,
+        isError = isError,
+        minLines = minLines,
     )
 }
 

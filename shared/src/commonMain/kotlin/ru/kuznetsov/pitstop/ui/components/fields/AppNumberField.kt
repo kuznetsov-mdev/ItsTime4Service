@@ -25,6 +25,7 @@ fun AppNumberField(
     placeholder: String? = null,
     unit: String? = null,
     enabled: Boolean = true,
+    isError: Boolean = false,
 ) {
     val colors = PitStopTheme.colors
     FieldBox(
@@ -37,6 +38,7 @@ fun AppNumberField(
         placeholder = placeholder,
         keyboardType = KeyboardType.Number,
         enabled = enabled,
+        isError = isError,
         trailing = unit?.let {
             {
                 Text(

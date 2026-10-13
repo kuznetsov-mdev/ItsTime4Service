@@ -8,7 +8,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,11 +30,19 @@ fun LabeledMiniField(
     modifier: Modifier = Modifier,
     placeholder: String? = null,
     keyboardType: KeyboardType = KeyboardType.Text,
+    isError: Boolean = false,
+    required: Boolean = false,
+    minLines: Int = 1,
 ) {
     val colors = PitStopTheme.colors
     Column(modifier = modifier) {
         Text(
-            label,
+            buildAnnotatedString {
+                append(label)
+                if (required) {
+                    withStyle(SpanStyle(color = colors.tierDue)) { append(" *") }
+                }
+            },
             style = PitStopTheme.typography.sans.copy(fontSize = 10.5.sp),
             color = colors.inkFaint,
             modifier = Modifier.padding(bottom = 4.dp),
@@ -45,6 +56,8 @@ fun LabeledMiniField(
             contentPadding = PaddingValues(horizontal = 13.dp, vertical = 12.dp),
             placeholder = placeholder,
             keyboardType = keyboardType,
+            isError = isError,
+            minLines = minLines,
         )
     }
 }

@@ -1,5 +1,6 @@
 package ru.kuznetsov.pitstop.features.carform
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -21,6 +24,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,25 +33,19 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.parameter.parametersOf
 import pitstop.shared.generated.resources.Res
 import pitstop.shared.generated.resources.action_add_custom_task
 import pitstop.shared.generated.resources.action_remove_task
-import pitstop.shared.generated.resources.action_save
 import pitstop.shared.generated.resources.action_save_car
 import pitstop.shared.generated.resources.car_name_placeholder
 import pitstop.shared.generated.resources.date_placeholder
@@ -58,20 +57,11 @@ import pitstop.shared.generated.resources.field_mileage_km
 import pitstop.shared.generated.resources.field_reminder_window_km
 import pitstop.shared.generated.resources.field_task_interval_km
 import pitstop.shared.generated.resources.field_vin
-import pitstop.shared.generated.resources.last_done_km_placeholder
-import pitstop.shared.generated.resources.preset_air_filter
-import pitstop.shared.generated.resources.preset_oil
-import pitstop.shared.generated.resources.preset_pads
-import pitstop.shared.generated.resources.preset_timing_belt
 import pitstop.shared.generated.resources.screen_add_car
-import pitstop.shared.generated.resources.screen_edit_car
 import pitstop.shared.generated.resources.section_tasks
 import pitstop.shared.generated.resources.task_block_title
-import pitstop.shared.generated.resources.task_name_air_filter
 import pitstop.shared.generated.resources.task_name_oil
-import pitstop.shared.generated.resources.task_name_pads
 import pitstop.shared.generated.resources.task_name_placeholder
-import pitstop.shared.generated.resources.task_name_timing_belt
 import pitstop.shared.generated.resources.tasks_added
 import pitstop.shared.generated.resources.vin_placeholder
 import ru.kuznetsov.pitstop.ui.components.screen.ScreenHorizontalPadding
@@ -83,36 +73,24 @@ import ru.kuznetsov.pitstop.ui.components.buttons.PresetChip
 import ru.kuznetsov.pitstop.ui.components.buttons.PrimaryButton
 import ru.kuznetsov.pitstop.ui.components.fields.AppNumberField
 import ru.kuznetsov.pitstop.ui.components.fields.AppTextField
+import ru.kuznetsov.pitstop.ui.components.fields.FieldLabel
 import ru.kuznetsov.pitstop.ui.components.fields.LabeledMiniField
+import ru.kuznetsov.pitstop.ui.format.TaskFields
+import ru.kuznetsov.pitstop.ui.format.TaskPreset
+import ru.kuznetsov.pitstop.ui.format.chipLabel
+import ru.kuznetsov.pitstop.ui.format.taskName
 import ru.kuznetsov.pitstop.ui.icons.PitStopIcons
 import ru.kuznetsov.pitstop.ui.theme.PitStopTheme
-
-private val TaskPreset.chipLabel: StringResource
-    get() = when (this) {
-        TaskPreset.OIL -> Res.string.preset_oil
-        TaskPreset.PADS -> Res.string.preset_pads
-        TaskPreset.AIR_FILTER -> Res.string.preset_air_filter
-        TaskPreset.TIMING_BELT -> Res.string.preset_timing_belt
-    }
-
-private val TaskPreset.taskName: StringResource
-    get() = when (this) {
-        TaskPreset.OIL -> Res.string.task_name_oil
-        TaskPreset.PADS -> Res.string.task_name_pads
-        TaskPreset.AIR_FILTER -> Res.string.task_name_air_filter
-        TaskPreset.TIMING_BELT -> Res.string.task_name_timing_belt
-    }
 
 @Composable
 fun CarFormScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    carId: String? = null,
-    viewModel: CarFormViewModel = koinViewModel { parametersOf(carId) },
+    viewModel: CarFormViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(state.isSaved, state.isMissing) {
-        if (state.isSaved || state.isMissing) onBack()
+    LaunchedEffect(state.isSaved) {
+        if (state.isSaved) onBack()
     }
     CarFormContent(
         state = state,
@@ -137,7 +115,7 @@ internal fun CarFormContent(
     onBrandChange: (String) -> Unit,
     onMileageChange: (String) -> Unit,
     onVinChange: (String) -> Unit,
-    onTaskChange: (TaskBlockState) -> Unit,
+    onTaskChange: (key: Int, fields: TaskFields) -> Unit,
     onAddTask: () -> Unit,
     onAddPreset: (TaskPreset, String) -> Unit,
     onRemoveTask: (key: Int) -> Unit,
@@ -148,10 +126,7 @@ internal fun CarFormContent(
     val typography = PitStopTheme.typography
     Column(modifier.fillMaxSize()) {
         ScreenTopBar(onBack = onBack)
-        ScreenTitle(
-            title = stringResource(if (state.isEditing) Res.string.screen_edit_car else Res.string.screen_add_car),
-        )
-        if (state.isLoading) return@Column
+        ScreenTitle(title = stringResource(Res.string.screen_add_car))
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -164,6 +139,7 @@ internal fun CarFormContent(
                 value = state.brand,
                 onValueChange = onBrandChange,
                 placeholder = stringResource(Res.string.car_name_placeholder),
+                isError = state.showErrors && state.isBrandMissing,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
             )
             Row(
@@ -177,6 +153,7 @@ internal fun CarFormContent(
                         value = state.mileageKm,
                         onValueChange = onMileageChange,
                         placeholder = "84300",
+                        isError = state.showErrors && state.isMileageMissing,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -213,21 +190,23 @@ internal fun CarFormContent(
                 }
             }
             state.tasks.forEachIndexed { index, task ->
-                TaskBlock(
-                    number = index + 1,
-                    task = task,
-                    onChange = onTaskChange,
-                    onRemove = { onRemoveTask(task.key) },
-                    modifier = Modifier.padding(bottom = 14.dp),
-                )
+                key(task.key) {
+                    TaskBlock(
+                        number = index + 1,
+                        fields = task.fields,
+                        showErrors = state.showErrors,
+                        onChange = { onTaskChange(task.key, it) },
+                        onRemove = { onRemoveTask(task.key) },
+                        modifier = Modifier.padding(bottom = 14.dp),
+                    )
+                }
             }
             AddTaskButton(onClick = onAddTask)
         }
         val defaultTaskName = stringResource(Res.string.task_name_oil)
         PrimaryButton(
-            text = stringResource(if (state.isEditing) Res.string.action_save else Res.string.action_save_car),
+            text = stringResource(Res.string.action_save_car),
             onClick = { onSave(defaultTaskName) },
-            enabled = state.canSave,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = ScreenHorizontalPadding, end = ScreenHorizontalPadding, top = 12.dp, bottom = 20.dp),
@@ -235,39 +214,23 @@ internal fun CarFormContent(
     }
 }
 
-@Composable
-private fun FieldLabel(text: String, required: Boolean = false, bottomPadding: Boolean = true) {
-    val colors = PitStopTheme.colors
-    Text(
-        buildAnnotatedString {
-            append(text.uppercase())
-            if (required) {
-                withStyle(SpanStyle(color = colors.tierDue)) { append(" *") }
-            }
-        },
-        style = PitStopTheme.typography.sans.copy(
-            fontSize = 11.5.sp,
-            lineHeight = 15.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.04f.em,
-        ),
-        color = colors.inkMuted,
-        modifier = Modifier.padding(bottom = if (bottomPadding) 8.dp else 0.dp),
-    )
-}
-
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TaskBlock(
     number: Int,
-    task: TaskBlockState,
-    onChange: (TaskBlockState) -> Unit,
+    fields: TaskFields,
+    showErrors: Boolean,
+    onChange: (TaskFields) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = PitStopTheme.colors
     val shape = RoundedCornerShape(PitStopTheme.dimens.radiusL)
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    LaunchedEffect(Unit) { bringIntoViewRequester.bringIntoView() }
     Column(
         modifier = modifier
+            .bringIntoViewRequester(bringIntoViewRequester)
             .fillMaxWidth()
             .clip(shape)
             .background(colors.surface)
@@ -293,24 +256,27 @@ private fun TaskBlock(
             )
         }
         AppTextField(
-            value = task.name,
-            onValueChange = { onChange(task.copy(name = it)) },
+            value = fields.name,
+            onValueChange = { onChange(fields.copy(name = it)) },
             placeholder = stringResource(Res.string.task_name_placeholder),
+            isError = showErrors && fields.isNameMissing,
             modifier = Modifier.fillMaxWidth(),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
             LabeledMiniField(
                 label = stringResource(Res.string.field_task_interval_km),
-                value = task.intervalKm,
-                onValueChange = { onChange(task.copy(intervalKm = it)) },
+                value = fields.intervalKm,
+                onValueChange = { onChange(fields.copy(intervalKm = it)) },
                 placeholder = "10000",
                 keyboardType = KeyboardType.Number,
+                isError = showErrors && fields.isIntervalMissing,
+                required = true,
                 modifier = Modifier.weight(1f),
             )
             LabeledMiniField(
                 label = stringResource(Res.string.field_interval_months),
-                value = task.intervalMonths,
-                onValueChange = { onChange(task.copy(intervalMonths = it)) },
+                value = fields.intervalMonths,
+                onValueChange = { onChange(fields.copy(intervalMonths = it)) },
                 placeholder = "12",
                 keyboardType = KeyboardType.Number,
                 modifier = Modifier.weight(1f),
@@ -319,24 +285,26 @@ private fun TaskBlock(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
             LabeledMiniField(
                 label = stringResource(Res.string.field_last_done_km),
-                value = task.lastDoneKm,
-                onValueChange = { onChange(task.copy(lastDoneKm = it)) },
-                placeholder = stringResource(Res.string.last_done_km_placeholder),
+                value = fields.lastDoneKm,
+                onValueChange = { onChange(fields.copy(lastDoneKm = it)) },
+                placeholder = "78000",
                 keyboardType = KeyboardType.Number,
+                isError = showErrors && fields.isLastDoneMissing,
+                required = true,
                 modifier = Modifier.weight(1f),
             )
             LabeledMiniField(
                 label = stringResource(Res.string.field_last_done_date),
-                value = task.lastDoneDate,
-                onValueChange = { onChange(task.copy(lastDoneDate = it)) },
+                value = fields.lastDoneDate,
+                onValueChange = { onChange(fields.copy(lastDoneDate = it)) },
                 placeholder = stringResource(Res.string.date_placeholder),
                 modifier = Modifier.weight(1f),
             )
         }
         LabeledMiniField(
             label = stringResource(Res.string.field_reminder_window_km),
-            value = task.reminderWindowKm,
-            onValueChange = { onChange(task.copy(reminderWindowKm = it)) },
+            value = fields.reminderWindowKm,
+            onValueChange = { onChange(fields.copy(reminderWindowKm = it)) },
             placeholder = "1500",
             keyboardType = KeyboardType.Number,
             modifier = Modifier.fillMaxWidth(),
@@ -382,7 +350,16 @@ private val previewState = CarFormUiState(
     mileageKm = "84300",
     vin = "XWEPC811BB0012345",
     tasks = listOf(
-        TaskBlockState(key = 0, name = "Замена масла и фильтра", intervalKm = "10000", intervalMonths = "12", reminderWindowKm = "1500"),
+        TaskBlockState(
+            key = 0,
+            fields = TaskFields(
+                name = "Замена масла и фильтра",
+                intervalKm = "10000",
+                intervalMonths = "12",
+                lastDoneKm = "78000",
+                reminderWindowKm = "1500",
+            ),
+        ),
     ),
 )
 
@@ -394,7 +371,7 @@ private fun CarFormPreviewContent() {
         onBrandChange = {},
         onMileageChange = {},
         onVinChange = {},
-        onTaskChange = {},
+        onTaskChange = { _, _ -> },
         onAddTask = {},
         onAddPreset = { _, _ -> },
         onRemoveTask = {},

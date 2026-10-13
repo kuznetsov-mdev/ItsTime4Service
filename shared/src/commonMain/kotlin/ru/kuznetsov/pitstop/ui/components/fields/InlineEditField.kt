@@ -10,13 +10,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,15 +32,23 @@ import ru.kuznetsov.pitstop.ui.components.ComponentPreview
 import ru.kuznetsov.pitstop.ui.icons.PitStopIcons
 import ru.kuznetsov.pitstop.ui.theme.PitStopTheme
 
-/** Compact numeric field + accent confirm button — quick mileage edit directly on the car screen, no form. */
+/** Compact field + accent confirm button — in-place edit of the car name, VIN and mileage on the car screen; takes focus as it appears, the button is dimmed while [canSave] rejects the text. */
 @Composable
 fun InlineEditField(
     initialValue: String,
     onSave: (String) -> Unit,
     modifier: Modifier = Modifier,
+    keyboardType: KeyboardType = KeyboardType.Number,
+    textStyle: TextStyle = PitStopTheme.typography.mono.copy(fontSize = 13.sp),
+    placeholder: String? = null,
+    transform: (String) -> String = { it },
+    canSave: (String) -> Boolean = { true },
 ) {
     val colors = PitStopTheme.colors
     var text by remember(initialValue) { mutableStateOf(initialValue) }
+    val focusRequester = remember { FocusRequester() }
+    val saveEnabled = canSave(text)
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -44,19 +56,22 @@ fun InlineEditField(
     ) {
         FieldBox(
             value = text,
-            onValueChange = { text = it },
-            textStyle = PitStopTheme.typography.mono.copy(fontSize = 13.sp),
+            onValueChange = { text = transform(it) },
+            textStyle = textStyle,
             shape = RoundedCornerShape(PitStopTheme.dimens.radiusS),
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 7.dp),
             modifier = Modifier.weight(1f),
-            keyboardType = KeyboardType.Number,
+            placeholder = placeholder,
+            keyboardType = keyboardType,
+            focusRequester = focusRequester,
         )
         Box(
             modifier = Modifier
                 .size(27.dp)
+                .alpha(if (saveEnabled) 1f else 0.35f)
                 .clip(RoundedCornerShape(PitStopTheme.dimens.radiusS))
                 .background(colors.accent)
-                .clickable { onSave(text) },
+                .clickable(enabled = saveEnabled) { onSave(text) },
             contentAlignment = Alignment.Center,
         ) {
             Icon(PitStopIcons.Check, contentDescription = stringResource(Res.string.action_save), tint = colors.onAccent, modifier = Modifier.size(14.dp))

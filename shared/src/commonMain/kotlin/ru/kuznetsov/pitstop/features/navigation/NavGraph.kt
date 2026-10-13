@@ -34,6 +34,7 @@ import ru.kuznetsov.pitstop.features.carform.CarFormScreen
 import ru.kuznetsov.pitstop.features.cars.CarsScreen
 import ru.kuznetsov.pitstop.features.history.HistoryScreen
 import ru.kuznetsov.pitstop.features.settings.SettingsScreen
+import ru.kuznetsov.pitstop.features.taskform.TaskFormScreen
 import ru.kuznetsov.pitstop.ui.components.buttons.TabBarItem
 import ru.kuznetsov.pitstop.ui.icons.PitStopIcons
 import ru.kuznetsov.pitstop.ui.theme.PitStopTheme
@@ -76,11 +77,18 @@ fun PitStopNavGraph(modifier: Modifier = Modifier) {
                     carId = carId,
                     onBack = { navController.popBackStack(Destination.Cars.route, inclusive = false) },
                     onOpenHistory = { navController.navigate(Destination.History.createRoute(carId)) },
-                    onEditCar = { navController.navigate(Destination.EditCar.createRoute(carId)) },
+                    onAddTask = { navController.navigate(Destination.NewTask.createRoute(carId)) },
+                    onOpenTask = { taskId -> navController.navigate(Destination.EditTask.createRoute(carId, taskId)) },
                 )
             }
-            composable(Destination.EditCar.route, arguments = carIdArgument) { entry ->
-                CarFormScreen(onBack = { navController.popBackStack() }, carId = entry.carId)
+            composable(Destination.NewTask.route, arguments = carIdArgument) { entry ->
+                TaskFormScreen(carId = entry.carId, taskId = null, onBack = { navController.popBackStack() })
+            }
+            composable(
+                Destination.EditTask.route,
+                arguments = carIdArgument + navArgument(Destination.ARG_TASK_ID) { type = NavType.StringType },
+            ) { entry ->
+                TaskFormScreen(carId = entry.carId, taskId = entry.taskId, onBack = { navController.popBackStack() })
             }
             composable(Destination.History.route, arguments = carIdArgument) { entry ->
                 HistoryScreen(carId = entry.carId, onBack = { navController.popBackStack() })
@@ -135,3 +143,6 @@ private fun NavHostController.navigateToTab(destination: Destination) {
 
 private val NavBackStackEntry.carId: String
     get() = arguments?.read { getString(Destination.ARG_CAR_ID) }.orEmpty()
+
+private val NavBackStackEntry.taskId: String
+    get() = arguments?.read { getString(Destination.ARG_TASK_ID) }.orEmpty()

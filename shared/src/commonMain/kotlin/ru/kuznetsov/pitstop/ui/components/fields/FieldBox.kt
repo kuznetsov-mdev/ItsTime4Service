@@ -13,6 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Shape
@@ -22,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import ru.kuznetsov.pitstop.ui.theme.PitStopTheme
 
 /**
- * Shared chrome (surface2 fill, 1dp rule border, placeholder handling) behind every field
+ * Shared chrome (surface2 fill, 1dp rule border — red when the field is in error — and placeholder handling) behind every field
  * component — [ru.kuznetsov.pitstop.ui.components.fields.AppTextField],
  * [ru.kuznetsov.pitstop.ui.components.fields.AppNumberField], [LabeledMiniField] and
  * [InlineEditField] all draw through this so the box styling stays in one place.
@@ -38,6 +40,9 @@ internal fun FieldBox(
     placeholder: String? = null,
     keyboardType: KeyboardType = KeyboardType.Text,
     enabled: Boolean = true,
+    isError: Boolean = false,
+    minLines: Int = 1,
+    focusRequester: FocusRequester? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val colors = PitStopTheme.colors
@@ -45,9 +50,9 @@ internal fun FieldBox(
         modifier = modifier
             .clip(shape)
             .background(colors.surface2)
-            .border(1.dp, colors.rule, shape)
+            .border(1.dp, if (isError) colors.tierDue else colors.rule, shape)
             .padding(contentPadding),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = if (minLines > 1) Alignment.Top else Alignment.CenterVertically,
     ) {
         Box(modifier = Modifier.weight(1f)) {
             if (value.isEmpty() && placeholder != null) {
@@ -56,10 +61,13 @@ internal fun FieldBox(
             BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
                 enabled = enabled,
                 textStyle = textStyle.copy(color = colors.ink),
-                singleLine = true,
+                singleLine = minLines == 1,
+                minLines = minLines,
                 cursorBrush = SolidColor(colors.accent),
                 keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             )

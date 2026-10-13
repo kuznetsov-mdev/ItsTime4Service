@@ -1,47 +1,33 @@
 package ru.kuznetsov.pitstop.features.carform
 
+import ru.kuznetsov.pitstop.ui.format.TaskFields
+
 /**
- * State of the car form, which both adds a new car and edits an existing one ([isEditing]).
+ * State of the add-car form.
  * Every field is kept as the text the user typed; numbers and dates are parsed only on save.
- * [isLoading] is `true` while the edited car is being read; [isMissing] means it no longer exists.
- * [isSaved] flips to `true` once the car is stored; either of the last two tells the screen to close.
+ * The brand and the mileage are required, and so are the required fields of every task block.
+ * [showErrors] turns on after a save attempt with a required field left empty: from then on
+ * every such field is outlined in red until it is filled.
+ * [isSaved] flips to `true` once the car is stored and tells the screen to close.
  */
 data class CarFormUiState(
     val brand: String = "",
     val mileageKm: String = "",
     val vin: String = "",
     val tasks: List<TaskBlockState> = emptyList(),
-    val isEditing: Boolean = false,
-    val isLoading: Boolean = false,
-    val isMissing: Boolean = false,
+    val showErrors: Boolean = false,
     val isSaved: Boolean = false,
 ) {
-    val canSave: Boolean get() = brand.isNotBlank() && (mileageKm.toIntOrNull() ?: 0) > 0
+    val isBrandMissing: Boolean get() = brand.isBlank()
+    val isMileageMissing: Boolean get() = (mileageKm.toIntOrNull() ?: 0) <= 0
+    val isValid: Boolean get() = !isBrandMissing && !isMileageMissing && tasks.all { it.fields.isValid }
 }
 
 /**
  * One maintenance task block of the form.
  * [key] identifies the block while others are added and removed around it.
- * [taskId] is the id of the stored task the block edits, `null` for a block added in the form.
  */
 data class TaskBlockState(
     val key: Int,
-    val taskId: String? = null,
-    val name: String = "",
-    val intervalKm: String = "",
-    val intervalMonths: String = "",
-    val lastDoneKm: String = "",
-    val lastDoneDate: String = "",
-    val reminderWindowKm: String = "",
+    val fields: TaskFields = TaskFields(),
 )
-
-/**
- * Ready-made tasks behind the quick-add chips, with the intervals used by the design mockup.
- * The task name is localized, so it is supplied by the screen.
- */
-enum class TaskPreset(val intervalKm: Int, val reminderWindowKm: Int) {
-    OIL(10_000, 1_500),
-    PADS(30_000, 3_000),
-    AIR_FILTER(15_000, 2_000),
-    TIMING_BELT(60_000, 5_000),
-}

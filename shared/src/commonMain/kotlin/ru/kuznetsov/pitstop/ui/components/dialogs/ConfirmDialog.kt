@@ -46,6 +46,7 @@ fun ConfirmDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     icon: ImageVector = PitStopIcons.Trash,
+    destructive: Boolean = true,
 ) {
     Dialog(onDismissRequest = onDismiss) {
         ConfirmDialogCard(
@@ -56,6 +57,7 @@ fun ConfirmDialog(
             onConfirm = onConfirm,
             onDismiss = onDismiss,
             icon = icon,
+            destructive = destructive,
             modifier = modifier,
         )
     }
@@ -71,8 +73,11 @@ private fun ConfirmDialogCard(
     onDismiss: () -> Unit,
     icon: ImageVector,
     modifier: Modifier = Modifier,
+    destructive: Boolean = true,
 ) {
     val colors = PitStopTheme.colors
+    val actionColor = if (destructive) colors.tierDue else colors.accent
+    val onActionColor = if (destructive) colors.onTier else colors.onAccent
     val typography = PitStopTheme.typography
     val shape = RoundedCornerShape(PitStopTheme.dimens.radiusXxl)
     Column(
@@ -87,10 +92,10 @@ private fun ConfirmDialogCard(
             modifier = Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(11.dp))
-                .background(colors.tierDue.copy(alpha = 0.14f)),
+                .background(actionColor.copy(alpha = 0.14f)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(icon, contentDescription = null, tint = colors.tierDue, modifier = Modifier.size(19.dp))
+            Icon(icon, contentDescription = null, tint = actionColor, modifier = Modifier.size(19.dp))
         }
         Spacer(Modifier.height(14.dp))
         Text(title, style = typography.display.copy(fontSize = 17.sp, lineHeight = 21.sp), color = colors.ink)
@@ -99,7 +104,7 @@ private fun ConfirmDialogCard(
         Spacer(Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DialogButton(dismissLabel, background = colors.surface2, contentColor = colors.ink, onClick = onDismiss)
-            DialogButton(confirmLabel, background = colors.tierDue, contentColor = colors.onTier, onClick = onConfirm)
+            DialogButton(confirmLabel, background = actionColor, contentColor = onActionColor, onClick = onConfirm)
         }
     }
 }
