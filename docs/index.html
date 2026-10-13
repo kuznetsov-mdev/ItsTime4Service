@@ -1765,20 +1765,22 @@
     });
 
     /* --- name and VIN: tap turns the text into a field with a check button --- */
-    /* На экране авто редактируется только одно поле. Переход к другому закрывает текущее и сохраняет его;
-       обязательные название и пробег, если их стёрли, возвращаются к прежнему значению. */
-    function commitEditing() {
-      var car = currentDetailCar();
-      var vinInput = root.querySelector('#vinEditInput');
-      if (istate.editingVin && vinInput) car.vin = vinInput.value.trim().toUpperCase() || '—';
-      var brandInput = root.querySelector('#brandEditInput');
-      if (istate.editingBrand && brandInput && brandInput.value.trim()) car.brand = brandInput.value.trim();
-      var mileageInput = root.querySelector('#mileageEditInput');
-      if (istate.editingMileage && mileageInput && parseInt(mileageInput.value, 10) > 0) car.mileageKm = parseInt(mileageInput.value, 10);
+    /* На экране авто редактируется только одно поле, и сохраняет его только галочка.
+       Тап мимо поля — по другому полю, строке работы, кнопке или пустому месту — завершает правку
+       и возвращает полю исходное значение; то, по чему тапнули, срабатывает как обычно. */
+    function cancelEditing() {
       istate.editingVin = false; istate.editingBrand = false; istate.editingMileage = false; istate.brandError = false;
     }
+    var detailView = root.querySelector('.view[data-view="detail"]');
+    if (detailView && (istate.editingVin || istate.editingBrand || istate.editingMileage)) {
+      detailView.addEventListener('click', function (e) {
+        if (e.target.closest('.stat-edit-row')) return;
+        cancelEditing();
+        setTimeout(paintInteractive, 0);
+      }, true);
+    }
     var editBrandBtn = root.querySelector('[data-edit-brand]');
-    if (editBrandBtn) editBrandBtn.addEventListener('click', function () { commitEditing(); istate.editingBrand = true; paintInteractive(); });
+    if (editBrandBtn) editBrandBtn.addEventListener('click', function () { cancelEditing(); istate.editingBrand = true; paintInteractive(); });
     /* у обязательных полей (название, пробег) галочка неактивна, пока поле пустое */
     [['#brandEditInput', '#saveBrandBtn', function (v) { return !!v.trim(); }],
      ['#mileageEditInput', '#saveMileageBtn', function (v) { return parseInt(v, 10) > 0; }]].forEach(function (pair) {
@@ -1796,7 +1798,7 @@
       istate.editingBrand = false; istate.brandError = false; paintInteractive();
     });
     var editVinBtn = root.querySelector('[data-edit-vin]');
-    if (editVinBtn) editVinBtn.addEventListener('click', function () { commitEditing(); istate.editingVin = true; paintInteractive(); });
+    if (editVinBtn) editVinBtn.addEventListener('click', function () { cancelEditing(); istate.editingVin = true; paintInteractive(); });
     var saveVinBtn = root.querySelector('#saveVinBtn');
     if (saveVinBtn) saveVinBtn.addEventListener('click', function () {
       currentDetailCar().vin = root.querySelector('#vinEditInput').value.trim().toUpperCase() || '—';
@@ -1932,7 +1934,7 @@
 
     /* --- quick mileage edit --- */
     var editMileageBtn = root.querySelector('[data-edit-mileage]');
-    if (editMileageBtn) editMileageBtn.addEventListener('click', function () { commitEditing(); istate.editingMileage = true; paintInteractive(); });
+    if (editMileageBtn) editMileageBtn.addEventListener('click', function () { cancelEditing(); istate.editingMileage = true; paintInteractive(); });
     var saveMileageBtn = root.querySelector('#saveMileageBtn');
     if (saveMileageBtn) saveMileageBtn.addEventListener('click', function () {
       var val = parseInt(root.querySelector('#mileageEditInput').value, 10);
