@@ -2,6 +2,7 @@ package ru.kuznetsov.pitstop.features.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,7 @@ import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import pitstop.shared.generated.resources.Res
+import pitstop.shared.generated.resources.reminder_time_dialog_text
 import pitstop.shared.generated.resources.app_name
 import pitstop.shared.generated.resources.notification_caption
 import pitstop.shared.generated.resources.notification_sample_full
@@ -54,6 +56,7 @@ import pitstop.shared.generated.resources.units_mi
 import ru.kuznetsov.pitstop.domain.model.DistanceUnit
 import ru.kuznetsov.pitstop.domain.model.Settings
 import ru.kuznetsov.pitstop.domain.model.ThemeMode
+import ru.kuznetsov.pitstop.ui.components.dialogs.TimePickerDialog
 import ru.kuznetsov.pitstop.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.pitstop.ui.components.ScreenPreview
 import ru.kuznetsov.pitstop.ui.components.screen.ScreenTitle
@@ -80,6 +83,9 @@ fun SettingsScreen(
         onUnitSelect = viewModel::onUnitSelect,
         onPushToggle = viewModel::onPushToggle,
         onReminderWindowChange = viewModel::onReminderWindowChange,
+        onReminderTimeClick = viewModel::onReminderTimeClick,
+        onReminderTimeDismiss = viewModel::onReminderTimeDismiss,
+        onReminderTimeChange = viewModel::onReminderTimeChange,
         modifier = modifier,
     )
 }
@@ -91,9 +97,21 @@ internal fun SettingsContent(
     onUnitSelect: (DistanceUnit) -> Unit,
     onPushToggle: (Boolean) -> Unit,
     onReminderWindowChange: (thousandKm: Int) -> Unit,
+    onReminderTimeClick: () -> Unit,
+    onReminderTimeDismiss: () -> Unit,
+    onReminderTimeChange: (LocalTime) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val settings = state.settings
+    if (settings != null && state.isPickingReminderTime) {
+        TimePickerDialog(
+            title = stringResource(Res.string.settings_reminder_time),
+            text = stringResource(Res.string.reminder_time_dialog_text),
+            time = settings.reminderTime,
+            onConfirm = onReminderTimeChange,
+            onDismiss = onReminderTimeDismiss,
+        )
+    }
     Column(modifier.fillMaxSize()) {
         ScreenTitle(title = stringResource(Res.string.screen_settings), modifier = Modifier.padding(top = 12.dp))
         if (settings == null) return@Column
@@ -157,6 +175,7 @@ internal fun SettingsContent(
                         icon = PitStopIcons.Gear,
                         title = stringResource(Res.string.settings_reminder_time),
                         subtitle = stringResource(Res.string.settings_reminder_time_subtitle),
+                        onClick = onReminderTimeClick,
                     ) {
                         Text(
                             settings.reminderTime.toDisplayText(),
@@ -192,6 +211,7 @@ private fun SettingRow(
     icon: ImageVector,
     title: String,
     subtitle: String,
+    onClick: (() -> Unit)? = null,
     trailing: @Composable () -> Unit,
 ) {
     val colors = PitStopTheme.colors
@@ -203,6 +223,7 @@ private fun SettingRow(
             .clip(shape)
             .background(colors.surface)
             .border(1.dp, colors.rule, shape)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 14.dp, vertical = 13.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -247,6 +268,9 @@ private fun SettingsPreviewContent() {
         onUnitSelect = {},
         onPushToggle = {},
         onReminderWindowChange = {},
+        onReminderTimeClick = {},
+        onReminderTimeDismiss = {},
+        onReminderTimeChange = {},
     )
 }
 

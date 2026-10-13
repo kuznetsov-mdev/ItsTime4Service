@@ -30,7 +30,7 @@ import ru.kuznetsov.pitstop.ui.components.ComponentPreview
 import ru.kuznetsov.pitstop.ui.icons.PitStopIcons
 import ru.kuznetsov.pitstop.ui.theme.PitStopTheme
 
-/** Numeric +/− stepper — default reminder window (thousand km) in settings. */
+/** Numeric +/− stepper — default reminder window (thousand km) in settings, hours and minutes in the time picker. */
 @Composable
 fun Stepper(
     value: Int,
@@ -39,6 +39,7 @@ fun Stepper(
     min: Int = Int.MIN_VALUE,
     max: Int = Int.MAX_VALUE,
     step: Int = 1,
+    valueText: (Int) -> String = Int::toString,
 ) {
     val colors = PitStopTheme.colors
     Row(
@@ -53,7 +54,7 @@ fun Stepper(
             onClick = { onValueChange((value - step).coerceAtLeast(min)) },
         )
         Text(
-            value.toString(),
+            valueText(value),
             style = PitStopTheme.typography.mono.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold),
             color = colors.ink,
             textAlign = TextAlign.Center,

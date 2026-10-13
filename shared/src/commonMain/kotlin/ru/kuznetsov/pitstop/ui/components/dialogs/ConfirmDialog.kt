@@ -105,7 +105,7 @@ private fun ConfirmDialogCard(
 }
 
 @Composable
-private fun RowScope.DialogButton(
+internal fun RowScope.DialogButton(
     label: String,
     background: Color,
     contentColor: Color,
