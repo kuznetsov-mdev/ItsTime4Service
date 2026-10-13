@@ -234,6 +234,11 @@
   .dialog-actions { display: flex; gap: 8px; margin-top: 18px; }
   .dialog-btn { flex: 1; border: none; border-radius: 12px; padding: 13px 10px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; text-align: center; background: var(--surface-2); color: var(--ink); }
   .dialog-btn.danger { background: var(--tier-due); color: var(--on-tier); }
+  .dialog-btn.primary { background: var(--accent); color: var(--on-accent); }
+  .dialog-icon.accent { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+  .time-rows { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+  .time-row { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; }
+  .setting-row.tappable { cursor: pointer; }
 
   /* ---------- Add car form ---------- */
   .field-label { font-size: 11.5px; font-weight: 700; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; padding: 0 18px; margin-bottom: 8px; display: block; }
@@ -413,7 +418,7 @@
   <!-- ================= LIGHT EXHIBIT ================= -->
   <div class="section-block panel locked-light">
     <div class="section-head"><span class="theme-dot light"></span><h2>Экраны · светлая тема</h2></div>
-    <p class="section-sub">Статичный набор — пять ключевых экранов приложения, окно подтверждения удаления авто и форма редактирования авто.</p>
+    <p class="section-sub">Статичный набор — пять ключевых экранов приложения, окно подтверждения удаления авто, форма редактирования авто и выбор времени напоминаний.</p>
     <div class="gallery" id="galleryLight"></div>
   </div>
 
@@ -960,6 +965,28 @@
       '</div></div>';
   }
 
+  /* ---------------- dialog: reminder time ---------------- */
+  function pad2(n) { return ('0' + n).slice(-2); }
+  function timeDialogHtml(draft, opts) {
+    var cancelAttr = opts.interactive ? ' data-cancel-time' : '';
+    var saveAttr = opts.interactive ? ' data-save-time' : '';
+    function stepper(part, value) {
+      var dec = opts.interactive ? ' data-time-step="' + part + ':-1"' : '';
+      var inc = opts.interactive ? ' data-time-step="' + part + ':1"' : '';
+      return '<div class="stepper"><button' + dec + '>' + icon('minus', 12) + '</button><span class="val">' + pad2(value) + '</span><button' + inc + '>' + icon('plus', 12) + '</button></div>';
+    }
+    return '<div class="dialog-scrim"' + cancelAttr + '><div class="dialog" role="dialog" aria-modal="true">' +
+      '<div class="dialog-icon accent">' + icon('clock', 19) + '</div>' +
+      '<div class="dialog-title">Время напоминаний</div>' +
+      '<div class="dialog-text">В это время приходят уведомления о скорых и просроченных работах.</div>' +
+      '<div class="time-rows">' +
+      '<div class="time-row"><span>Часы</span>' + stepper('h', draft.h) + '</div>' +
+      '<div class="time-row"><span>Минуты</span>' + stepper('m', draft.m) + '</div>' +
+      '</div>' +
+      '<div class="dialog-actions"><button class="dialog-btn"' + cancelAttr + '>Отмена</button><button class="dialog-btn primary"' + saveAttr + '>Сохранить</button></div>' +
+      '</div></div>';
+  }
+
   /* ---------------- screen: car detail ---------------- */
   function detailScreenHtml(car, opts) {
     opts = opts || {};
@@ -1162,11 +1189,12 @@
       '<div class="setting-row"><button class="icon-btn">' + icon('gauge', 16) + '</button>' +
       '<div class="setting-text"><div class="t1">Напоминать заранее</div><div class="t2">тыс. км до срока по умолчанию</div></div>' +
       '<div class="stepper"><button' + decAttr + '>' + icon('minus', 12) + '</button><span class="val">' + state.reminderDefault + '</span><button' + incAttr + '>' + icon('plus', 12) + '</button></div></div>' +
-      '<div class="setting-row"><button class="icon-btn">' + icon('gear', 16) + '</button>' +
+      '<div class="setting-row tappable"' + (opts.interactive ? ' data-open-time' : '') + '><button class="icon-btn">' + icon('gear', 16) + '</button>' +
       '<div class="setting-text"><div class="t1">Время напоминаний</div><div class="t2">Ежедневная проверка пробега</div></div>' +
       '<span style="font-family:var(--mono);font-size:12px;color:var(--ink-muted)">' + state.reminderTime + '</span></div>' +
       '</div>' +
       '</div>' + tabbar +
+      (state.timeDraft ? timeDialogHtml(state.timeDraft, opts) : '') +
       '</div>';
   }
 
@@ -1186,7 +1214,10 @@
       phoneWrap('05', 'Настройки', settingsScreenHtml(settingsState, { interactive: false })) +
       phoneWrap('06', 'Удаление авто', detailScreenHtml(cars[0], { interactive: false, confirmDelete: true })) +
       phoneWrap('07', 'Редактирование авто', newScreenHtml({ interactive: false, edit: cars[0] },
-        cars[0].tasks.map(function (t, i) { return taskToBlock(t, i + 1, true); })));
+        cars[0].tasks.map(function (t, i) { return taskToBlock(t, i + 1, true); }))) +
+      phoneWrap('08', 'Время напоминаний', settingsScreenHtml(
+        { themeIdx: settingsState.themeIdx, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00', timeDraft: { h: 9, m: 0 } },
+        { interactive: false }));
   }
   renderStaticGallery('galleryLight');
   renderStaticGallery('galleryDark');
@@ -1374,6 +1405,33 @@
         paintInteractive();
       });
     });
+    /* --- reminder time dialog --- */
+    var openTime = root.querySelector('[data-open-time]');
+    if (openTime) openTime.addEventListener('click', function () {
+      var parts = istate.settings.reminderTime.split(':');
+      istate.settings.timeDraft = { h: +parts[0], m: +parts[1] };
+      paintInteractive();
+    });
+    root.querySelectorAll('[data-time-step]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var spec = b.getAttribute('data-time-step').split(':'), d = +spec[1], draft = istate.settings.timeDraft;
+        if (spec[0] === 'h') draft.h = (draft.h + d + 24) % 24; else draft.m = (draft.m + d * 5 + 60) % 60;
+        paintInteractive();
+      });
+    });
+    root.querySelectorAll('[data-cancel-time]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        if (e.target !== el) return;
+        istate.settings.timeDraft = null; paintInteractive();
+      });
+    });
+    var saveTime = root.querySelector('[data-save-time]');
+    if (saveTime) saveTime.addEventListener('click', function () {
+      var draft = istate.settings.timeDraft;
+      istate.settings.reminderTime = pad2(draft.h) + ':' + pad2(draft.m);
+      istate.settings.timeDraft = null; paintInteractive();
+    });
+
     var pushSwitch = root.querySelector('#pushSwitch');
     if (pushSwitch) pushSwitch.addEventListener('click', function () { istate.settings.pushOn = !istate.settings.pushOn; paintInteractive(); });
     root.querySelectorAll('[data-step]').forEach(function (b) {
