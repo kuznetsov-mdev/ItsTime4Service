@@ -230,6 +230,17 @@
   .history-list { flex: 1; overflow-y: auto; padding: 8px 18px 18px; }
   .history-row { padding: 12px 0; border-bottom: 1px solid var(--rule); }
   .history-row:last-child { border-bottom: none; }
+  .history-row[data-open-entry] { cursor: pointer; }
+  .history-year { display: flex; align-items: center; gap: 12px; margin: 14px -18px 10px; font-family: var(--display); font-weight: 800; font-size: 14px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .history-year:first-child { margin-top: 4px; }
+  .history-year::before, .history-year::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
+  .history-month { border: 1px solid var(--rule); border-radius: 12px; padding: 0 12px 2px; margin: 0 0 12px; min-width: 0; }
+  .history-month legend { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); padding: 0 6px; margin-left: 2px; }
+  .entry-rows { display: flex; flex-direction: column; margin-top: 14px; border-top: 1px solid var(--rule); }
+  .entry-row { display: flex; justify-content: space-between; gap: 14px; padding: 9px 0; border-bottom: 1px solid var(--rule); font-size: 12.5px; }
+  .entry-row .k { color: var(--ink-faint); flex-shrink: 0; }
+  .entry-row .v { color: var(--ink); text-align: right; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+  .entry-row .v.mono { font-family: var(--mono); font-weight: 500; }
   .history-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
   .history-name { font-size: 13.5px; font-weight: 700; }
   .history-date { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); flex-shrink: 0; white-space: nowrap; }
@@ -438,7 +449,7 @@
   <!-- ================= LIGHT EXHIBIT ================= -->
   <div class="section-block panel locked-light">
     <div class="section-head"><span class="theme-dot light"></span><h2>Экраны · светлая тема</h2></div>
-    <p class="section-sub">Статичный набор — пять ключевых экранов приложения, окно подтверждения удаления авто, экраны редактирования и добавления работы, правка названия и VIN, выбор времени напоминаний, подсветка незаполненных полей, окно деталей выполненной работы и снятие отметки.</p>
+    <p class="section-sub">Статичный набор — пять ключевых экранов приложения, окно подтверждения удаления авто, экраны редактирования и добавления работы, правка названия и VIN, выбор времени напоминаний, подсветка незаполненных полей, окно деталей выполненной работы, снятие отметки и запись истории ТО.</p>
     <div class="gallery" id="galleryLight"></div>
   </div>
 
@@ -1112,22 +1123,61 @@
   }
 
   /* ---------------- screen: history ---------------- */
+  var MONTH_NAMES = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+
+  /* ---------------- dialog: one service history record ---------------- */
+  function historyEntryDialogHtml(entry, opts) {
+    var closeAttr = opts.interactive ? ' data-close-entry' : '';
+    function row(label, value, mono) {
+      return '<div class="entry-row"><span class="k">' + label + '</span><span class="v' + (mono ? ' mono' : '') + '">' + (value || '—') + '</span></div>';
+    }
+    return '<div class="dialog-scrim"' + closeAttr + '><div class="dialog" role="dialog" aria-modal="true">' +
+      '<div class="dialog-icon accent">' + icon('wrench', 19) + '</div>' +
+      '<div class="dialog-title">' + entry.taskName + '</div>' +
+      '<div class="dialog-text">' + formatDateRu(entry.date) + '</div>' +
+      '<div class="entry-rows">' +
+      row('Что менялось', entry.taskName) +
+      row('Пробег', fmtKm(entry.mileageKm), true) +
+      row('Стоимость', entry.costRub ? entry.costRub.toLocaleString('ru-RU') + ' ₽' : '', true) +
+      row('Где обслуживались', entry.service) +
+      row('Комментарий', entry.comment) +
+      '</div>' +
+      '<div class="dialog-actions"><button class="dialog-btn"' + closeAttr + '>Закрыть</button></div>' +
+      '</div></div>';
+  }
+
+  /* История разбита по годам (разделитель с годом по центру) и месяцам (рамка с подписью месяца), от новых к старым. */
   function historyScreenHtml(car, opts) {
     opts = opts || {};
     var entries = (car.history || []).slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; });
-    var rows = entries.length ? entries.map(function (e) {
-      return '<div class="history-row"><div class="history-top"><span class="history-name">' + e.taskName + '</span><span class="history-date">' + formatDateRu(e.date) + '</span></div>' +
+    function rowHtml(e) {
+      return '<div class="history-row"' + (opts.interactive ? ' data-open-entry="' + e.id + '"' : '') + '><div class="history-top"><span class="history-name">' + e.taskName + '</span><span class="history-date">' + formatDateRu(e.date) + '</span></div>' +
         '<div class="history-meta"><span>' + fmtKm(e.mileageKm) + '</span>' +
         (e.costRub ? '<span>' + e.costRub.toLocaleString('ru-RU') + ' ₽</span>' : '') +
         (e.service ? '<span>' + e.service + '</span>' : '') + '</div>' +
         (e.comment ? '<div class="history-comment">' + e.comment + '</div>' : '') + '</div>';
-    }).join('') : '<div class="history-empty">Пока нет записей — отметьте работу выполненной на экране авто, и она появится здесь</div>';
+    }
+    var html = '', lastYear = null, lastMonth = null;
+    entries.forEach(function (e) {
+      var year = e.date.slice(0, 4), month = e.date.slice(0, 7);
+      if (month !== lastMonth) {
+        if (lastMonth !== null) html += '</fieldset>';
+        if (year !== lastYear) html += '<div class="history-year">' + year + '</div>';
+        html += '<fieldset class="history-month"><legend>' + MONTH_NAMES[+e.date.slice(5, 7) - 1] + '</legend>';
+        lastYear = year; lastMonth = month;
+      }
+      html += rowHtml(e);
+    });
+    if (lastMonth !== null) html += '</fieldset>';
+    var rows = entries.length ? html : '<div class="history-empty">Пока нет записей — отметьте работу выполненной на экране авто, и она появится здесь</div>';
     var backAttr = opts.interactive ? ' data-back="detail"' : '';
+    var openEntry = opts.entryId ? entries.find(function (e) { return e.id === opts.entryId; }) : null;
     return '<div class="view" data-view="history">' +
       '<div class="s-topbar"><button class="icon-btn"' + backAttr + '>' + icon('chevronLeft', 16) + '</button><span></span></div>' +
       '<div class="detail-title">История ТО</div>' +
       '<div class="detail-vin">' + car.brand + '</div>' +
       '<div class="history-list">' + rows + '</div>' +
+      (openEntry ? historyEntryDialogHtml(openEntry, opts) : '') +
       '</div>';
   }
 
@@ -1371,7 +1421,8 @@
       phoneWrap('10', 'Работа выполнена', detailScreenHtml(cars[0], { interactive: false, doneTaskId: 't3' })) +
       phoneWrap('11', 'Снятие отметки', detailScreenHtml(markedCar, { interactive: false, unmarkTaskId: 't3' })) +
       phoneWrap('12', 'Новая работа', taskScreenHtml(cars[0], emptyTaskForm(), { interactive: false })) +
-      phoneWrap('13', 'Название и VIN', detailScreenHtml(cars[0], { interactive: false, editingBrand: true }));
+      phoneWrap('13', 'Название и VIN', detailScreenHtml(cars[0], { interactive: false, editingBrand: true })) +
+      phoneWrap('14', 'Запись истории', historyScreenHtml(cars[0], { interactive: false, entryId: 'h4' }));
   }
   renderStaticGallery('galleryLight');
   renderStaticGallery('galleryDark');
@@ -1382,7 +1433,7 @@
     screen: 'cars', detailId: null, editingMileage: false, confirmDelete: false,
     taskBlocks: [], nextBlockN: 1, form: { brand: '', mileage: '', vin: '' }, formErrors: false,
     doneTaskId: null, unmarkTaskId: null, editingBrand: false, editingVin: false, brandError: false,
-    taskForm: null, taskFormErrors: false, confirmDeleteTask: false,
+    taskForm: null, taskFormErrors: false, confirmDeleteTask: false, historyEntryId: null,
     settings: { themeIdx: 0, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00' }
   };
   function carById(id) { return cars.find(function (c) { return c.id === id; }); }
@@ -1395,7 +1446,7 @@
     root.innerHTML =
       carsScreenHtml(cars, { interactive: true }) +
       (detailCar ? detailScreenHtml(detailCar, { interactive: true, editingMileage: istate.editingMileage, confirmDelete: istate.confirmDelete, doneTaskId: istate.doneTaskId, unmarkTaskId: istate.unmarkTaskId, editingBrand: istate.editingBrand, editingVin: istate.editingVin }) : '') +
-      (detailCar ? historyScreenHtml(detailCar, { interactive: true }) : '') +
+      (detailCar ? historyScreenHtml(detailCar, { interactive: true, entryId: istate.historyEntryId }) : '') +
       (detailCar && istate.taskForm ? taskScreenHtml(detailCar, istate.taskForm, { interactive: true, showErrors: istate.taskFormErrors, confirmDeleteTask: istate.confirmDeleteTask }) : '') +
       newScreenHtml({ interactive: true, form: istate.form, showErrors: istate.formErrors }, istate.taskBlocks) +
       settingsScreenHtml(istate.settings, { interactive: true });
@@ -1431,7 +1482,16 @@
       b.addEventListener('click', function () { istate.screen = b.getAttribute('data-tab'); paintInteractive(); });
     });
     var openHistoryBtn = root.querySelector('[data-open-history]');
-    if (openHistoryBtn) openHistoryBtn.addEventListener('click', function () { istate.screen = 'history'; paintInteractive(); });
+    if (openHistoryBtn) openHistoryBtn.addEventListener('click', function () { istate.historyEntryId = null; istate.screen = 'history'; paintInteractive(); });
+    root.querySelectorAll('[data-open-entry]').forEach(function (row) {
+      row.addEventListener('click', function () { istate.historyEntryId = row.getAttribute('data-open-entry'); paintInteractive(); });
+    });
+    root.querySelectorAll('[data-close-entry]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        if (e.target !== el) return;
+        istate.historyEntryId = null; paintInteractive();
+      });
+    });
 
     /* --- name and VIN: tap turns the text into a field with a check button --- */
     /* На экране авто редактируется только одно поле. Переход к другому закрывает текущее и сохраняет его;
