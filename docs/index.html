@@ -174,6 +174,7 @@
     display: flex; align-items: center; justify-content: center; color: var(--on-accent); cursor: pointer; z-index: 20;
   }
   .interactive .fab { bottom: 82px; }
+  .fab.no-tabbar, .interactive .fab.no-tabbar { bottom: 22px; }
   .fab svg.i { width: 21px; height: 21px; stroke-width: 2.2; }
 
   .tabbar { display: flex; border-top: 1px solid var(--rule); background: var(--surface); flex-shrink: 0; }
@@ -183,6 +184,12 @@
   /* ---------- Car detail ---------- */
   .detail-title { font-family: var(--display); font-weight: 800; font-size: 19px; padding: 7px 18px 0; flex-shrink: 0; }
   .detail-vin { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); padding: 3px 18px 0; flex-shrink: 0; }
+  button.detail-title, button.detail-vin { display: block; background: none; border: none; text-align: left; cursor: pointer; color: inherit; }
+  button.detail-vin { color: var(--ink-faint); }
+  .detail-title .tap, .detail-vin .tap { border-bottom: 1px dashed var(--ink-faint); padding-bottom: 1px; }
+  .title-edit { padding: 6px 18px 0; margin-top: 0; flex-shrink: 0; }
+  .title-edit input.error { border-color: var(--tier-due); }
+  .title-edit.brand input { font-family: var(--display); font-weight: 800; font-size: 15px; }
   .stat-pair { display: flex; gap: 10px; padding: 16px 18px 6px; flex-shrink: 0; }
   .stat-block { flex: 1; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 14px; min-width: 0; }
   .stat-block .stat-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); }
@@ -201,6 +208,10 @@
 
   .task-list { flex: 1; overflow-y: auto; padding: 6px 18px 18px; }
   .task-row { padding: 12px 0; border-bottom: 1px solid var(--rule); }
+  .task-row[data-open-task] { cursor: pointer; }
+  .task-list.with-fab { padding-bottom: 84px; }
+  .task-form-sub { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); padding: 0 18px 4px; flex-shrink: 0; }
+  .task-form .preset-chips { padding: 0 18px; margin-bottom: 14px; }
   .task-row:last-child { border-bottom: none; }
   .task-top { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
   .task-icon { width: 32px; height: 32px; border-radius: 10px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; color: var(--ink-muted); flex-shrink: 0; }
@@ -416,7 +427,7 @@
       <div class="section-head"><span class="theme-dot" style="background:var(--accent);box-shadow:0 0 0 3px rgba(14,165,183,0.18)"></span><h2>Интерактивный макет</h2></div>
       <button class="theme-btn" id="themeBtn" aria-label="Переключить тему"></button>
     </div>
-    <p class="section-sub">Открывай авто, отмечай работы выполненными (с деталями и возможностью снять отметку), правь пробег тапом по значению, смотри историю ТО, добавляй новое авто с готовыми пресетами работ, редактируй авто и его работы карандашом в топ-баре и удаляй авто корзиной в топ-баре (с подтверждением) — тема переключается кнопкой справа.</p>
+    <p class="section-sub">Открывай авто, отмечай работы выполненными (с деталями и возможностью снять отметку), правь пробег тапом по значению, смотри историю ТО, добавляй новое авто с готовыми пресетами работ, открывай работу тапом по строке, добавляй работу кнопкой «+», меняй название и VIN тапом по ним и удаляй авто корзиной в топ-баре (с подтверждением) — тема переключается кнопкой справа.</p>
     <div class="stage">
       <div class="route-pill" id="routeLabel">Мои авто</div>
       <div class="phone lg interactive"><div class="notch"></div><div class="screen" id="interactiveScreen"></div></div>
@@ -427,7 +438,7 @@
   <!-- ================= LIGHT EXHIBIT ================= -->
   <div class="section-block panel locked-light">
     <div class="section-head"><span class="theme-dot light"></span><h2>Экраны · светлая тема</h2></div>
-    <p class="section-sub">Статичный набор — пять ключевых экранов приложения, окно подтверждения удаления авто, форма редактирования авто, выбор времени напоминаний, подсветка незаполненных полей, окно деталей выполненной работы и снятие отметки.</p>
+    <p class="section-sub">Статичный набор — пять ключевых экранов приложения, окно подтверждения удаления авто, экраны редактирования и добавления работы, правка названия и VIN, выбор времени напоминаний, подсветка незаполненных полей, окно деталей выполненной работы и снятие отметки.</p>
     <div class="gallery" id="galleryLight"></div>
   </div>
 
@@ -1049,7 +1060,7 @@
       var doneBtn = marked
         ? '<button class="mark-done-btn done"' + doneAttr + '>' + icon('check', 12) + ' Выполнено</button>'
         : '<button class="mark-done-btn"' + doneAttr + '>' + icon('check', 12) + ' Отметить выполненной</button>';
-      return '<div class="task-row">' +
+      return '<div class="task-row"' + (opts.interactive ? ' data-open-task="' + t.id + '"' : '') + '>' +
         '<div class="task-top"><div class="task-icon">' + icon(t.icon, 16) + '</div>' +
         '<div class="task-main"><div class="task-name">' + t.name + '</div><div class="task-meta">' + taskMetaText(st) + ' · каждые ' + fmtKm(t.intervalKm) + '</div></div>' +
         '<span class="task-status-chip" style="background:' + color + ';color:var(--on-tier)">' + tierLabel(st.status) + '</span></div>' +
@@ -1060,7 +1071,20 @@
     var backAttr = opts.interactive ? ' data-back="cars"' : '';
     var histAttr = opts.interactive ? ' data-open-history' : '';
     var deleteAttr = opts.interactive ? ' data-delete-car' : '';
-    var editCarAttr = opts.interactive ? ' data-edit-car' : '';
+    var idAttr = function (id) { return opts.interactive ? ' id="' + id + '"' : ' readonly'; };
+    var hasVin = car.vin && car.vin !== '—';
+    var titleBlock = opts.editingBrand
+      ? '<div class="stat-edit-row title-edit brand"><input' + idAttr('brandEditInput') + ' value="' + car.brand + '"><button' + (opts.interactive ? ' id="saveBrandBtn"' : '') + '>' + icon('check', 14) + '</button></div>'
+      : (opts.interactive
+        ? '<button class="detail-title" data-edit-brand aria-label="Изменить название"><span class="tap">' + car.brand + '</span></button>'
+        : '<div class="detail-title"><span class="tap">' + car.brand + '</span></div>');
+    var vinText = 'VIN <span class="tap">' + (hasVin ? car.vin : 'добавить') + '</span>';
+    var vinBlock = opts.editingVin
+      ? '<div class="stat-edit-row title-edit"><input' + idAttr('vinEditInput') + ' maxlength="17" placeholder="17 символов" value="' + (hasVin ? car.vin : '') + '"><button' + (opts.interactive ? ' id="saveVinBtn"' : '') + '>' + icon('check', 14) + '</button></div>'
+      : (opts.interactive
+        ? '<button class="detail-vin" data-edit-vin aria-label="Изменить VIN">' + vinText + '</button>'
+        : '<div class="detail-vin">' + vinText + '</div>');
+    var addTaskFab = '<button class="fab no-tabbar"' + (opts.interactive ? ' data-add-task' : '') + ' aria-label="Добавить работу">' + icon('plus', 21) + '</button>';
     var mileageBlock;
     if (opts.interactive && opts.editingMileage) {
       mileageBlock = '<div class="stat-edit-row"><input type="number" id="mileageEditInput" value="' + car.mileageKm + '">' +
@@ -1074,14 +1098,13 @@
     }
     return '<div class="view" data-view="detail">' +
       '<div class="s-topbar"><button class="icon-btn"' + backAttr + '>' + icon('chevronLeft', 16) + '</button>' +
-      '<div class="icon-row"><button class="icon-btn"' + histAttr + '>' + icon('clock', 16) + '</button><button class="icon-btn"' + editCarAttr + '>' + icon('pencil', 16) + '</button><button class="icon-btn"' + deleteAttr + '>' + icon('trash', 16) + '</button></div></div>' +
-      '<div class="detail-title">' + car.brand + '</div>' +
-      '<div class="detail-vin">VIN ' + car.vin + '</div>' +
+      '<div class="icon-row"><button class="icon-btn"' + histAttr + '>' + icon('clock', 16) + '</button><button class="icon-btn"' + deleteAttr + '>' + icon('trash', 16) + '</button></div></div>' +
+      titleBlock + vinBlock +
       '<div class="stat-pair">' +
       '<div class="stat-block"><div class="stat-label">Пробег</div>' + mileageBlock + '</div>' +
       '<div class="stat-block"><div class="stat-label">Скоро / просрочено</div><div class="stat-num" style="color:' + tierVar(worstStatus(a)) + '"><span>' + a.total + ' из ' + a.count + '</span></div></div>' +
       '</div>' +
-      '<div class="task-list">' + rows + '</div>' +
+      '<div class="task-list with-fab">' + rows + '</div>' + addTaskFab +
       (opts.confirmDelete ? deleteDialogHtml(car, opts) : '') +
       (opts.doneTaskId ? taskDoneDialogHtml(car.tasks.find(function (t) { return t.id === opts.doneTaskId; }), opts) : '') +
       (opts.unmarkTaskId ? unmarkDialogHtml(opts) : '') +
@@ -1109,13 +1132,14 @@
   }
 
   /* ---------------- screen: add car ---------------- */
-  function presetChipsHtml(opts) {
+  function presetChipsHtml(opts, attrName) {
+    attrName = attrName || 'data-preset';
     var presets = [
       { key: 'oil', label: 'Масло' }, { key: 'pads', label: 'Колодки' },
       { key: 'filter', label: 'Воздушный фильтр' }, { key: 'belt', label: 'Ремень ГРМ' }
     ];
     return '<div class="preset-chips">' + presets.map(function (p) {
-      var attr = opts.interactive ? ' data-preset="' + p.key + '"' : '';
+      var attr = opts.interactive ? ' ' + attrName + '="' + p.key + '"' : '';
       return '<button class="preset-chip"' + attr + '>+ ' + p.label + '</button>';
     }).join('') + '</div>';
   }
@@ -1179,33 +1203,31 @@
     };
   }
 
-  /* opts.edit — машина, которую правят: та же форма, но заполненная, с другим заголовком и кнопкой. */
   function newScreenHtml(opts, blocks) {
     opts = opts || {};
-    var editCar = opts.edit || null;
     blocks = blocks || [];
     var form = opts.form || {};
     var brandError = opts.showErrors && !String(form.brand || '').trim() ? ' error' : '';
     var mileageError = opts.showErrors && !(parseInt(form.mileage, 10) > 0) ? ' error' : '';
-    var backAttr = opts.interactive ? ' data-back="' + (editCar ? 'detail' : 'cars') + '"' : '';
+    var backAttr = opts.interactive ? ' data-back="cars"' : '';
     var countLabel = blocks.length + (blocks.length === 1 ? ' добавлена' : ' добавлено');
     var blocksHtml = blocks.map(function (b) { return taskBlockHtml(b, opts); }).join('');
     var idWrap = opts.interactive ? ' id="taskBlocks"' : '';
     var addBtn = opts.interactive
       ? '<button class="add-task-btn" id="addTaskBtn">' + icon('plus', 14) + ' Добавить произвольную работу</button>'
       : '<div class="add-task-btn">' + icon('plus', 14) + ' Добавить произвольную работу</div>';
-    var staticBrand = opts.staticErrors ? 'Например, Kia Rio' : (editCar ? editCar.brand : 'Kia Rio');
-    var staticMileage = opts.staticErrors ? '84300' : (editCar ? editCar.mileageKm.toLocaleString('ru-RU') : '84 300');
-    var staticVin = opts.staticErrors ? '17 символов' : (editCar ? editCar.vin : 'XWEPC811BB0012345');
+    var staticBrand = opts.staticErrors ? 'Например, Kia Rio' : 'Kia Rio';
+    var staticMileage = opts.staticErrors ? '84300' : '84 300';
+    var staticVin = opts.staticErrors ? '17 символов' : 'XWEPC811BB0012345';
     var staticError = opts.staticErrors ? ' error' : '';
     var brandField = opts.interactive ? '<input class="text-input' + brandError + '" id="newBrand" placeholder="Например, Kia Rio" value="' + (form.brand || '') + '">' : '<div class="text-input static' + staticError + '">' + staticBrand + '</div>';
     var mileageField = opts.interactive ? '<input class="num-input' + mileageError + '" id="newMileage" type="number" placeholder="84300" value="' + (form.mileage || '') + '">' : '<div class="num-input static' + staticError + '">' + staticMileage + '</div>';
     var vinField = opts.interactive ? '<input class="text-input" id="newVin" placeholder="17 символов" value="' + (form.vin || '') + '">' : '<div class="text-input static">' + staticVin + '</div>';
-    var saveText = editCar ? 'Сохранить' : 'Сохранить авто';
+    var saveText = 'Сохранить авто';
     var saveBtn = opts.interactive ? '<button class="save-btn" id="saveCarBtn">' + saveText + '</button>' : '<div class="save-btn">' + saveText + '</div>';
-    return '<div class="view" data-view="' + (editCar ? 'edit' : 'new') + '">' +
+    return '<div class="view" data-view="new">' +
       '<div class="s-topbar"><button class="icon-btn"' + backAttr + '>' + icon('chevronLeft', 16) + '</button></div>' +
-      '<div class="s-title">' + (editCar ? 'Редактирование авто' : 'Добавление авто') + '</div>' +
+      '<div class="s-title">Добавление авто</div>' +
       '<div class="form-body">' +
       '<span class="field-label">Марка<span class="req"> *</span></span>' + brandField +
       '<div class="row-2">' +
@@ -1218,6 +1240,57 @@
       '<div' + idWrap + '>' + blocksHtml + '</div>' +
       addBtn +
       '</div>' + saveBtn +
+      '</div>';
+  }
+
+  /* ---------------- screen: one maintenance task (add & edit) ---------------- */
+  function emptyTaskForm() { return { taskId: null, name: '', intervalKm: '', intervalMonths: '', lastKm: '', lastDate: '', reminderKm: '' }; }
+  function taskDeleteDialogHtml(form, opts) {
+    var cancelAttr = opts.interactive ? ' data-cancel-delete-task' : '';
+    var confirmAttr = opts.interactive ? ' data-confirm-delete-task' : '';
+    return '<div class="dialog-scrim"' + cancelAttr + '><div class="dialog" role="alertdialog" aria-modal="true">' +
+      '<div class="dialog-icon">' + icon('trash', 19) + '</div>' +
+      '<div class="dialog-title">Удалить работу?</div>' +
+      '<div class="dialog-text">«' + form.name + '» пропадёт из списка работ. Записи о ней в истории ТО останутся.</div>' +
+      '<div class="dialog-actions"><button class="dialog-btn"' + cancelAttr + '>Отмена</button><button class="dialog-btn danger"' + confirmAttr + '>Удалить</button></div>' +
+      '</div></div>';
+  }
+  function taskScreenHtml(car, form, opts) {
+    opts = opts || {};
+    var editing = !!form.taskId;
+    function field(kind, id, placeholder, value, error) {
+      var cls = kind + '-input' + (error ? ' error' : '');
+      if (!opts.interactive) {
+        var shown = (value === undefined || value === null || value === '') ? placeholder : value;
+        return '<div class="' + cls + ' static">' + shown + '</div>';
+      }
+      return '<input class="' + cls + '" id="' + id + '"' + (kind === 'num' ? ' type="number"' : '') + ' placeholder="' + placeholder + '" value="' + (value === undefined || value === null ? '' : value) + '">';
+    }
+    var nameError = opts.showErrors && blockNameMissing(form);
+    var intervalError = opts.showErrors && blockIntervalMissing(form);
+    var backAttr = opts.interactive ? ' data-back="detail"' : '';
+    var deleteBtn = editing ? '<div class="icon-row"><button class="icon-btn"' + (opts.interactive ? ' data-delete-task' : '') + '>' + icon('trash', 16) + '</button></div>' : '<span></span>';
+    var saveBtn = opts.interactive ? '<button class="save-btn" id="saveTaskBtn">Сохранить</button>' : '<div class="save-btn">Сохранить</div>';
+    return '<div class="view task-form" data-view="task">' +
+      '<div class="s-topbar"><button class="icon-btn"' + backAttr + '>' + icon('chevronLeft', 16) + '</button>' + deleteBtn + '</div>' +
+      '<div class="s-title">' + (editing ? 'Редактирование работы' : 'Новая работа') + '</div>' +
+      '<div class="task-form-sub">' + car.brand + '</div>' +
+      '<div class="form-body">' +
+      (editing ? '' : presetChipsHtml(opts, 'data-task-preset')) +
+      '<span class="field-label">Название<span class="req"> *</span></span>' +
+      field('text', 'taskName', 'Например, Замена масла и фильтра', form.name, nameError) +
+      '<div class="row-2">' +
+      '<div><span class="field-label" style="padding:0 0 8px">Интервал, км<span class="req"> *</span></span>' + field('num', 'taskInterval', '10000', form.intervalKm, intervalError) + '</div>' +
+      '<div><span class="field-label" style="padding:0 0 8px">Интервал, мес</span>' + field('num', 'taskMonths', '12', form.intervalMonths) + '</div>' +
+      '</div>' +
+      '<div class="row-2">' +
+      '<div><span class="field-label" style="padding:0 0 8px">Последний раз, км</span>' + field('num', 'taskLastKm', 'не проводилась', form.lastKm) + '</div>' +
+      '<div><span class="field-label" style="padding:0 0 8px">Дата замены</span>' + field('text', 'taskLastDate', 'дд.мм.гггг', form.lastDate) + '</div>' +
+      '</div>' +
+      '<span class="field-label">Напоминать за N км до срока</span>' +
+      field('num', 'taskReminder', '1500', form.reminderKm) +
+      '</div>' + saveBtn +
+      (opts.confirmDeleteTask ? taskDeleteDialogHtml(form, opts) : '') +
       '</div>';
   }
 
@@ -1284,15 +1357,16 @@
       phoneWrap('04', 'История ТО', historyScreenHtml(cars[0], { interactive: false })) +
       phoneWrap('05', 'Настройки', settingsScreenHtml(settingsState, { interactive: false })) +
       phoneWrap('06', 'Удаление авто', detailScreenHtml(cars[0], { interactive: false, confirmDelete: true })) +
-      phoneWrap('07', 'Редактирование авто', newScreenHtml({ interactive: false, edit: cars[0] },
-        cars[0].tasks.map(function (t, i) { return taskToBlock(t, i + 1, true); }))) +
+      phoneWrap('07', 'Редактирование работы', taskScreenHtml(cars[0], taskToBlock(cars[0].tasks[0], 1, true), { interactive: false })) +
       phoneWrap('08', 'Время напоминаний', settingsScreenHtml(
         { themeIdx: settingsState.themeIdx, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00', timeDraft: { h: 9, m: 0 } },
         { interactive: false })) +
       phoneWrap('09', 'Незаполненные поля', newScreenHtml({ interactive: false, staticErrors: true },
         [{ n: 1, filled: true, errorName: true, errorInterval: true, name: 'Например, Замена масла и фильтра', intervalKm: '10000', intervalMonths: '12', lastKm: 'не проводилась', lastDate: 'дд.мм.гггг', reminderKm: '1500' }])) +
       phoneWrap('10', 'Работа выполнена', detailScreenHtml(cars[0], { interactive: false, doneTaskId: 't3' })) +
-      phoneWrap('11', 'Снятие отметки', detailScreenHtml(markedCar, { interactive: false, unmarkTaskId: 't3' }));
+      phoneWrap('11', 'Снятие отметки', detailScreenHtml(markedCar, { interactive: false, unmarkTaskId: 't3' })) +
+      phoneWrap('12', 'Новая работа', taskScreenHtml(cars[0], emptyTaskForm(), { interactive: false })) +
+      phoneWrap('13', 'Название и VIN', detailScreenHtml(cars[0], { interactive: false, editingBrand: true, editingVin: true }));
   }
   renderStaticGallery('galleryLight');
   renderStaticGallery('galleryDark');
@@ -1302,28 +1376,34 @@
   var istate = {
     screen: 'cars', detailId: null, editingMileage: false, confirmDelete: false,
     taskBlocks: [], nextBlockN: 1, form: { brand: '', mileage: '', vin: '' }, formErrors: false,
-    doneTaskId: null, unmarkTaskId: null,
+    doneTaskId: null, unmarkTaskId: null, editingBrand: false, editingVin: false, brandError: false,
+    taskForm: null, taskFormErrors: false, confirmDeleteTask: false,
     settings: { themeIdx: 0, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00' }
   };
   function carById(id) { return cars.find(function (c) { return c.id === id; }); }
   function currentDetailCar() { return carById(istate.detailId) || cars[0]; }
 
-  var routeNames = { cars: 'Мои авто', detail: 'Регламентные работы', history: 'История ТО', new: 'Добавление авто', edit: 'Редактирование авто', settings: 'Настройки' };
+  var routeNames = { cars: 'Мои авто', detail: 'Регламентные работы', history: 'История ТО', new: 'Добавление авто', settings: 'Настройки' };
   function paintInteractive() {
     var root = document.getElementById('interactiveScreen');
     var detailCar = currentDetailCar();
     root.innerHTML =
       carsScreenHtml(cars, { interactive: true }) +
-      (detailCar ? detailScreenHtml(detailCar, { interactive: true, editingMileage: istate.editingMileage, confirmDelete: istate.confirmDelete, doneTaskId: istate.doneTaskId, unmarkTaskId: istate.unmarkTaskId }) : '') +
+      (detailCar ? detailScreenHtml(detailCar, { interactive: true, editingMileage: istate.editingMileage, confirmDelete: istate.confirmDelete, doneTaskId: istate.doneTaskId, unmarkTaskId: istate.unmarkTaskId, editingBrand: istate.editingBrand, editingVin: istate.editingVin }) : '') +
       (detailCar ? historyScreenHtml(detailCar, { interactive: true }) : '') +
-      newScreenHtml({ interactive: true, edit: istate.screen === 'edit' ? detailCar : null, form: istate.form, showErrors: istate.formErrors }, istate.taskBlocks) +
+      (detailCar && istate.taskForm ? taskScreenHtml(detailCar, istate.taskForm, { interactive: true, showErrors: istate.taskFormErrors, confirmDeleteTask: istate.confirmDeleteTask }) : '') +
+      newScreenHtml({ interactive: true, form: istate.form, showErrors: istate.formErrors }, istate.taskBlocks) +
       settingsScreenHtml(istate.settings, { interactive: true });
     root.parentElement.classList.add('interactive');
     wireInteractive();
     document.querySelectorAll('#interactiveScreen .view').forEach(function (v) {
       v.classList.toggle('active', v.getAttribute('data-view') === istate.screen);
     });
-    document.getElementById('routeLabel').textContent = routeNames[istate.screen];
+    document.getElementById('routeLabel').textContent = istate.screen === 'task'
+      ? (istate.taskForm && istate.taskForm.taskId ? 'Редактирование работы' : 'Новая работа')
+      : routeNames[istate.screen];
+    var brandInput = root.querySelector('#brandEditInput');
+    if (brandInput && istate.brandError) brandInput.classList.add('error');
   }
 
   function wireInteractive() {
@@ -1332,7 +1412,8 @@
     root.querySelectorAll('[data-open-car]').forEach(function (row) {
       row.addEventListener('click', function () {
         istate.detailId = row.getAttribute('data-open-car'); istate.editingMileage = false; istate.confirmDelete = false;
-        istate.doneTaskId = null; istate.unmarkTaskId = null; istate.screen = 'detail'; paintInteractive();
+        istate.doneTaskId = null; istate.unmarkTaskId = null; istate.editingBrand = false; istate.editingVin = false; istate.brandError = false;
+        istate.screen = 'detail'; paintInteractive();
       });
     });
     root.querySelectorAll('[data-open-new]').forEach(function (b) {
@@ -1347,14 +1428,91 @@
     var openHistoryBtn = root.querySelector('[data-open-history]');
     if (openHistoryBtn) openHistoryBtn.addEventListener('click', function () { istate.screen = 'history'; paintInteractive(); });
 
-    /* --- edit car: the add-car form, pre-filled --- */
-    var editCarBtn = root.querySelector('[data-edit-car]');
-    if (editCarBtn) editCarBtn.addEventListener('click', function () {
-      var car = currentDetailCar();
-      istate.form = { brand: car.brand, mileage: car.mileageKm, vin: car.vin === '—' ? '' : car.vin };
-      istate.taskBlocks = car.tasks.map(function (t, i) { return taskToBlock(t, i + 1, false); });
-      istate.nextBlockN = car.tasks.length + 1;
-      istate.editingMileage = false; istate.formErrors = false; istate.screen = 'edit'; paintInteractive();
+    /* --- name and VIN: tap turns the text into a field with a check button --- */
+    var editBrandBtn = root.querySelector('[data-edit-brand]');
+    if (editBrandBtn) editBrandBtn.addEventListener('click', function () { istate.editingBrand = true; istate.brandError = false; paintInteractive(); });
+    var saveBrandBtn = root.querySelector('#saveBrandBtn');
+    if (saveBrandBtn) saveBrandBtn.addEventListener('click', function () {
+      var value = root.querySelector('#brandEditInput').value.trim();
+      /* название обязательно: пустое не сохраняется, поле получает красную рамку */
+      if (!value) { istate.brandError = true; paintInteractive(); return; }
+      currentDetailCar().brand = value;
+      istate.editingBrand = false; istate.brandError = false; paintInteractive();
+    });
+    var editVinBtn = root.querySelector('[data-edit-vin]');
+    if (editVinBtn) editVinBtn.addEventListener('click', function () { istate.editingVin = true; paintInteractive(); });
+    var saveVinBtn = root.querySelector('#saveVinBtn');
+    if (saveVinBtn) saveVinBtn.addEventListener('click', function () {
+      currentDetailCar().vin = root.querySelector('#vinEditInput').value.trim().toUpperCase() || '—';
+      istate.editingVin = false; paintInteractive();
+    });
+
+    /* --- one task: tap on a row edits it, the FAB adds a new one --- */
+    root.querySelectorAll('[data-open-task]').forEach(function (row) {
+      row.addEventListener('click', function () {
+        var task = currentDetailCar().tasks.find(function (t) { return t.id === row.getAttribute('data-open-task'); });
+        if (!task) return;
+        istate.taskForm = taskToBlock(task, 1, false); istate.taskFormErrors = false; istate.confirmDeleteTask = false;
+        istate.screen = 'task'; paintInteractive();
+      });
+    });
+    var addTaskFab = root.querySelector('[data-add-task]');
+    if (addTaskFab) addTaskFab.addEventListener('click', function () {
+      istate.taskForm = emptyTaskForm(); istate.taskFormErrors = false; istate.confirmDeleteTask = false;
+      istate.screen = 'task'; paintInteractive();
+    });
+    function syncTaskForm() {
+      var f = istate.taskForm;
+      if (!f || !root.querySelector('#taskName')) return;
+      f.name = root.querySelector('#taskName').value; f.intervalKm = root.querySelector('#taskInterval').value;
+      f.intervalMonths = root.querySelector('#taskMonths').value; f.lastKm = root.querySelector('#taskLastKm').value;
+      f.lastDate = root.querySelector('#taskLastDate').value; f.reminderKm = root.querySelector('#taskReminder').value;
+    }
+    root.querySelectorAll('[data-task-preset]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var def = PRESET_DEFS[b.getAttribute('data-task-preset')];
+        syncTaskForm();
+        istate.taskForm.name = def.name; istate.taskForm.intervalKm = def.intervalKm; istate.taskForm.reminderKm = def.reminderKm;
+        paintInteractive();
+      });
+    });
+    var saveTaskBtn = root.querySelector('#saveTaskBtn');
+    if (saveTaskBtn) saveTaskBtn.addEventListener('click', function () {
+      syncTaskForm();
+      var f = istate.taskForm, car = currentDetailCar();
+      if (blockNameMissing(f) || blockIntervalMissing(f)) { istate.taskFormErrors = true; paintInteractive(); return; }
+      var name = String(f.name).trim();
+      var intervalKm = parseInt(f.intervalKm, 10);
+      var intervalMonths = f.intervalMonths ? parseInt(f.intervalMonths, 10) : undefined;
+      var values = {
+        name: name, icon: pickIcon(name), intervalKm: intervalKm, intervalMonths: intervalMonths,
+        lastKm: f.lastKm ? parseInt(f.lastKm, 10) : 0,
+        lastDate: intervalMonths ? isoFromRu(f.lastDate) : undefined,
+        reminderKm: f.reminderKm ? parseInt(f.reminderKm, 10) : Math.round(intervalKm * 0.15)
+      };
+      var existing = f.taskId ? car.tasks.find(function (t) { return t.id === f.taskId; }) : null;
+      if (existing) {
+        if (existing.lastKm !== values.lastKm) existing.doneMark = null;
+        Object.keys(values).forEach(function (key) { existing[key] = values[key]; });
+      } else {
+        values.id = 'nt' + Date.now();
+        car.tasks.push(values);
+      }
+      istate.taskForm = null; istate.taskFormErrors = false; istate.screen = 'detail'; paintInteractive();
+    });
+    var deleteTaskBtn = root.querySelector('[data-delete-task]');
+    if (deleteTaskBtn) deleteTaskBtn.addEventListener('click', function () { syncTaskForm(); istate.confirmDeleteTask = true; paintInteractive(); });
+    root.querySelectorAll('[data-cancel-delete-task]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        if (e.target !== el) return;
+        istate.confirmDeleteTask = false; paintInteractive();
+      });
+    });
+    var confirmDeleteTaskBtn = root.querySelector('[data-confirm-delete-task]');
+    if (confirmDeleteTaskBtn) confirmDeleteTaskBtn.addEventListener('click', function () {
+      var car = currentDetailCar(), id = istate.taskForm.taskId;
+      car.tasks = car.tasks.filter(function (t) { return t.id !== id; });
+      istate.taskForm = null; istate.confirmDeleteTask = false; istate.screen = 'detail'; paintInteractive();
     });
 
     /* --- delete car with confirmation --- */
@@ -1385,7 +1543,7 @@
 
     /* --- mark task done: details dialog, then the mark; a marked task can be unmarked --- */
     root.querySelectorAll('[data-mark-done]').forEach(function (b) {
-      b.addEventListener('click', function () { istate.doneTaskId = b.getAttribute('data-mark-done'); paintInteractive(); });
+      b.addEventListener('click', function (e) { e.stopPropagation(); istate.doneTaskId = b.getAttribute('data-mark-done'); paintInteractive(); });
     });
     root.querySelectorAll('[data-cancel-done]').forEach(function (el) {
       el.addEventListener('click', function (e) {
@@ -1414,7 +1572,7 @@
       paintInteractive();
     });
     root.querySelectorAll('[data-unmark]').forEach(function (b) {
-      b.addEventListener('click', function () { istate.unmarkTaskId = b.getAttribute('data-unmark'); paintInteractive(); });
+      b.addEventListener('click', function (e) { e.stopPropagation(); istate.unmarkTaskId = b.getAttribute('data-unmark'); paintInteractive(); });
     });
     root.querySelectorAll('[data-cancel-unmark]').forEach(function (el) {
       el.addEventListener('click', function (e) {
@@ -1473,8 +1631,6 @@
     var saveBtn = root.querySelector('#saveCarBtn');
     if (saveBtn) saveBtn.addEventListener('click', function () {
       syncForm();
-      var editing = istate.screen === 'edit';
-      var editedCar = editing ? currentDetailCar() : null;
       var brand = istate.form.brand.trim();
       var mileage = parseInt(istate.form.mileage, 10);
       var blocksValid = istate.taskBlocks.every(function (b) { return !blockNameMissing(b) && !blockIntervalMissing(b); });
@@ -1483,21 +1639,14 @@
       istate.formErrors = false;
       var vin = istate.form.vin.trim() || '—';
       var tasks = istate.taskBlocks.map(function (block, index) {
-        var existing = editedCar && block.taskId ? editedCar.tasks.find(function (t) { return t.id === block.taskId; }) : null;
         var name = String(block.name).trim();
         var intervalKm = parseInt(block.intervalKm, 10);
         var intervalMonths = block.intervalMonths ? parseInt(block.intervalMonths, 10) : undefined;
         var lastKm = block.lastKm ? parseInt(block.lastKm, 10) : 0;
         var lastDateIso = intervalMonths ? isoFromRu(block.lastDate) : undefined;
         var reminderKm = block.reminderKm ? parseInt(block.reminderKm, 10) : Math.round(intervalKm * 0.15);
-        return { id: existing ? existing.id : 'nt' + index + Date.now(), name: name, icon: pickIcon(name), intervalKm: intervalKm, lastKm: lastKm, reminderKm: reminderKm, intervalMonths: intervalMonths, lastDate: lastDateIso };
+        return { id: 'nt' + index + Date.now(), name: name, icon: pickIcon(name), intervalKm: intervalKm, lastKm: lastKm, reminderKm: reminderKm, intervalMonths: intervalMonths, lastDate: lastDateIso };
       });
-      if (editing) {
-        /* при правке работа по умолчанию не подставляется: авто может остаться без работ */
-        editedCar.brand = brand; editedCar.mileageKm = mileage; editedCar.vin = vin; editedCar.tasks = tasks;
-        istate.screen = 'detail'; paintInteractive();
-        return;
-      }
       if (tasks.length === 0) tasks.push({ id: 'nt0' + Date.now(), name: 'Замена масла и фильтра', icon: 'droplet', intervalKm: 10000, lastKm: mileage, reminderKm: 1500 });
       cars.push({ id: 'c' + Date.now(), brand: brand, mileageKm: mileage, vin: vin, tasks: tasks, history: [] });
       istate.screen = 'cars'; paintInteractive();
