@@ -253,10 +253,10 @@
   .history-year::before, .history-year::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
   .history-month { border: 1px solid var(--rule); border-radius: 12px; padding: 0 12px 2px; margin: 0 0 12px; min-width: 0; }
   .history-month legend { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); padding: 0 6px; margin-left: 2px; }
-  .history-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 4px; }
+  .history-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
   .history-name { font-size: 13.5px; font-weight: 700; }
   .history-date { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); flex-shrink: 0; white-space: nowrap; }
-  .history-meta { font-family: var(--mono); font-size: 11px; color: var(--ink-muted); display: flex; gap: 12px; flex-wrap: wrap; }
+  .history-meta { font-family: var(--mono); font-size: 11px; color: var(--ink-muted); margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
   .history-empty { padding: 48px 18px; text-align: center; color: var(--ink-faint); font-size: 13px; line-height: 1.5; }
 
   /* ---------- Confirm dialog ---------- */
@@ -1258,14 +1258,12 @@
     function ownerLabel(o) { return o.brand + (o.sold ? ' [продано]' : ''); }
     function rowHtml(x) {
       var e = x.e;
-      /* сверху — авто, пробег, стоимость и сервис; ниже — вид работы и дата */
-      return '<div class="history-row"' + (opts.interactive ? ' data-open-entry="' + e.id + '"' : '') + '>' +
+      return '<div class="history-row"' + (opts.interactive ? ' data-open-entry="' + e.id + '"' : '') + '><div class="history-top"><span class="history-name">' + e.taskName + '</span><span class="history-date">' + formatDateRu(e.date) + '</span></div>' +
         '<div class="history-meta">' +
         (selected ? '' : '<span class="history-car' + (x.owner.sold ? ' sold-car' : '') + '">' + ownerLabel(x.owner) + '</span>') +
         '<span>' + fmtKm(e.mileageKm) + '</span>' +
         (e.costRub ? '<span>' + e.costRub.toLocaleString('ru-RU') + ' ₽</span>' : '') +
         (e.service ? '<span>' + e.service + '</span>' : '') + '</div>' +
-        '<div class="history-top"><span class="history-name">' + e.taskName + '</span><span class="history-date">' + formatDateRu(e.date) + '</span></div>' +
         (e.comment ? '<div class="history-comment">' + e.comment + '</div>' : '') + '</div>';
     }
     var html = '', lastYear = null, lastMonth = null;
