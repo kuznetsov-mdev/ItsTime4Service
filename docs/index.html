@@ -1699,7 +1699,12 @@
       cars = cars.filter(function (c) { return c.id !== id; });
       /* удалённое авто больше не открывается при запуске */
       if (istate.lastOpenedCarId === id) istate.lastOpenedCarId = null;
-      if (istate.settings.defaultCarId === id) { istate.settings.defaultCarId = null; istate.settings.openDefault = false; }
+      /* удалили авто «по умолчанию»: выбирается другое, а если авто не осталось — настройка выключается */
+      if (istate.settings.defaultCarId === id) {
+        var fallback = carById(istate.lastOpenedCarId) || cars[0] || null;
+        istate.settings.defaultCarId = fallback ? fallback.id : null;
+        if (!fallback) istate.settings.openDefault = false;
+      }
       istate.confirmDelete = false; istate.detailId = null; istate.screen = 'cars'; paintInteractive();
     });
 
