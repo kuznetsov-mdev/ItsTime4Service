@@ -236,11 +236,6 @@
   .history-year::before, .history-year::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
   .history-month { border: 1px solid var(--rule); border-radius: 12px; padding: 0 12px 2px; margin: 0 0 12px; min-width: 0; }
   .history-month legend { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); padding: 0 6px; margin-left: 2px; }
-  .entry-rows { display: flex; flex-direction: column; margin-top: 14px; border-top: 1px solid var(--rule); }
-  .entry-row { display: flex; justify-content: space-between; gap: 14px; padding: 9px 0; border-bottom: 1px solid var(--rule); font-size: 12.5px; }
-  .entry-row .k { color: var(--ink-faint); flex-shrink: 0; }
-  .entry-row .v { color: var(--ink); text-align: right; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
-  .entry-row .v.mono { font-family: var(--mono); font-weight: 500; }
   .history-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
   .history-name { font-size: 13.5px; font-weight: 700; }
   .history-date { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); flex-shrink: 0; white-space: nowrap; }
@@ -1145,23 +1140,26 @@
   var MONTH_NAMES = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 
   /* ---------------- dialog: one service history record ---------------- */
+  /* Дата и пробег записи только показываются; сервис, стоимость и комментарий можно править. */
   function historyEntryDialogHtml(entry, opts) {
-    var closeAttr = opts.interactive ? ' data-close-entry' : '';
-    function row(label, value, mono) {
-      return '<div class="entry-row"><span class="k">' + label + '</span><span class="v' + (mono ? ' mono' : '') + '">' + (value || '—') + '</span></div>';
+    var cancelAttr = opts.interactive ? ' data-close-entry' : '';
+    var saveAttr = opts.interactive ? ' data-save-entry' : '';
+    function staticField(kind, value, placeholder, multiline) {
+      return '<div class="' + kind + '-input static' + (multiline ? ' multiline' : '') + '">' + (value || placeholder) + '</div>';
     }
-    return '<div class="dialog-scrim"' + closeAttr + '><div class="dialog" role="dialog" aria-modal="true">' +
+    var fields = opts.interactive
+      ? '<div><span class="mini-label">Где обслуживались</span><input class="text-input" id="entryService" placeholder="Например, АвтоСервис Юг" value="' + (entry.service || '') + '"></div>' +
+        '<div><span class="mini-label">Сколько стоило, ₽</span><input class="num-input" id="entryCost" type="number" placeholder="2400" value="' + (entry.costRub || '') + '"></div>' +
+        '<div><span class="mini-label">Комментарий</span><textarea class="text-input" id="entryComment" placeholder="Что меняли, какие запчасти">' + (entry.comment || '') + '</textarea></div>'
+      : '<div><span class="mini-label">Где обслуживались</span>' + staticField('text', entry.service, 'Например, АвтоСервис Юг') + '</div>' +
+        '<div><span class="mini-label">Сколько стоило, ₽</span>' + staticField('num', entry.costRub, '2400') + '</div>' +
+        '<div><span class="mini-label">Комментарий</span>' + staticField('text', entry.comment, 'Что меняли, какие запчасти', true) + '</div>';
+    return '<div class="dialog-scrim"' + cancelAttr + '><div class="dialog" role="dialog" aria-modal="true">' +
       '<div class="dialog-icon accent">' + icon('wrench', 19) + '</div>' +
       '<div class="dialog-title">' + entry.taskName + '</div>' +
-      '<div class="dialog-text">' + formatDateRu(entry.date) + '</div>' +
-      '<div class="entry-rows">' +
-      row('Что менялось', entry.taskName) +
-      row('Пробег', fmtKm(entry.mileageKm), true) +
-      row('Стоимость', entry.costRub ? entry.costRub.toLocaleString('ru-RU') + ' ₽' : '', true) +
-      row('Где обслуживались', entry.service) +
-      row('Комментарий', entry.comment) +
-      '</div>' +
-      '<div class="dialog-actions"><button class="dialog-btn"' + closeAttr + '>Закрыть</button></div>' +
+      '<div class="dialog-text">' + formatDateRu(entry.date) + ' · ' + fmtKm(entry.mileageKm) + '</div>' +
+      '<div class="dialog-fields">' + fields + '</div>' +
+      '<div class="dialog-actions"><button class="dialog-btn"' + cancelAttr + '>Отмена</button><button class="dialog-btn primary"' + saveAttr + '>Сохранить</button></div>' +
       '</div></div>';
   }
 
@@ -1501,6 +1499,17 @@
       b.addEventListener('click', function () { istate.screen = b.getAttribute('data-tab'); paintInteractive(); });
     });
     var openHistoryBtn = root.querySelector('[data-open-history]');
+    var saveEntryBtn = root.querySelector('[data-save-entry]');
+    if (saveEntryBtn) saveEntryBtn.addEventListener('click', function () {
+      var entry = (currentDetailCar().history || []).find(function (h) { return h.id === istate.historyEntryId; });
+      if (entry) {
+        var cost = parseInt(root.querySelector('#entryCost').value, 10);
+        entry.service = root.querySelector('#entryService').value.trim() || null;
+        entry.costRub = cost > 0 ? cost : null;
+        entry.comment = root.querySelector('#entryComment').value.trim() || null;
+      }
+      istate.historyEntryId = null; paintInteractive();
+    });
     if (openHistoryBtn) openHistoryBtn.addEventListener('click', function () { istate.historyEntryId = null; istate.screen = 'history'; paintInteractive(); });
     root.querySelectorAll('[data-open-entry]').forEach(function (row) {
       row.addEventListener('click', function () { istate.historyEntryId = row.getAttribute('data-open-entry'); paintInteractive(); });
