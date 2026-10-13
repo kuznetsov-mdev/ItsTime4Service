@@ -218,7 +218,7 @@
   .task-icon { width: 32px; height: 32px; border-radius: 10px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; color: var(--ink-muted); flex-shrink: 0; }
   .task-main { flex: 1; min-width: 0; }
   .task-name { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .task-meta { font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .task-meta { font-family: var(--mono); font-size: 10.5px; line-height: 1.5; color: var(--ink-faint); margin-top: 2px; font-variant-numeric: tabular-nums; }
   .task-status-chip { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; flex-shrink: 0; white-space: nowrap; }
   .task-track { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
   .task-fill { height: 100%; border-radius: 999px; transition: width 0.2s ease; }
@@ -1015,12 +1015,12 @@
     });
   }
   function fmtKm(n) { return Math.round(n).toLocaleString('ru-RU') + ' км'; }
-  function taskMetaText(st) {
-    var text = st.remaining <= 0 ? ('просрочено на ' + fmtKm(-st.remaining)) : ('осталось ' + fmtKm(st.remaining));
-    if (st.remainingMonths !== null) {
-      text += ' · ' + (st.remainingMonths <= 0 ? 'время истекло' : ('или ' + fmtMonths(st.remainingMonths)));
-    }
-    return text;
+  /* каждая часть сводки — «осталось…», «или…», «каждые…» — с новой строки */
+  function taskMetaHtml(st, task) {
+    var lines = [st.remaining <= 0 ? ('просрочено на ' + fmtKm(-st.remaining)) : ('осталось ' + fmtKm(st.remaining))];
+    if (st.remainingMonths !== null) lines.push(st.remainingMonths <= 0 ? 'время истекло' : ('или ' + fmtMonths(st.remainingMonths)));
+    lines.push('каждые ' + fmtKm(task.intervalKm));
+    return lines.map(function (line) { return '<div>' + line + '</div>'; }).join('');
   }
   function carAlerts(car) {
     var soon = 0, due = 0;
@@ -1142,7 +1142,7 @@
         : '<button class="mark-done-btn"' + doneAttr + '>' + icon('check', 12) + ' Отметить выполненной</button>';
       return '<div class="task-row"' + (opts.interactive ? ' data-open-task="' + t.id + '"' : '') + '>' +
         '<div class="task-top"><div class="task-icon">' + icon(t.icon, 16) + '</div>' +
-        '<div class="task-main"><div class="task-name">' + t.name + '</div><div class="task-meta">' + taskMetaText(st) + ' · каждые ' + fmtKm(t.intervalKm) + '</div></div>' +
+        '<div class="task-main"><div class="task-name">' + t.name + '</div><div class="task-meta">' + taskMetaHtml(st, t) + '</div></div>' +
         '<span class="task-status-chip" style="background:' + color + ';color:var(--on-tier)">' + tierLabel(st.status) + '</span></div>' +
         '<div class="task-track"><div class="task-fill" style="width:' + Math.round(st.frac * 100) + '%;background:' + color + '"></div></div>' +
         '<div class="task-actions">' + doneBtn + '</div>' +
