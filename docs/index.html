@@ -1457,9 +1457,14 @@
   function currentDetailCar() { return carById(istate.detailId) || cars[0]; }
 
   var routeNames = { cars: 'Мои авто', detail: 'Регламентные работы', history: 'История ТО', new: 'Добавление авто', settings: 'Настройки' };
+  var SCROLLABLE = '.form-body, .task-list, .history-list, .car-list';
   function paintInteractive() {
     var root = document.getElementById('interactiveScreen');
     var detailCar = currentDetailCar();
+    /* перерисовка не должна сбрасывать прокрутку экрана, на котором пользователь остался */
+    var prevView = root.querySelector('.view.active');
+    var prevScroller = prevView ? prevView.querySelector(SCROLLABLE) : null;
+    var prevScroll = prevView ? { screen: prevView.getAttribute('data-view'), top: prevScroller ? prevScroller.scrollTop : 0 } : null;
     root.innerHTML =
       carsScreenHtml(cars, { interactive: true }) +
       (detailCar ? detailScreenHtml(detailCar, { interactive: true, editingMileage: istate.editingMileage, confirmDelete: istate.confirmDelete, doneTaskId: istate.doneTaskId, unmarkTaskId: istate.unmarkTaskId, editingBrand: istate.editingBrand, editingVin: istate.editingVin }) : '') +
@@ -1472,6 +1477,15 @@
     document.querySelectorAll('#interactiveScreen .view').forEach(function (v) {
       v.classList.toggle('active', v.getAttribute('data-view') === istate.screen);
     });
+    var view = root.querySelector('.view.active');
+    var scroller = view ? view.querySelector(SCROLLABLE) : null;
+    if (scroller && prevScroll && prevScroll.screen === istate.screen) scroller.scrollTop = prevScroll.top;
+    /* новый блок работы в форме авто: список прокручивается к нему */
+    if (scroller && istate.scrollToBlock) {
+      var newBlock = view.querySelector('.task-block[data-block="' + istate.scrollToBlock + '"]');
+      if (newBlock) scroller.scrollTop += newBlock.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 10;
+    }
+    istate.scrollToBlock = null;
     document.getElementById('routeLabel').textContent = istate.screen === 'task'
       ? (istate.taskForm && istate.taskForm.taskId ? 'Редактирование работы' : 'Новая работа')
       : routeNames[istate.screen];
@@ -1712,11 +1726,12 @@
       });
     }
     var addTaskBtn = root.querySelector('#addTaskBtn');
-    if (addTaskBtn) addTaskBtn.addEventListener('click', function () { syncForm(); istate.taskBlocks.push({ n: istate.nextBlockN++ }); paintInteractive(); });
+    if (addTaskBtn) addTaskBtn.addEventListener('click', function () { syncForm(); istate.scrollToBlock = istate.nextBlockN; istate.taskBlocks.push({ n: istate.nextBlockN++ }); paintInteractive(); });
     root.querySelectorAll('[data-preset]').forEach(function (b) {
       b.addEventListener('click', function () {
         var def = PRESET_DEFS[b.getAttribute('data-preset')];
         syncForm();
+        istate.scrollToBlock = istate.nextBlockN;
         istate.taskBlocks.push({ n: istate.nextBlockN++, name: def.name, intervalKm: def.intervalKm, reminderKm: def.reminderKm });
         paintInteractive();
       });
