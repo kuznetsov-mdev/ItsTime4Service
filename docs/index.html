@@ -1014,7 +1014,20 @@
       return r !== 0 ? r : a.st.remaining - b.st.remaining;
     });
   }
-  function fmtKm(n) { return Math.round(n).toLocaleString('ru-RU') + ' км'; }
+  /* Данные всегда в километрах. Если в настройках выбраны мили, расстояния показываются и вводятся в милях,
+     а при сохранении пересчитываются в километры. Поле, которое не трогали, не пересчитывается — чтобы
+     округление туда-обратно не сдвигало сохранённое значение. */
+  var MILES = false;
+  var KM_PER_MILE = 1.609344;
+  function unitWord() { return MILES ? 'миль' : 'км'; }
+  function unitLabel() { return MILES ? 'мили' : 'км'; }
+  function toUnit(km) { return MILES ? Math.round(km / KM_PER_MILE) : km; }
+  function fromUnit(value) { return MILES ? Math.round(value * KM_PER_MILE) : value; }
+  function keepKm(originalKm, typed) {
+    var value = parseInt(typed, 10);
+    return (originalKm !== undefined && originalKm !== null && value === toUnit(originalKm)) ? originalKm : fromUnit(value);
+  }
+  function fmtKm(n) { return Math.round(toUnit(n)).toLocaleString('ru-RU') + ' ' + unitWord(); }
   /* каждая часть сводки — «осталось…», «или…», «каждые…» — с новой строки */
   function taskMetaHtml(st, task) {
     var lines = [st.remaining <= 0 ? ('просрочено на ' + fmtKm(-st.remaining)) : ('осталось ' + fmtKm(st.remaining))];
@@ -1167,10 +1180,10 @@
     var addTaskFab = '<button class="fab no-tabbar"' + (opts.interactive ? ' data-add-task' : '') + ' aria-label="Добавить работу">' + icon('plus', 21) + '</button>';
     var mileageBlock;
     if (opts.interactive && opts.editingMileage) {
-      mileageBlock = '<div class="stat-edit-row"><input type="number" id="mileageEditInput" value="' + car.mileageKm + '">' +
+      mileageBlock = '<div class="stat-edit-row"><input type="number" id="mileageEditInput" value="' + toUnit(car.mileageKm) + '">' +
         '<button id="saveMileageBtn">' + icon('check', 14) + '</button></div>';
     } else {
-      var mileageText = car.mileageKm.toLocaleString('ru-RU');
+      var mileageText = toUnit(car.mileageKm).toLocaleString('ru-RU');
       mileageBlock = '<div class="stat-num-row"><span class="stat-icon">' + icon('gauge', 24) + '</span>' +
         (opts.interactive
           ? '<button class="mileage-value" data-edit-mileage aria-label="Изменить пробег">' + mileageText + '</button>'
@@ -1205,14 +1218,14 @@
     var fields = opts.interactive
       ? '<div class="filter-pair">' +
         '<div><span class="mini-label">Дата<span class="req"> *</span></span><input class="text-input" id="entryDate" placeholder="дд.мм.гггг" value="' + formatDateRu(entry.date) + '"></div>' +
-        '<div><span class="mini-label">Пробег, км<span class="req"> *</span></span><input class="num-input" id="entryMileage" type="number" placeholder="78000" value="' + entry.mileageKm + '"></div>' +
+        '<div><span class="mini-label">Пробег, ' + unitLabel() + '<span class="req"> *</span></span><input class="num-input" id="entryMileage" type="number" placeholder="78000" value="' + toUnit(entry.mileageKm) + '"></div>' +
         '</div>' +
         '<div><span class="mini-label">Где обслуживались</span><input class="text-input" id="entryService" placeholder="Например, АвтоСервис Юг" value="' + (entry.service || '') + '"></div>' +
         '<div><span class="mini-label">Сколько стоило, ₽</span><input class="num-input" id="entryCost" type="number" placeholder="2400" value="' + (entry.costRub || '') + '"></div>' +
         '<div><span class="mini-label">Комментарий</span><textarea class="text-input" id="entryComment" placeholder="Что меняли, какие запчасти">' + (entry.comment || '') + '</textarea></div>'
       : '<div class="filter-pair">' +
         '<div><span class="mini-label">Дата<span class="req"> *</span></span>' + staticField('text', formatDateRu(entry.date), 'дд.мм.гггг') + '</div>' +
-        '<div><span class="mini-label">Пробег, км<span class="req"> *</span></span>' + staticField('num', entry.mileageKm, '78000') + '</div>' +
+        '<div><span class="mini-label">Пробег, ' + unitLabel() + '<span class="req"> *</span></span>' + staticField('num', entry.mileageKm, '78000') + '</div>' +
         '</div>' +
         '<div><span class="mini-label">Где обслуживались</span>' + staticField('text', entry.service, 'Например, АвтоСервис Юг') + '</div>' +
         '<div><span class="mini-label">Сколько стоило, ₽</span>' + staticField('num', entry.costRub, '2400') + '</div>' +
@@ -1246,27 +1259,11 @@
       '<div class="dialog-title">Фильтр</div>' +
       '<div class="dialog-fields">' +
       '<div><span class="mini-label">Период, с — по</span><div class="filter-pair">' + field('text', 'fltFrom', 'дд.мм.гггг', filters.from) + field('text', 'fltTo', 'дд.мм.гггг', filters.to) + '</div></div>' +
-      '<div><span class="mini-label">Поиск по названию работы</span>' + field('text', 'fltQuery', 'Например, масло', filters.query) + '</div>' +
-      '<div><span class="mini-label">Пробег, км, с — по</span><div class="filter-pair">' + field('num', 'fltKmFrom', '0', filters.kmFrom) + field('num', 'fltKmTo', '100000', filters.kmTo) + '</div></div>' +
+      '<div><span class="mini-label">Поиск по названию работы</span>' + field('text', 'fltQuery', 'Например, масл', filters.query) + '</div>' +
+      '<div><span class="mini-label">Пробег, ' + unitLabel() + ', с — по</span><div class="filter-pair">' + field('num', 'fltKmFrom', '0', filters.kmFrom) + field('num', 'fltKmTo', '100000', filters.kmTo) + '</div></div>' +
       '</div>' +
       '<div class="dialog-actions"><button class="dialog-btn"' + (opts.interactive ? ' data-reset-filter' : '') + '>Сбросить</button><button class="dialog-btn primary"' + (opts.interactive ? ' data-apply-filter' : '') + '>Применить</button></div>' +
       '</div></div>';
-  }
-  /* Поиск по названию работы с учётом словоформ, без словарей: у слова запроса не учитываются две последние буквы
-     (но остаётся не меньше трёх), и ищутся слова названия с таким же началом («масло» находит «масла» и «масел»,
-     «тормоз» — «тормозные»). Все слова запроса должны найтись в названии. */
-  function searchWords(text) {
-    return String(text || '').toLowerCase().replace(/ё/g, 'е').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .split(/[^a-zа-я0-9]+/).filter(Boolean);
-  }
-  function wordsMatch(queryWord, titleWord) {
-    var common = 0;
-    while (common < queryWord.length && common < titleWord.length && queryWord[common] === titleWord[common]) common++;
-    return common >= Math.min(queryWord.length, Math.max(3, queryWord.length - 2));
-  }
-  function titleMatchesQuery(title, query) {
-    var titleWords = searchWords(title);
-    return searchWords(query).every(function (q) { return titleWords.some(function (w) { return wordsMatch(q, w); }); });
   }
   function historyFiltersActive(f) { return !!(f.from || f.to || String(f.query || '').trim() || f.kmFrom || f.kmTo); }
 
@@ -1285,15 +1282,16 @@
     });
     var total = entries.length;
     var fromIso = isoFromRu(filters.from), toIso = isoFromRu(filters.to);
-    var query = String(filters.query || '').trim();
+    var query = String(filters.query || '').trim().toLowerCase();
     var kmFrom = parseInt(filters.kmFrom, 10), kmTo = parseInt(filters.kmTo, 10);
     entries = entries.filter(function (x) {
       var e = x.e;
       if (fromIso && e.date < fromIso) return false;
       if (toIso && e.date > toIso) return false;
-      if (query && !titleMatchesQuery(e.taskName, query)) return false;
-      if (kmFrom >= 0 && e.mileageKm < kmFrom) return false;
-      if (kmTo >= 0 && e.mileageKm > kmTo) return false;
+      /* поиск по вхождению: запрос ищется как подстрока названия, без учёта регистра */
+      if (query && e.taskName.toLowerCase().indexOf(query) === -1) return false;
+      if (kmFrom >= 0 && toUnit(e.mileageKm) < kmFrom) return false;
+      if (kmTo >= 0 && toUnit(e.mileageKm) > kmTo) return false;
       return true;
     }).sort(function (a, b) { return a.e.date < b.e.date ? 1 : -1; });
     function ownerLabel(o) { return o.brand + (o.sold ? ' [продано]' : ''); }
@@ -1387,14 +1385,14 @@
         '<div class="task-block-head"><span class="task-block-title">Работа ' + n + '</span><button class="icon-btn">' + icon('trash', 14) + '</button></div>' +
         '<div class="text-input static' + (block.errorName ? ' error' : '') + '">' + staticVal(block.name, 'Замена масла и фильтра') + '</div>' +
         '<div class="mini-row">' +
-        '<div><span class="mini-label">Интервал замены, км<span class="req"> *</span></span><div class="num-input static' + (block.errorInterval ? ' error' : '') + '">' + staticVal(block.intervalKm, '10 000') + '</div></div>' +
+        '<div><span class="mini-label">Интервал замены, ' + unitLabel() + '<span class="req"> *</span></span><div class="num-input static' + (block.errorInterval ? ' error' : '') + '">' + staticVal(block.intervalKm, '10 000') + '</div></div>' +
         '<div><span class="mini-label">Интервал по времени, мес (опц.)</span><div class="num-input static">' + staticVal(block.intervalMonths, '12') + '</div></div>' +
         '</div>' +
         '<div class="mini-row">' +
-        '<div><span class="mini-label">Последний раз, км<span class="req"> *</span></span><div class="num-input static' + (block.errorLastKm ? ' error' : '') + '">' + staticVal(block.lastKm, '78 000') + '</div></div>' +
+        '<div><span class="mini-label">Последний раз, ' + unitLabel() + '<span class="req"> *</span></span><div class="num-input static' + (block.errorLastKm ? ' error' : '') + '">' + staticVal(block.lastKm, '78 000') + '</div></div>' +
         '<div><span class="mini-label">Дата последней замены (опц.)</span><div class="text-input static">' + staticVal(block.lastDate, '15.01.2026') + '</div></div>' +
         '</div>' +
-        '<span class="mini-label">Напоминать за N тыс. км до срока</span><div class="num-input static">' + staticVal(block.reminderKm, '1 500') + '</div>' +
+        '<span class="mini-label">Напоминать за N ' + unitWord() + ' до срока</span><div class="num-input static">' + staticVal(block.reminderKm, '1 500') + '</div>' +
         '</div>';
     }
     var nameError = opts.showErrors && blockNameMissing(block) ? ' error' : '';
@@ -1404,19 +1402,19 @@
       '<div class="task-block-head"><span class="task-block-title">Работа ' + n + '</span><button class="icon-btn" data-remove-block="' + n + '">' + icon('trash', 14) + '</button></div>' +
       '<input class="text-input' + nameError + '" placeholder="Например, Замена масла и фильтра" value="' + inputVal(block.name) + '">' +
       '<div class="mini-row">' +
-      '<div><span class="mini-label">Интервал замены, км<span class="req"> *</span></span><input class="num-input' + intervalError + '" type="number" placeholder="10000" value="' + inputVal(block.intervalKm) + '"></div>' +
+      '<div><span class="mini-label">Интервал замены, ' + unitLabel() + '<span class="req"> *</span></span><input class="num-input' + intervalError + '" type="number" placeholder="10000" value="' + inputVal(block.intervalKm) + '"></div>' +
       '<div><span class="mini-label">Интервал по времени, мес (опц.)</span><input class="num-input" type="number" placeholder="12" value="' + inputVal(block.intervalMonths) + '"></div>' +
       '</div>' +
       '<div class="mini-row">' +
-      '<div><span class="mini-label">Последний раз, км<span class="req"> *</span></span><input class="num-input' + lastKmError + '" type="number" placeholder="78000" value="' + inputVal(block.lastKm) + '"></div>' +
+      '<div><span class="mini-label">Последний раз, ' + unitLabel() + '<span class="req"> *</span></span><input class="num-input' + lastKmError + '" type="number" placeholder="78000" value="' + inputVal(block.lastKm) + '"></div>' +
       '<div><span class="mini-label">Дата последней замены (опц.)</span><input class="text-input" placeholder="дд.мм.гггг" value="' + inputVal(block.lastDate) + '"></div>' +
       '</div>' +
-      '<span class="mini-label">Напоминать за N тыс. км до срока</span><input class="num-input" type="number" placeholder="1500" value="' + inputVal(block.reminderKm) + '">' +
+      '<span class="mini-label">Напоминать за N ' + unitWord() + ' до срока</span><input class="num-input" type="number" placeholder="1500" value="' + inputVal(block.reminderKm) + '">' +
       '</div>';
   }
 
   function taskToBlock(task, n, formatNumbers) {
-    function num(value) { return formatNumbers ? value.toLocaleString('ru-RU') : value; }
+    function num(value) { return formatNumbers ? toUnit(value).toLocaleString('ru-RU') : toUnit(value); }
     return {
       n: n, taskId: task.id, filled: true, name: task.name,
       intervalKm: num(task.intervalKm), intervalMonths: task.intervalMonths || '',
@@ -1453,7 +1451,7 @@
       '<div class="form-body">' +
       '<span class="field-label">Марка<span class="req"> *</span></span>' + brandField +
       '<div class="row-2">' +
-      '<div><span class="field-label" style="padding:0 0 8px">Пробег, км<span class="req"> *</span></span>' + mileageField + '</div>' +
+      '<div><span class="field-label" style="padding:0 0 8px">Пробег, ' + unitLabel() + '<span class="req"> *</span></span>' + mileageField + '</div>' +
       '<div><span class="field-label" style="padding:0 0 8px">VIN-номер</span>' + vinField + '</div>' +
       '</div>' +
       '<div class="section-divider"><span class="st">Регламентные работы</span><span class="sc">' + countLabel + '</span></div>' +
@@ -1507,14 +1505,14 @@
       '<span class="field-label">Название<span class="req"> *</span></span>' +
       field('text', 'taskName', 'Например, Замена масла и фильтра', form.name, nameError) +
       '<div class="row-2">' +
-      '<div><span class="field-label" style="padding:0 0 8px">Интервал, км<span class="req"> *</span></span>' + field('num', 'taskInterval', '10000', form.intervalKm, intervalError) + '</div>' +
+      '<div><span class="field-label" style="padding:0 0 8px">Интервал, ' + unitLabel() + '<span class="req"> *</span></span>' + field('num', 'taskInterval', '10000', form.intervalKm, intervalError) + '</div>' +
       '<div><span class="field-label" style="padding:0 0 8px">Интервал, мес</span>' + field('num', 'taskMonths', '12', form.intervalMonths) + '</div>' +
       '</div>' +
       '<div class="row-2">' +
-      '<div><span class="field-label" style="padding:0 0 8px">Последний раз, км<span class="req"> *</span></span>' + field('num', 'taskLastKm', '78000', form.lastKm, lastKmError) + '</div>' +
+      '<div><span class="field-label" style="padding:0 0 8px">Последний раз, ' + unitLabel() + '<span class="req"> *</span></span>' + field('num', 'taskLastKm', '78000', form.lastKm, lastKmError) + '</div>' +
       '<div><span class="field-label" style="padding:0 0 8px">Дата замены</span>' + field('text', 'taskLastDate', 'дд.мм.гггг', form.lastDate) + '</div>' +
       '</div>' +
-      '<span class="field-label">Напоминать за N км до срока</span>' +
+      '<span class="field-label">Напоминать за N ' + unitWord() + ' до срока</span>' +
       field('num', 'taskReminder', '1500', form.reminderKm) +
       '</div>' + addMoreBtn + saveBtn +
       (opts.confirmDeleteTask ? taskDeleteDialogHtml(form, opts) : '') +
@@ -1585,7 +1583,7 @@
       '<div class="notif-text">Kia Rio: пора заменить воздушный фильтр — осталось 700 км</div>' +
       '<div class="notif-caption">Повторно напомним не раньше чем через 3 дня — чтобы не спамить одной и той же работой</div></div></div>' +
       '<div class="setting-row"><button class="icon-btn">' + icon('gauge', 16) + '</button>' +
-      '<div class="setting-text"><div class="t1">Напоминать заранее</div><div class="t2">тыс. км до срока по умолчанию</div></div>' +
+      '<div class="setting-text"><div class="t1">Напоминать заранее</div><div class="t2">тыс. ' + unitWord() + ' до срока по умолчанию</div></div>' +
       '<div class="stepper"><button' + decAttr + '>' + icon('minus', 12) + '</button><span class="val">' + state.reminderDefault + '</span><button' + incAttr + '>' + icon('plus', 12) + '</button></div></div>' +
       '<div class="setting-row tappable"' + (opts.interactive ? ' data-open-time' : '') + '><button class="icon-btn">' + icon('gear', 16) + '</button>' +
       '<div class="setting-text"><div class="t1">Время напоминаний</div><div class="t2">Ежедневная проверка пробега</div></div>' +
@@ -1633,7 +1631,7 @@
         { interactive: false, cars: cars })) +
       phoneWrap('16', 'История: выбор авто', historyScreenHtml(cars, sold, { carId: null, carsOpen: true }, { interactive: false })) +
       phoneWrap('17', 'История: фильтр', historyScreenHtml(cars, sold,
-        { carId: 'c1', filterOpen: true, filters: { from: '01.01.2025', to: '31.12.2025', query: 'масло', kmFrom: '', kmTo: '' } }, { interactive: false })) +
+        { carId: 'c1', filterOpen: true, filters: { from: '01.01.2025', to: '31.12.2025', query: 'масл', kmFrom: '', kmTo: '' } }, { interactive: false })) +
       phoneWrap('18', 'История проданного авто', historyScreenHtml(cars, sold, { carId: 's1' }, { interactive: false })) +
       phoneWrap('19', 'Настройки: удаление авто', settingsScreenHtml(settingsState, { interactive: false, cars: cars, sold: sold, showEnd: true })) +
       phoneWrap('20', 'Полное удаление авто', settingsScreenHtml(
@@ -1663,6 +1661,7 @@
   function paintInteractive() {
     var root = document.getElementById('interactiveScreen');
     var detailCar = currentDetailCar();
+    MILES = istate.settings.unitsIdx === 1;
     /* перерисовка не должна сбрасывать прокрутку экрана, на котором пользователь остался */
     var prevView = root.querySelector('.view.active');
     var prevScroller = prevView ? prevView.querySelector(SCROLLABLE) : null;
@@ -1731,7 +1730,7 @@
       if (entry) {
         /* дата и пробег обязательны: с ошибкой запись не сохраняется, поле получает красную рамку */
         var dateInput = root.querySelector('#entryDate'), mileageInput = root.querySelector('#entryMileage');
-        var newDate = validIsoFromRu(dateInput.value), newMileage = parseInt(mileageInput.value, 10);
+        var newDate = validIsoFromRu(dateInput.value), newMileage = parseInt(mileageInput.value, 10) > 0 ? keepKm(entry.mileageKm, mileageInput.value) : NaN;
         dateInput.classList.toggle('error', !newDate); mileageInput.classList.toggle('error', !(newMileage > 0));
         if (!newDate || !(newMileage > 0)) return;
         if (newMileage !== entry.mileageKm) {
@@ -1856,7 +1855,7 @@
       b.addEventListener('click', function () {
         var def = PRESET_DEFS[b.getAttribute('data-task-preset')];
         syncTaskForm();
-        istate.taskForm.name = def.name; istate.taskForm.intervalKm = def.intervalKm; istate.taskForm.reminderKm = def.reminderKm;
+        istate.taskForm.name = def.name; istate.taskForm.intervalKm = toUnit(def.intervalKm); istate.taskForm.reminderKm = toUnit(def.reminderKm);
         paintInteractive();
       });
     });
@@ -1866,13 +1865,14 @@
       var f = istate.taskForm, car = currentDetailCar();
       if (blockInvalid(f)) { istate.taskFormErrors = true; paintInteractive(); return false; }
       var name = String(f.name).trim();
-      var intervalKm = parseInt(f.intervalKm, 10);
+      var stored = f.taskId ? car.tasks.find(function (t) { return t.id === f.taskId; }) : null;
+      var intervalKm = keepKm(stored && stored.intervalKm, f.intervalKm);
       var intervalMonths = f.intervalMonths ? parseInt(f.intervalMonths, 10) : undefined;
       var values = {
         name: name, icon: pickIcon(name), intervalKm: intervalKm, intervalMonths: intervalMonths,
-        lastKm: parseInt(f.lastKm, 10),
+        lastKm: keepKm(stored && stored.lastKm, f.lastKm),
         lastDate: intervalMonths ? isoFromRu(f.lastDate) : undefined,
-        reminderKm: f.reminderKm ? parseInt(f.reminderKm, 10) : Math.round(intervalKm * 0.15)
+        reminderKm: f.reminderKm ? keepKm(stored && stored.reminderKm, f.reminderKm) : Math.round(intervalKm * 0.15)
       };
       var existing = f.taskId ? car.tasks.find(function (t) { return t.id === f.taskId; }) : null;
       if (existing) {
@@ -1963,8 +1963,8 @@
     if (editMileageBtn) editMileageBtn.addEventListener('click', function () { cancelEditing(); istate.editingMileage = true; paintInteractive(); });
     var saveMileageBtn = root.querySelector('#saveMileageBtn');
     if (saveMileageBtn) saveMileageBtn.addEventListener('click', function () {
-      var val = parseInt(root.querySelector('#mileageEditInput').value, 10);
-      if (val) currentDetailCar().mileageKm = val;
+      var typed = root.querySelector('#mileageEditInput').value;
+      if (parseInt(typed, 10) > 0) currentDetailCar().mileageKm = keepKm(currentDetailCar().mileageKm, typed);
       istate.editingMileage = false; paintInteractive();
     });
 
@@ -2040,7 +2040,7 @@
         var def = PRESET_DEFS[b.getAttribute('data-preset')];
         syncForm();
         istate.scrollToBlock = istate.nextBlockN;
-        istate.taskBlocks.push({ n: istate.nextBlockN++, name: def.name, intervalKm: def.intervalKm, reminderKm: def.reminderKm });
+        istate.taskBlocks.push({ n: istate.nextBlockN++, name: def.name, intervalKm: toUnit(def.intervalKm), reminderKm: toUnit(def.reminderKm) });
         paintInteractive();
       });
     });
@@ -2064,15 +2064,16 @@
       var blocksValid = istate.taskBlocks.every(function (b) { return !blockInvalid(b); });
       /* пустое обязательное поле: форма не сохраняется, поля подсвечиваются красной рамкой */
       if (!brand || !(mileage > 0) || !blocksValid) { istate.formErrors = true; paintInteractive(); return; }
+      mileage = fromUnit(mileage);
       istate.formErrors = false;
       var vin = istate.form.vin.trim() || '—';
       var tasks = istate.taskBlocks.map(function (block, index) {
         var name = String(block.name).trim();
-        var intervalKm = parseInt(block.intervalKm, 10);
+        var intervalKm = fromUnit(parseInt(block.intervalKm, 10));
         var intervalMonths = block.intervalMonths ? parseInt(block.intervalMonths, 10) : undefined;
-        var lastKm = parseInt(block.lastKm, 10);
+        var lastKm = fromUnit(parseInt(block.lastKm, 10));
         var lastDateIso = intervalMonths ? isoFromRu(block.lastDate) : undefined;
-        var reminderKm = block.reminderKm ? parseInt(block.reminderKm, 10) : Math.round(intervalKm * 0.15);
+        var reminderKm = block.reminderKm ? fromUnit(parseInt(block.reminderKm, 10)) : Math.round(intervalKm * 0.15);
         return { id: 'nt' + index + Date.now(), name: name, icon: pickIcon(name), intervalKm: intervalKm, lastKm: lastKm, reminderKm: reminderKm, intervalMonths: intervalMonths, lastDate: lastDateIso };
       });
       if (tasks.length === 0) tasks.push({ id: 'nt0' + Date.now(), name: 'Замена масла и фильтра', icon: 'droplet', intervalKm: 10000, lastKm: mileage, reminderKm: 1500 });
