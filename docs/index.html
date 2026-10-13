@@ -232,6 +232,22 @@
   .history-row { padding: 12px 0; border-bottom: 1px solid var(--rule); }
   .history-row:last-child { border-bottom: none; }
   .history-row[data-open-entry] { cursor: pointer; }
+  .history-bar { position: relative; display: flex; align-items: center; gap: 8px; padding: 6px 18px 10px; flex-shrink: 0; }
+  .car-select { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 10px; padding: 11px 13px; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer; font-family: inherit; text-align: left; }
+  .car-select .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .car-select .chev { display: flex; color: var(--ink-faint); transform: rotate(-90deg); flex-shrink: 0; }
+  .car-select.open .chev { transform: rotate(90deg); }
+  .sold-car { color: var(--ink-faint); font-weight: 500; }
+  .filter-btn { position: relative; width: 42px; height: 42px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--rule); color: var(--ink-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .filter-btn.active { color: var(--accent); border-color: var(--accent); }
+  .filter-btn.active::after { content: ''; position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+  .car-menu { position: absolute; left: 18px; right: 18px; top: calc(100% - 6px); background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; box-shadow: var(--shadow); z-index: 6; padding: 4px 0; max-height: 250px; overflow-y: auto; }
+  .car-menu button { display: block; width: 100%; padding: 11px 14px; background: none; border: none; font-size: 13px; text-align: left; color: var(--ink); cursor: pointer; font-family: inherit; }
+  .car-menu button.selected { color: var(--accent); font-weight: 700; }
+  .car-menu button.sold-car.selected { color: var(--ink-muted); }
+  .history-car { color: var(--ink); font-weight: 600; font-family: var(--sans, inherit); }
+  .history-car.sold-car { color: var(--ink-faint); font-weight: 500; }
+  .filter-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .history-year { display: flex; align-items: center; gap: 12px; margin: 0 -18px; padding: 10px 0 9px; position: sticky; top: 0; z-index: 2; background: var(--bg); font-family: var(--display); font-weight: 800; font-size: 14px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
   .history-year::before, .history-year::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
   .history-month { border: 1px solid var(--rule); border-radius: 12px; padding: 0 12px 2px; margin: 0 0 12px; min-width: 0; }
@@ -447,7 +463,7 @@
       <div class="section-head"><span class="theme-dot" style="background:var(--accent);box-shadow:0 0 0 3px rgba(14,165,183,0.18)"></span><h2>Интерактивный макет</h2></div>
       <button class="theme-btn" id="themeBtn" aria-label="Переключить тему"></button>
     </div>
-    <p class="section-sub">Открывай авто, отмечай работы выполненными (с деталями и возможностью снять отметку), правь пробег тапом по значению, смотри историю ТО, добавляй новое авто с готовыми пресетами работ, открывай работу тапом по строке, добавляй работу кнопкой «+», меняй название и VIN тапом по ним и удаляй авто корзиной в топ-баре (с подтверждением) — тема переключается кнопкой справа.</p>
+    <p class="section-sub">Открывай авто, отмечай работы выполненными (с деталями и возможностью снять отметку), правь пробег тапом по значению, смотри общую историю ТО во вкладке «История» (выбор авто, фильтр, проданные авто), добавляй новое авто с готовыми пресетами работ, открывай работу тапом по строке, добавляй работу кнопкой «+», меняй название и VIN тапом по ним и удаляй авто корзиной в топ-баре (с подтверждением) — тема переключается кнопкой справа.</p>
     <div class="stage">
       <div class="route-pill" id="routeLabel">Мои авто</div>
       <button class="relaunch-btn" id="relaunchBtn" title="Имитирует закрытие и повторный запуск приложения">Перезапустить приложение</button>
@@ -459,7 +475,7 @@
   <!-- ================= LIGHT EXHIBIT ================= -->
   <div class="section-block panel locked-light">
     <div class="section-head"><span class="theme-dot light"></span><h2>Экраны · светлая тема</h2></div>
-    <p class="section-sub">Статичный набор — пять ключевых экранов приложения, окно подтверждения удаления авто, экраны редактирования и добавления работы, правка названия и VIN, выбор времени напоминаний, подсветка незаполненных полей, окно деталей выполненной работы, снятие отметки и запись истории ТО.</p>
+    <p class="section-sub">Статичный набор — пять ключевых экранов приложения, окно подтверждения удаления авто, экраны редактирования и добавления работы, правка названия и VIN, выбор времени напоминаний, подсветка незаполненных полей, окно деталей выполненной работы, снятие отметки, запись истории ТО, выбор авто и фильтр в истории.</p>
     <div class="gallery" id="galleryLight"></div>
   </div>
 
@@ -733,7 +749,7 @@
             <div class="component-meta"><div class="name">Сегмент-контрол</div><div class="pkg">&lt;Segmented options active /&gt;</div><div class="note">Группа взаимоисключающих кнопок: тема, единицы измерения.</div></div>
           </div>
           <div class="component-card">
-            <div class="component-preview"><div class="tabbar" style="border-top:none;width:210px;"><button class="active">Авто</button><button>Настройки</button></div></div>
+            <div class="component-preview"><div class="tabbar" style="border-top:none;width:210px;"><button class="active">Авто</button><button>История</button><button>Настройки</button></div></div>
             <div class="component-meta"><div class="name">Пункт таб-бара</div><div class="pkg">&lt;TabBarItem label icon active /&gt;</div><div class="note">Нижняя навигация, активный пункт подсвечен accent-цветом.</div></div>
           </div>
         </div>
@@ -923,6 +939,22 @@
     ]}
   ];
   function cloneCars() { return JSON.parse(JSON.stringify(INITIAL_CARS)); }
+  /* Удалённые (проданные) авто: работ у них уже нет, но история ТО остаётся */
+  var INITIAL_SOLD = [
+    { id: 's1', brand: 'Lada Granta', history: [
+      { id: 'g1', taskName: 'Замена масла и фильтра', date: '2022-03-12', mileageKm: 61000, costRub: 1900, service: 'Гараж на Садовой' },
+      { id: 'g2', taskName: 'Тормозные колодки (передние)', date: '2022-06-25', mileageKm: 66000, costRub: 3100, service: 'Гараж на Садовой' },
+      { id: 'g3', taskName: 'Замена масла и фильтра', date: '2022-11-05', mileageKm: 71000, costRub: 2000, service: 'Гараж на Садовой', comment: 'Последнее ТО перед продажей' }
+    ]}
+  ];
+  function cloneSold() { return JSON.parse(JSON.stringify(INITIAL_SOLD)); }
+  function emptyHistoryFilters() { return { from: '', to: '', query: '', kmFrom: '', kmTo: '' }; }
+  function tabbarHtml(active, opts) {
+    var tabs = [['cars', 'Авто'], ['history', 'История'], ['settings', 'Настройки']];
+    return '<nav class="tabbar">' + tabs.map(function (t) {
+      return '<button' + (t[0] === active ? ' class="active"' : '') + (opts.interactive ? ' data-tab="' + t[0] + '"' : '') + '>' + t[1] + '</button>';
+    }).join('') + '</nav>';
+  }
 
   function monthsBetween(fromISO, toISO) {
     var f = fromISO.split('-').map(Number), t = toISO.split('-').map(Number);
@@ -1009,9 +1041,7 @@
         '</div>';
     }).join('');
     var fab = '<button class="fab"' + (opts.interactive ? ' data-open-new' : '') + '>' + icon('plus', 21) + '</button>';
-    var tabbar = opts.interactive
-      ? '<nav class="tabbar"><button class="active" data-tab="cars">Авто</button><button data-tab="settings">Настройки</button></nav>'
-      : '<nav class="tabbar"><button class="active">Авто</button><button>Настройки</button></nav>';
+    var tabbar = tabbarHtml('cars', opts);
     return '<div class="view" data-view="cars">' +
       '<div class="s-topbar"><span></span><span></span></div>' +
       '<div class="s-title">Мои авто</div>' +
@@ -1028,7 +1058,7 @@
     return '<div class="dialog-scrim"' + scrimAttr + '><div class="dialog" role="alertdialog" aria-modal="true">' +
       '<div class="dialog-icon">' + icon('trash', 19) + '</div>' +
       '<div class="dialog-title">Удалить ' + car.brand + '?</div>' +
-      '<div class="dialog-text">Авто, его регламентные работы и история ТО будут удалены. Это действие нельзя отменить.</div>' +
+      '<div class="dialog-text">Авто и его регламентные работы будут удалены. История ТО сохранится в разделе «История» с пометкой «продано».</div>' +
       '<div class="dialog-actions"><button class="dialog-btn"' + cancelAttr + '>Отмена</button><button class="dialog-btn danger"' + confirmAttr + '>Удалить</button></div>' +
       '</div></div>';
   }
@@ -1178,38 +1208,102 @@
       '</div></div>';
   }
 
-  /* История разбита по годам (разделитель с годом по центру) и месяцам (рамка с подписью месяца), от новых к старым. */
-  function historyScreenHtml(car, opts) {
+  /* ---------------- dialog: history filter ---------------- */
+  function historyFilterDialogHtml(filters, opts) {
+    var cancelAttr = opts.interactive ? ' data-cancel-filter' : '';
+    function field(kind, id, placeholder, value) {
+      if (!opts.interactive) return '<div class="' + kind + '-input static">' + (value || placeholder) + '</div>';
+      return '<input class="' + kind + '-input" id="' + id + '"' + (kind === 'num' ? ' type="number"' : '') + ' placeholder="' + placeholder + '" value="' + (value || '') + '">';
+    }
+    return '<div class="dialog-scrim"' + cancelAttr + '><div class="dialog" role="dialog" aria-modal="true">' +
+      '<div class="dialog-icon accent">' + icon('filter', 19) + '</div>' +
+      '<div class="dialog-title">Фильтр</div>' +
+      '<div class="dialog-fields">' +
+      '<div><span class="mini-label">Период, с — по</span><div class="filter-pair">' + field('text', 'fltFrom', 'дд.мм.гггг', filters.from) + field('text', 'fltTo', 'дд.мм.гггг', filters.to) + '</div></div>' +
+      '<div><span class="mini-label">Поиск по названию работы</span>' + field('text', 'fltQuery', 'Например, масл', filters.query) + '</div>' +
+      '<div><span class="mini-label">Пробег, км, с — по</span><div class="filter-pair">' + field('num', 'fltKmFrom', '0', filters.kmFrom) + field('num', 'fltKmTo', '100000', filters.kmTo) + '</div></div>' +
+      '</div>' +
+      '<div class="dialog-actions"><button class="dialog-btn"' + (opts.interactive ? ' data-reset-filter' : '') + '>Сбросить</button><button class="dialog-btn primary"' + (opts.interactive ? ' data-apply-filter' : '') + '>Применить</button></div>' +
+      '</div></div>';
+  }
+  function historyFiltersActive(f) { return !!(f.from || f.to || String(f.query || '').trim() || f.kmFrom || f.kmTo); }
+
+  /* История — общий раздел по всем авто, включая удалённые (они серые, с пометкой «[продано]»).
+     Вверху всегда выпадающее поле с авто и кнопка фильтра; записи разбиты по годам и месяцам, от новых к старым. */
+  function historyScreenHtml(cars, sold, h, opts) {
     opts = opts || {};
-    var entries = (car.history || []).slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; });
-    function rowHtml(e) {
+    var filters = h.filters || emptyHistoryFilters();
+    var owners = cars.map(function (c) { return { id: c.id, brand: c.brand, sold: false, history: c.history || [] }; })
+      .concat(sold.map(function (c) { return { id: c.id, brand: c.brand, sold: true, history: c.history || [] }; }));
+    var selected = h.carId ? owners.find(function (o) { return o.id === h.carId; }) : null;
+    var entries = [];
+    owners.forEach(function (o) {
+      if (selected && o.id !== selected.id) return;
+      o.history.forEach(function (e) { entries.push({ e: e, owner: o }); });
+    });
+    var total = entries.length;
+    var fromIso = isoFromRu(filters.from), toIso = isoFromRu(filters.to);
+    var query = String(filters.query || '').trim().toLowerCase();
+    var kmFrom = parseInt(filters.kmFrom, 10), kmTo = parseInt(filters.kmTo, 10);
+    entries = entries.filter(function (x) {
+      var e = x.e;
+      if (fromIso && e.date < fromIso) return false;
+      if (toIso && e.date > toIso) return false;
+      if (query && e.taskName.toLowerCase().indexOf(query) === -1) return false;
+      if (kmFrom >= 0 && e.mileageKm < kmFrom) return false;
+      if (kmTo >= 0 && e.mileageKm > kmTo) return false;
+      return true;
+    }).sort(function (a, b) { return a.e.date < b.e.date ? 1 : -1; });
+    function ownerLabel(o) { return o.brand + (o.sold ? ' [продано]' : ''); }
+    function rowHtml(x) {
+      var e = x.e;
       return '<div class="history-row"' + (opts.interactive ? ' data-open-entry="' + e.id + '"' : '') + '><div class="history-top"><span class="history-name">' + e.taskName + '</span><span class="history-date">' + formatDateRu(e.date) + '</span></div>' +
-        '<div class="history-meta"><span>' + fmtKm(e.mileageKm) + '</span>' +
+        '<div class="history-meta">' +
+        (selected ? '' : '<span class="history-car' + (x.owner.sold ? ' sold-car' : '') + '">' + ownerLabel(x.owner) + '</span>') +
+        '<span>' + fmtKm(e.mileageKm) + '</span>' +
         (e.costRub ? '<span>' + e.costRub.toLocaleString('ru-RU') + ' ₽</span>' : '') +
         (e.service ? '<span>' + e.service + '</span>' : '') + '</div>' +
         (e.comment ? '<div class="history-comment">' + e.comment + '</div>' : '') + '</div>';
     }
     var html = '', lastYear = null, lastMonth = null;
-    entries.forEach(function (e) {
-      var year = e.date.slice(0, 4), month = e.date.slice(0, 7);
+    entries.forEach(function (x) {
+      var year = x.e.date.slice(0, 4), month = x.e.date.slice(0, 7);
       if (month !== lastMonth) {
         if (lastMonth !== null) html += '</fieldset>';
         if (year !== lastYear) html += '<div class="history-year">' + year + '</div>';
-        html += '<fieldset class="history-month"><legend>' + MONTH_NAMES[+e.date.slice(5, 7) - 1] + '</legend>';
+        html += '<fieldset class="history-month"><legend>' + MONTH_NAMES[+x.e.date.slice(5, 7) - 1] + '</legend>';
         lastYear = year; lastMonth = month;
       }
-      html += rowHtml(e);
+      html += rowHtml(x);
     });
     if (lastMonth !== null) html += '</fieldset>';
-    var rows = entries.length ? html : '<div class="history-empty">Пока нет записей — отметьте работу выполненной на экране авто, и она появится здесь</div>';
-    var backAttr = opts.interactive ? ' data-back="detail"' : '';
-    var openEntry = opts.entryId ? entries.find(function (e) { return e.id === opts.entryId; }) : null;
+    var rows = entries.length ? html : '<div class="history-empty">' + (total
+      ? 'Ничего не найдено — измените фильтр'
+      : 'Пока нет записей — отметьте работу выполненной на экране авто, и она появится здесь') + '</div>';
+    var menu = '';
+    if (h.carsOpen) {
+      menu = '<div class="car-menu">' +
+        '<button' + (selected ? '' : ' class="selected"') + (opts.interactive ? ' data-history-car="all"' : '') + '>Все авто</button>' +
+        owners.map(function (o) {
+          var cls = [(o.sold ? 'sold-car' : ''), (selected && selected.id === o.id ? 'selected' : '')].join(' ').trim();
+          return '<button' + (cls ? ' class="' + cls + '"' : '') + (opts.interactive ? ' data-history-car="' + o.id + '"' : '') + '>' + ownerLabel(o) + '</button>';
+        }).join('') + '</div>';
+    }
+    var bar = '<div class="history-bar">' +
+      '<button class="car-select' + (h.carsOpen ? ' open' : '') + '"' + (opts.interactive ? ' data-toggle-cars' : '') + '>' +
+      '<span class="label' + (selected && selected.sold ? ' sold-car' : '') + '">' + (selected ? ownerLabel(selected) : 'Все авто') + '</span>' +
+      '<span class="chev">' + icon('chevronLeft', 14) + '</span></button>' +
+      '<button class="filter-btn' + (historyFiltersActive(filters) ? ' active' : '') + '"' + (opts.interactive ? ' data-open-filter' : '') + ' aria-label="Фильтр">' + icon('filter', 17) + '</button>' +
+      menu + '</div>';
+    var openEntry = h.entryId ? entries.find(function (x) { return x.e.id === h.entryId; }) : null;
     return '<div class="view" data-view="history">' +
-      '<div class="s-topbar"><button class="icon-btn"' + backAttr + '>' + icon('chevronLeft', 16) + '</button><span></span></div>' +
-      '<div class="detail-title">История ТО</div>' +
-      '<div class="detail-vin">' + car.brand + '</div>' +
+      '<div class="s-topbar"><span></span><span></span></div>' +
+      '<div class="s-title">История ТО</div>' +
+      bar +
       '<div class="history-list">' + rows + '</div>' +
-      (openEntry ? historyEntryDialogHtml(openEntry, opts) : '') +
+      tabbarHtml('history', opts) +
+      (openEntry ? historyEntryDialogHtml(openEntry.e, opts) : '') +
+      (h.filterOpen ? historyFilterDialogHtml(h.filterDraft || filters, opts) : '') +
       '</div>';
   }
 
@@ -1396,9 +1490,7 @@
         return '<button class="' + (i === activeIdx ? 'active' : '') + '"' + attr + '>' + o + '</button>';
       }).join('') + '</div>';
     }
-    var tabbar = opts.interactive
-      ? '<nav class="tabbar"><button data-tab="cars">Авто</button><button class="active" data-tab="settings">Настройки</button></nav>'
-      : '<nav class="tabbar"><button>Авто</button><button class="active">Настройки</button></nav>';
+    var tabbar = tabbarHtml('settings', opts);
     var pushAttr = opts.interactive ? ' id="pushSwitch"' : '';
     var decAttr = opts.interactive ? ' data-step="-1"' : '';
     var incAttr = opts.interactive ? ' data-step="1"' : '';
@@ -1453,6 +1545,7 @@
 
   function renderStaticGallery(containerId) {
     var cars = cloneCars();
+    var sold = cloneSold();
     var markedCar = cloneCars()[0];
     markedCar.tasks.forEach(function (t) {
       if (t.id === 't3') { t.lastKm = markedCar.mileageKm; t.doneMark = { mileageKm: markedCar.mileageKm }; }
@@ -1462,7 +1555,7 @@
       phoneWrap('01', 'Мои авто', carsScreenHtml(cars, { interactive: false })) +
       phoneWrap('02', 'Добавление авто', newScreenHtml({ interactive: false }, [{ n: 1 }])) +
       phoneWrap('03', 'Регламентные работы', detailScreenHtml(cars[0], { interactive: false })) +
-      phoneWrap('04', 'История ТО', historyScreenHtml(cars[0], { interactive: false })) +
+      phoneWrap('04', 'История ТО', historyScreenHtml(cars, sold, { carId: null }, { interactive: false })) +
       phoneWrap('05', 'Настройки', settingsScreenHtml(settingsState, { interactive: false, cars: cars })) +
       phoneWrap('06', 'Удаление авто', detailScreenHtml(cars[0], { interactive: false, confirmDelete: true })) +
       phoneWrap('07', 'Редактирование работы', taskScreenHtml(cars[0], taskToBlock(cars[0].tasks[0], 1, true), { interactive: false })) +
@@ -1475,17 +1568,23 @@
       phoneWrap('11', 'Снятие отметки', detailScreenHtml(markedCar, { interactive: false, unmarkTaskId: 't3' })) +
       phoneWrap('12', 'Новая работа', taskScreenHtml(cars[0], emptyTaskForm(), { interactive: false })) +
       phoneWrap('13', 'Название и VIN', detailScreenHtml(cars[0], { interactive: false, editingBrand: true })) +
-      phoneWrap('14', 'Запись истории', historyScreenHtml(cars[0], { interactive: false, entryId: 'h4' })) +
+      phoneWrap('14', 'Запись истории', historyScreenHtml(cars, sold, { carId: 'c1', entryId: 'h4' }, { interactive: false })) +
       phoneWrap('15', 'Открывать по умолчанию', settingsScreenHtml(
         { themeIdx: settingsState.themeIdx, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00', openDefault: true, defaultCarId: 'c2' },
-        { interactive: false, cars: cars }));
+        { interactive: false, cars: cars })) +
+      phoneWrap('16', 'История: выбор авто', historyScreenHtml(cars, sold, { carId: null, carsOpen: true }, { interactive: false })) +
+      phoneWrap('17', 'История: фильтр', historyScreenHtml(cars, sold,
+        { carId: 'c1', filterOpen: true, filters: { from: '01.01.2025', to: '31.12.2025', query: 'масл', kmFrom: '', kmTo: '' } }, { interactive: false })) +
+      phoneWrap('18', 'История проданного авто', historyScreenHtml(cars, sold, { carId: 's1' }, { interactive: false }));
   }
   renderStaticGallery('galleryLight');
   renderStaticGallery('galleryDark');
 
   /* ================= interactive copy ================= */
   var cars = cloneCars();
+  var soldCars = cloneSold();
   var istate = {
+    history: { carId: null, carsOpen: false, filterOpen: false, filters: emptyHistoryFilters() },
     screen: 'cars', detailId: null, editingMileage: false, confirmDelete: false,
     taskBlocks: [], nextBlockN: 1, form: { brand: '', mileage: '', vin: '' }, formErrors: false,
     doneTaskId: null, unmarkTaskId: null, editingBrand: false, editingVin: false, brandError: false,
@@ -1508,7 +1607,10 @@
     root.innerHTML =
       carsScreenHtml(cars, { interactive: true }) +
       (detailCar ? detailScreenHtml(detailCar, { interactive: true, editingMileage: istate.editingMileage, confirmDelete: istate.confirmDelete, doneTaskId: istate.doneTaskId, unmarkTaskId: istate.unmarkTaskId, editingBrand: istate.editingBrand, editingVin: istate.editingVin }) : '') +
-      (detailCar ? historyScreenHtml(detailCar, { interactive: true, entryId: istate.historyEntryId }) : '') +
+      historyScreenHtml(cars, soldCars, {
+        carId: istate.history.carId, carsOpen: istate.history.carsOpen, filterOpen: istate.history.filterOpen,
+        filters: istate.history.filters, entryId: istate.historyEntryId
+      }, { interactive: true }) +
       (detailCar && istate.taskForm ? taskScreenHtml(detailCar, istate.taskForm, { interactive: true, showErrors: istate.taskFormErrors, confirmDeleteTask: istate.confirmDeleteTask }) : '') +
       newScreenHtml({ interactive: true, form: istate.form, showErrors: istate.formErrors }, istate.taskBlocks) +
       settingsScreenHtml(istate.settings, { interactive: true, cars: cars });
@@ -1551,12 +1653,18 @@
       b.addEventListener('click', function () { istate.screen = b.getAttribute('data-back'); paintInteractive(); });
     });
     root.querySelectorAll('.tabbar button[data-tab]').forEach(function (b) {
-      b.addEventListener('click', function () { istate.screen = b.getAttribute('data-tab'); paintInteractive(); });
+      b.addEventListener('click', function () {
+        istate.history.carsOpen = false; istate.history.filterOpen = false; istate.historyEntryId = null;
+        istate.screen = b.getAttribute('data-tab'); paintInteractive();
+      });
     });
     var openHistoryBtn = root.querySelector('[data-open-history]');
     var saveEntryBtn = root.querySelector('[data-save-entry]');
     if (saveEntryBtn) saveEntryBtn.addEventListener('click', function () {
-      var entry = (currentDetailCar().history || []).find(function (h) { return h.id === istate.historyEntryId; });
+      var entry = null;
+      cars.concat(soldCars).forEach(function (c) {
+        (c.history || []).forEach(function (h) { if (h.id === istate.historyEntryId) entry = h; });
+      });
       if (entry) {
         var cost = parseInt(root.querySelector('#entryCost').value, 10);
         entry.service = root.querySelector('#entryService').value.trim() || null;
@@ -1565,7 +1673,40 @@
       }
       istate.historyEntryId = null; paintInteractive();
     });
-    if (openHistoryBtn) openHistoryBtn.addEventListener('click', function () { istate.historyEntryId = null; istate.screen = 'history'; paintInteractive(); });
+    /* часы на карточке авто — быстрый переход в раздел «История» с уже выбранным этим авто */
+    if (openHistoryBtn) openHistoryBtn.addEventListener('click', function () {
+      istate.historyEntryId = null; istate.history.carId = currentDetailCar().id; istate.history.carsOpen = false; istate.history.filterOpen = false;
+      istate.resetScroll = true; istate.screen = 'history'; paintInteractive();
+    });
+    var toggleCarsBtn = root.querySelector('[data-toggle-cars]');
+    if (toggleCarsBtn) toggleCarsBtn.addEventListener('click', function () { istate.history.carsOpen = !istate.history.carsOpen; paintInteractive(); });
+    root.querySelectorAll('[data-history-car]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-history-car');
+        istate.history.carId = id === 'all' ? null : id; istate.history.carsOpen = false; istate.resetScroll = true; paintInteractive();
+      });
+    });
+    var openFilterBtn = root.querySelector('[data-open-filter]');
+    if (openFilterBtn) openFilterBtn.addEventListener('click', function () { istate.history.carsOpen = false; istate.history.filterOpen = true; paintInteractive(); });
+    root.querySelectorAll('[data-cancel-filter]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        if (e.target !== el) return;
+        istate.history.filterOpen = false; paintInteractive();
+      });
+    });
+    var applyFilterBtn = root.querySelector('[data-apply-filter]');
+    if (applyFilterBtn) applyFilterBtn.addEventListener('click', function () {
+      istate.history.filters = {
+        from: root.querySelector('#fltFrom').value.trim(), to: root.querySelector('#fltTo').value.trim(),
+        query: root.querySelector('#fltQuery').value.trim(),
+        kmFrom: root.querySelector('#fltKmFrom').value.trim(), kmTo: root.querySelector('#fltKmTo').value.trim()
+      };
+      istate.history.filterOpen = false; istate.resetScroll = true; paintInteractive();
+    });
+    var resetFilterBtn = root.querySelector('[data-reset-filter]');
+    if (resetFilterBtn) resetFilterBtn.addEventListener('click', function () {
+      istate.history.filters = emptyHistoryFilters(); istate.history.filterOpen = false; istate.resetScroll = true; paintInteractive();
+    });
     root.querySelectorAll('[data-open-entry]').forEach(function (row) {
       row.addEventListener('click', function () { istate.historyEntryId = row.getAttribute('data-open-entry'); paintInteractive(); });
     });
@@ -1695,7 +1836,9 @@
     });
     var confirmDeleteBtn = root.querySelector('[data-confirm-delete]');
     if (confirmDeleteBtn) confirmDeleteBtn.addEventListener('click', function () {
-      var id = currentDetailCar().id;
+      var deleted = currentDetailCar(), id = deleted.id;
+      /* авто удаляется вместе с работами, но его история остаётся в разделе «История» */
+      soldCars.unshift({ id: deleted.id, brand: deleted.brand, history: deleted.history || [] });
       cars = cars.filter(function (c) { return c.id !== id; });
       /* удалённое авто больше не открывается при запуске */
       if (istate.lastOpenedCarId === id) istate.lastOpenedCarId = null;
@@ -1904,7 +2047,7 @@
     var target = carById(st.openDefault ? st.defaultCarId : istate.lastOpenedCarId);
     istate.editingMileage = false; istate.editingBrand = false; istate.editingVin = false; istate.brandError = false;
     istate.confirmDelete = false; istate.doneTaskId = null; istate.unmarkTaskId = null; istate.historyEntryId = null;
-    istate.taskForm = null; st.timeDraft = null;
+    istate.taskForm = null; st.timeDraft = null; istate.history.carsOpen = false; istate.history.filterOpen = false;
     istate.detailId = target ? target.id : null;
     istate.screen = target ? 'detail' : 'cars';
     paintInteractive();
