@@ -189,7 +189,9 @@
   .stat-block .stat-num { font-family: var(--display); font-weight: 800; font-size: 22px; margin-top: 4px; display: flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
   .stat-num-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 4px; }
   .stat-num-row .stat-num { margin-top: 0; }
-  .mileage-edit-btn { width: 23px; height: 23px; border-radius: 50%; background: var(--surface-2); border: none; color: var(--ink-faint); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .stat-icon { color: var(--ink-faint); display: flex; flex-shrink: 0; }
+  .mileage-value { font-family: var(--display); font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; color: var(--ink); background: none; border: none; border-bottom: 1px dashed var(--ink-faint); padding: 0 0 1px; cursor: pointer; }
+  span.mileage-value { cursor: default; }
   .stat-edit-row { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
   .stat-edit-row input {
     flex: 1; min-width: 0; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 8px;
@@ -211,6 +213,7 @@
   .task-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
   .mark-done-btn { display: flex; align-items: center; gap: 5px; border: none; background: none; color: var(--accent); font-size: 11.5px; font-weight: 700; cursor: pointer; padding: 4px 2px; }
   .mark-done-btn svg.i { width: 12px; height: 12px; }
+  .mark-done-btn.done { color: var(--tier-ok); background: color-mix(in srgb, var(--tier-ok) 14%, transparent); border-radius: 999px; padding: 4px 10px; }
 
   /* ---------- History ---------- */
   .history-list { flex: 1; overflow-y: auto; padding: 8px 18px 18px; }
@@ -249,6 +252,12 @@
     padding: 12px 13px; font-size: 13px; color: var(--ink); font-family: inherit;
   }
   .text-input.static { color: var(--ink-faint); }
+  .text-input.error, .num-input.error, .text-input.error:focus, .num-input.error:focus { border-color: var(--tier-due); }
+  .dialog-fields { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+  .dialog-fields .text-input, .dialog-fields .num-input { width: 100%; margin: 0; }
+  .dialog-fields textarea.text-input, .dialog-fields .text-input.multiline { min-height: 58px; resize: none; line-height: 1.4; }
+  .dialog-fields .mini-label { margin-bottom: 5px; display: block; }
+  .history-comment { font-size: 11.5px; color: var(--ink-muted); margin-top: 5px; line-height: 1.45; }
   .text-input::placeholder, .num-input::placeholder { color: var(--ink-faint); }
   .row-2 { display: flex; gap: 10px; padding: 0 18px; margin-bottom: 0; }
   .row-2 > div { flex: 1; min-width: 0; }
@@ -407,7 +416,7 @@
       <div class="section-head"><span class="theme-dot" style="background:var(--accent);box-shadow:0 0 0 3px rgba(14,165,183,0.18)"></span><h2>Интерактивный макет</h2></div>
       <button class="theme-btn" id="themeBtn" aria-label="Переключить тему"></button>
     </div>
-    <p class="section-sub">Открывай авто, отмечай работы выполненными, правь пробег на ходу, смотри историю ТО, добавляй новое авто с готовыми пресетами работ, редактируй авто и его работы карандашом в топ-баре и удаляй авто корзиной в топ-баре (с подтверждением) — тема переключается кнопкой справа.</p>
+    <p class="section-sub">Открывай авто, отмечай работы выполненными (с деталями и возможностью снять отметку), правь пробег тапом по значению, смотри историю ТО, добавляй новое авто с готовыми пресетами работ, редактируй авто и его работы карандашом в топ-баре и удаляй авто корзиной в топ-баре (с подтверждением) — тема переключается кнопкой справа.</p>
     <div class="stage">
       <div class="route-pill" id="routeLabel">Мои авто</div>
       <div class="phone lg interactive"><div class="notch"></div><div class="screen" id="interactiveScreen"></div></div>
@@ -418,7 +427,7 @@
   <!-- ================= LIGHT EXHIBIT ================= -->
   <div class="section-block panel locked-light">
     <div class="section-head"><span class="theme-dot light"></span><h2>Экраны · светлая тема</h2></div>
-    <p class="section-sub">Статичный набор — пять ключевых экранов приложения, окно подтверждения удаления авто, форма редактирования авто и выбор времени напоминаний.</p>
+    <p class="section-sub">Статичный набор — пять ключевых экранов приложения, окно подтверждения удаления авто, форма редактирования авто, выбор времени напоминаний, подсветка незаполненных полей, окно деталей выполненной работы и снятие отметки.</p>
     <div class="gallery" id="galleryLight"></div>
   </div>
 
@@ -665,8 +674,12 @@
     <div class="component-groups">
 
       <div>
-        <div class="component-group-title">Кнопки <span class="cnt">6 шт.</span></div>
+        <div class="component-group-title">Кнопки <span class="cnt">7 шт.</span></div>
         <div class="component-grid">
+          <div class="component-card">
+            <div class="component-preview" style="flex-direction:column;gap:10px;"><button class="mark-done-btn"><span class="icon-slot" data-icon="check" data-size="12"></span> Отметить выполненной</button><button class="mark-done-btn done"><span class="icon-slot" data-icon="check" data-size="12"></span> Выполнено</button></div>
+            <div class="component-meta"><div class="name">Отметка работы</div><div class="pkg">&lt;MarkDoneButton done onClick /&gt;</div><div class="note">Два состояния: «Отметить выполненной» открывает окно с деталями, «Выполнено» (пока пробег не изменился) — окно снятия отметки.</div></div>
+          </div>
           <div class="component-card">
             <div class="component-preview"><button class="save-btn" style="width:auto;margin:0;padding:11px 22px;">Сохранить авто</button></div>
             <div class="component-meta"><div class="name">Основная кнопка</div><div class="pkg">&lt;PrimaryButton label /&gt;</div><div class="note">Full-width, accent-фон, используется как финальное действие формы.</div></div>
@@ -695,8 +708,12 @@
       </div>
 
       <div>
-        <div class="component-group-title">Поля <span class="cnt">4 шт.</span></div>
+        <div class="component-group-title">Поля <span class="cnt">5 шт.</span></div>
         <div class="component-grid">
+          <div class="component-card">
+            <div class="component-preview"><div class="text-input static error" style="width:180px;margin:0;">Например, Kia Rio</div></div>
+            <div class="component-meta"><div class="name">Поле с ошибкой</div><div class="pkg">&lt;TextField isError /&gt;</div><div class="note">Красная рамка у пустого обязательного поля после нажатия «Сохранить»; пропадает, когда поле заполнили.</div></div>
+          </div>
           <div class="component-card">
             <div class="component-preview"><div class="text-input static" style="width:180px;margin:0;">Kia Rio</div></div>
             <div class="component-meta"><div class="name">Текстовое поле</div><div class="pkg">&lt;TextField label placeholder /&gt;</div><div class="note">Марка, VIN, название работы, дата (как текст).</div></div>
@@ -711,7 +728,7 @@
           </div>
           <div class="component-card">
             <div class="component-preview"><div class="stat-edit-row" style="width:170px;"><input value="84300"><button><span class="icon-slot" data-icon="check" data-size="14"></span></button></div></div>
-            <div class="component-meta"><div class="name">Инлайн-редактирование</div><div class="pkg">&lt;InlineEditField value onSave /&gt;</div><div class="note">Быстрое обновление пробега прямо на экране авто, без формы.</div></div>
+            <div class="component-meta"><div class="name">Инлайн-редактирование</div><div class="pkg">&lt;InlineEditField value onSave /&gt;</div><div class="note">Быстрое обновление пробега прямо на экране авто: появляется по тапу на значение пробега.</div></div>
           </div>
         </div>
       </div>
@@ -835,7 +852,7 @@
       { id: 'h1', taskName: 'Тормозные колодки (передние)', date: '2025-01-10', mileageKm: 50000, costRub: 850, service: 'Kia Центр' },
       { id: 'h2', taskName: 'Тормозные колодки (передние)', date: '2025-06-02', mileageKm: 60000, costRub: 5200, service: 'Kia Центр' },
       { id: 'h3', taskName: 'Воздушный фильтр', date: '2025-09-10', mileageKm: 70000, costRub: 900, service: 'АвтоСервис Юг' },
-      { id: 'h4', taskName: 'Замена масла и фильтра', date: '2026-01-15', mileageKm: 78000, costRub: 2400, service: 'АвтоСервис Юг' }
+      { id: 'h4', taskName: 'Замена масла и фильтра', date: '2026-01-15', mileageKm: 78000, costRub: 2400, service: 'АвтоСервис Юг', comment: 'Масло 5W-30, заодно поменяли салонный фильтр' }
     ]},
     { id: 'c2', brand: 'Toyota Camry', mileageKm: 152000, vin: 'JT2BF22K1W0123456', tasks: [
       { id: 't5', name: 'Свечи зажигания', icon: 'wrench', intervalKm: 40000, lastKm: 110000, reminderKm: 2000 },
@@ -965,6 +982,39 @@
       '</div></div>';
   }
 
+  /* ---------------- dialog: task done details ---------------- */
+  function taskDoneDialogHtml(task, opts) {
+    var cancelAttr = opts.interactive ? ' data-cancel-done' : '';
+    var saveAttr = opts.interactive ? ' data-save-done' : '';
+    var fields = opts.interactive
+      ? '<div><span class="mini-label">Где обслуживались</span><input class="text-input" id="doneService" placeholder="Например, АвтоСервис Юг"></div>' +
+        '<div><span class="mini-label">Сколько стоило, ₽</span><input class="num-input" id="doneCost" type="number" placeholder="2400"></div>' +
+        '<div><span class="mini-label">Комментарий</span><textarea class="text-input" id="doneComment" placeholder="Что меняли, какие запчасти"></textarea></div>'
+      : '<div><span class="mini-label">Где обслуживались</span><div class="text-input static">АвтоСервис Юг</div></div>' +
+        '<div><span class="mini-label">Сколько стоило, ₽</span><div class="num-input static">900</div></div>' +
+        '<div><span class="mini-label">Комментарий</span><div class="text-input static multiline">Что меняли, какие запчасти</div></div>';
+    return '<div class="dialog-scrim"' + cancelAttr + '><div class="dialog" role="dialog" aria-modal="true">' +
+      '<div class="dialog-icon accent">' + icon('check', 19) + '</div>' +
+      '<div class="dialog-title">Работа выполнена</div>' +
+      '<div class="dialog-text">' + task.name + '. Все поля необязательные — их можно оставить пустыми.</div>' +
+      '<div class="dialog-fields">' + fields + '</div>' +
+      '<div class="dialog-actions"><button class="dialog-btn"' + cancelAttr + '>Отмена</button><button class="dialog-btn primary"' + saveAttr + '>Сохранить</button></div>' +
+      '</div></div>';
+  }
+
+  /* ---------------- dialog: remove the done mark ---------------- */
+  function unmarkDialogHtml(opts) {
+    var cancelAttr = opts.interactive ? ' data-cancel-unmark' : '';
+    var confirmAttr = opts.interactive ? ' data-confirm-unmark' : '';
+    return '<div class="dialog-scrim"' + cancelAttr + '><div class="dialog" role="alertdialog" aria-modal="true">' +
+      '<div class="dialog-icon accent">' + icon('check', 19) + '</div>' +
+      '<div class="dialog-title">Снять отметку?</div>' +
+      '<div class="dialog-text">Вы уверены, что хотите снять отметку о выполнении работ? Работа вернётся к прежнему сроку, запись из истории ТО будет удалена.</div>' +
+      '<div class="dialog-actions"><button class="dialog-btn"' + cancelAttr + '>Отмена</button><button class="dialog-btn primary"' + confirmAttr + '>Ok</button></div>' +
+      '</div></div>';
+  }
+  function isMarkedDone(car, task) { return !!task.doneMark && task.doneMark.mileageKm === car.mileageKm; }
+
   /* ---------------- dialog: reminder time ---------------- */
   function pad2(n) { return ('0' + n).slice(-2); }
   function timeDialogHtml(draft, opts) {
@@ -994,13 +1044,17 @@
     var rows = sortedTaskStats(car).map(function (x) {
       var t = x.t, st = x.st;
       var color = tierVar(st.status);
-      var doneAttr = opts.interactive ? ' data-mark-done="' + t.id + '"' : '';
+      var marked = isMarkedDone(car, t);
+      var doneAttr = opts.interactive ? (marked ? ' data-unmark="' : ' data-mark-done="') + t.id + '"' : '';
+      var doneBtn = marked
+        ? '<button class="mark-done-btn done"' + doneAttr + '>' + icon('check', 12) + ' Выполнено</button>'
+        : '<button class="mark-done-btn"' + doneAttr + '>' + icon('check', 12) + ' Отметить выполненной</button>';
       return '<div class="task-row">' +
         '<div class="task-top"><div class="task-icon">' + icon(t.icon, 16) + '</div>' +
         '<div class="task-main"><div class="task-name">' + t.name + '</div><div class="task-meta">' + taskMetaText(st) + ' · каждые ' + fmtKm(t.intervalKm) + '</div></div>' +
         '<span class="task-status-chip" style="background:' + color + ';color:var(--on-tier)">' + tierLabel(st.status) + '</span></div>' +
         '<div class="task-track"><div class="task-fill" style="width:' + Math.round(st.frac * 100) + '%;background:' + color + '"></div></div>' +
-        '<div class="task-actions"><button class="mark-done-btn"' + doneAttr + '>' + icon('check', 12) + ' Отметить выполненной</button></div>' +
+        '<div class="task-actions">' + doneBtn + '</div>' +
         '</div>';
     }).join('');
     var backAttr = opts.interactive ? ' data-back="cars"' : '';
@@ -1012,9 +1066,11 @@
       mileageBlock = '<div class="stat-edit-row"><input type="number" id="mileageEditInput" value="' + car.mileageKm + '">' +
         '<button id="saveMileageBtn">' + icon('check', 14) + '</button></div>';
     } else {
-      var editAttr = opts.interactive ? ' data-edit-mileage' : '';
-      mileageBlock = '<div class="stat-num-row"><div class="stat-num">' + icon('gauge', 16) + '<span>' + car.mileageKm.toLocaleString('ru-RU') + '</span></div>' +
-        '<button class="mileage-edit-btn"' + editAttr + '>' + icon('pencil', 11) + '</button></div>';
+      var mileageText = car.mileageKm.toLocaleString('ru-RU');
+      mileageBlock = '<div class="stat-num-row"><span class="stat-icon">' + icon('gauge', 24) + '</span>' +
+        (opts.interactive
+          ? '<button class="mileage-value" data-edit-mileage aria-label="Изменить пробег">' + mileageText + '</button>'
+          : '<span class="mileage-value">' + mileageText + '</span>') + '</div>';
     }
     return '<div class="view" data-view="detail">' +
       '<div class="s-topbar"><button class="icon-btn"' + backAttr + '>' + icon('chevronLeft', 16) + '</button>' +
@@ -1027,6 +1083,8 @@
       '</div>' +
       '<div class="task-list">' + rows + '</div>' +
       (opts.confirmDelete ? deleteDialogHtml(car, opts) : '') +
+      (opts.doneTaskId ? taskDoneDialogHtml(car.tasks.find(function (t) { return t.id === opts.doneTaskId; }), opts) : '') +
+      (opts.unmarkTaskId ? unmarkDialogHtml(opts) : '') +
       '</div>';
   }
 
@@ -1038,7 +1096,8 @@
       return '<div class="history-row"><div class="history-top"><span class="history-name">' + e.taskName + '</span><span class="history-date">' + formatDateRu(e.date) + '</span></div>' +
         '<div class="history-meta"><span>' + fmtKm(e.mileageKm) + '</span>' +
         (e.costRub ? '<span>' + e.costRub.toLocaleString('ru-RU') + ' ₽</span>' : '') +
-        (e.service ? '<span>' + e.service + '</span>' : '') + '</div></div>';
+        (e.service ? '<span>' + e.service + '</span>' : '') + '</div>' +
+        (e.comment ? '<div class="history-comment">' + e.comment + '</div>' : '') + '</div>';
     }).join('') : '<div class="history-empty">Пока нет записей — отметьте работу выполненной на экране авто, и она появится здесь</div>';
     var backAttr = opts.interactive ? ' data-back="detail"' : '';
     return '<div class="view" data-view="history">' +
@@ -1067,6 +1126,9 @@
     belt: { name: 'Ремень ГРМ', intervalKm: 60000, reminderKm: 5000 }
   };
 
+  function blockNameMissing(block) { return !String(block.name || '').trim(); }
+  function blockIntervalMissing(block) { return !(parseInt(block.intervalKm, 10) > 0); }
+
   function taskBlockHtml(block, opts) {
     block = block || {};
     var n = block.n;
@@ -1078,9 +1140,9 @@
     if (!opts.interactive) {
       return '<div class="task-block">' +
         '<div class="task-block-head"><span class="task-block-title">Работа ' + n + '</span><button class="icon-btn">' + icon('trash', 14) + '</button></div>' +
-        '<div class="text-input static">' + staticVal(block.name, 'Замена масла и фильтра') + '</div>' +
+        '<div class="text-input static' + (block.errorName ? ' error' : '') + '">' + staticVal(block.name, 'Замена масла и фильтра') + '</div>' +
         '<div class="mini-row">' +
-        '<div><span class="mini-label">Интервал замены, км</span><div class="num-input static">' + staticVal(block.intervalKm, '10 000') + '</div></div>' +
+        '<div><span class="mini-label">Интервал замены, км</span><div class="num-input static' + (block.errorInterval ? ' error' : '') + '">' + staticVal(block.intervalKm, '10 000') + '</div></div>' +
         '<div><span class="mini-label">Интервал по времени, мес (опц.)</span><div class="num-input static">' + staticVal(block.intervalMonths, '12') + '</div></div>' +
         '</div>' +
         '<div class="mini-row">' +
@@ -1090,11 +1152,13 @@
         '<span class="mini-label">Напоминать за N тыс. км до срока</span><div class="num-input static">' + staticVal(block.reminderKm, '1 500') + '</div>' +
         '</div>';
     }
+    var nameError = opts.showErrors && blockNameMissing(block) ? ' error' : '';
+    var intervalError = opts.showErrors && blockIntervalMissing(block) ? ' error' : '';
     return '<div class="task-block" data-block="' + n + '">' +
       '<div class="task-block-head"><span class="task-block-title">Работа ' + n + '</span><button class="icon-btn" data-remove-block="' + n + '">' + icon('trash', 14) + '</button></div>' +
-      '<input class="text-input" placeholder="Например, Замена масла и фильтра" value="' + inputVal(block.name) + '">' +
+      '<input class="text-input' + nameError + '" placeholder="Например, Замена масла и фильтра" value="' + inputVal(block.name) + '">' +
       '<div class="mini-row">' +
-      '<div><span class="mini-label">Интервал замены, км</span><input class="num-input" type="number" placeholder="10000" value="' + inputVal(block.intervalKm) + '"></div>' +
+      '<div><span class="mini-label">Интервал замены, км</span><input class="num-input' + intervalError + '" type="number" placeholder="10000" value="' + inputVal(block.intervalKm) + '"></div>' +
       '<div><span class="mini-label">Интервал по времени, мес (опц.)</span><input class="num-input" type="number" placeholder="12" value="' + inputVal(block.intervalMonths) + '"></div>' +
       '</div>' +
       '<div class="mini-row">' +
@@ -1119,8 +1183,10 @@
   function newScreenHtml(opts, blocks) {
     opts = opts || {};
     var editCar = opts.edit || null;
-    blocks = blocks || [{ n: 1 }];
+    blocks = blocks || [];
     var form = opts.form || {};
+    var brandError = opts.showErrors && !String(form.brand || '').trim() ? ' error' : '';
+    var mileageError = opts.showErrors && !(parseInt(form.mileage, 10) > 0) ? ' error' : '';
     var backAttr = opts.interactive ? ' data-back="' + (editCar ? 'detail' : 'cars') + '"' : '';
     var countLabel = blocks.length + (blocks.length === 1 ? ' добавлена' : ' добавлено');
     var blocksHtml = blocks.map(function (b) { return taskBlockHtml(b, opts); }).join('');
@@ -1128,11 +1194,12 @@
     var addBtn = opts.interactive
       ? '<button class="add-task-btn" id="addTaskBtn">' + icon('plus', 14) + ' Добавить произвольную работу</button>'
       : '<div class="add-task-btn">' + icon('plus', 14) + ' Добавить произвольную работу</div>';
-    var staticBrand = editCar ? editCar.brand : 'Kia Rio';
-    var staticMileage = editCar ? editCar.mileageKm.toLocaleString('ru-RU') : '84 300';
-    var staticVin = editCar ? editCar.vin : 'XWEPC811BB0012345';
-    var brandField = opts.interactive ? '<input class="text-input" id="newBrand" placeholder="Например, Kia Rio" value="' + (form.brand || '') + '">' : '<div class="text-input static">' + staticBrand + '</div>';
-    var mileageField = opts.interactive ? '<input class="num-input" id="newMileage" type="number" placeholder="84300" value="' + (form.mileage || '') + '">' : '<div class="num-input static">' + staticMileage + '</div>';
+    var staticBrand = opts.staticErrors ? 'Например, Kia Rio' : (editCar ? editCar.brand : 'Kia Rio');
+    var staticMileage = opts.staticErrors ? '84300' : (editCar ? editCar.mileageKm.toLocaleString('ru-RU') : '84 300');
+    var staticVin = opts.staticErrors ? '17 символов' : (editCar ? editCar.vin : 'XWEPC811BB0012345');
+    var staticError = opts.staticErrors ? ' error' : '';
+    var brandField = opts.interactive ? '<input class="text-input' + brandError + '" id="newBrand" placeholder="Например, Kia Rio" value="' + (form.brand || '') + '">' : '<div class="text-input static' + staticError + '">' + staticBrand + '</div>';
+    var mileageField = opts.interactive ? '<input class="num-input' + mileageError + '" id="newMileage" type="number" placeholder="84300" value="' + (form.mileage || '') + '">' : '<div class="num-input static' + staticError + '">' + staticMileage + '</div>';
     var vinField = opts.interactive ? '<input class="text-input" id="newVin" placeholder="17 символов" value="' + (form.vin || '') + '">' : '<div class="text-input static">' + staticVin + '</div>';
     var saveText = editCar ? 'Сохранить' : 'Сохранить авто';
     var saveBtn = opts.interactive ? '<button class="save-btn" id="saveCarBtn">' + saveText + '</button>' : '<div class="save-btn">' + saveText + '</div>';
@@ -1205,6 +1272,10 @@
 
   function renderStaticGallery(containerId) {
     var cars = cloneCars();
+    var markedCar = cloneCars()[0];
+    markedCar.tasks.forEach(function (t) {
+      if (t.id === 't3') { t.lastKm = markedCar.mileageKm; t.doneMark = { mileageKm: markedCar.mileageKm }; }
+    });
     var settingsState = { themeIdx: containerId === 'galleryDark' ? 1 : 0, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00' };
     document.getElementById(containerId).innerHTML =
       phoneWrap('01', 'Мои авто', carsScreenHtml(cars, { interactive: false })) +
@@ -1217,7 +1288,11 @@
         cars[0].tasks.map(function (t, i) { return taskToBlock(t, i + 1, true); }))) +
       phoneWrap('08', 'Время напоминаний', settingsScreenHtml(
         { themeIdx: settingsState.themeIdx, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00', timeDraft: { h: 9, m: 0 } },
-        { interactive: false }));
+        { interactive: false })) +
+      phoneWrap('09', 'Незаполненные поля', newScreenHtml({ interactive: false, staticErrors: true },
+        [{ n: 1, filled: true, errorName: true, errorInterval: true, name: 'Например, Замена масла и фильтра', intervalKm: '10000', intervalMonths: '12', lastKm: 'не проводилась', lastDate: 'дд.мм.гггг', reminderKm: '1500' }])) +
+      phoneWrap('10', 'Работа выполнена', detailScreenHtml(cars[0], { interactive: false, doneTaskId: 't3' })) +
+      phoneWrap('11', 'Снятие отметки', detailScreenHtml(markedCar, { interactive: false, unmarkTaskId: 't3' }));
   }
   renderStaticGallery('galleryLight');
   renderStaticGallery('galleryDark');
@@ -1226,7 +1301,8 @@
   var cars = cloneCars();
   var istate = {
     screen: 'cars', detailId: null, editingMileage: false, confirmDelete: false,
-    taskBlocks: [{ n: 1 }], nextBlockN: 2, form: { brand: '', mileage: '', vin: '' },
+    taskBlocks: [], nextBlockN: 1, form: { brand: '', mileage: '', vin: '' }, formErrors: false,
+    doneTaskId: null, unmarkTaskId: null,
     settings: { themeIdx: 0, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00' }
   };
   function carById(id) { return cars.find(function (c) { return c.id === id; }); }
@@ -1238,9 +1314,9 @@
     var detailCar = currentDetailCar();
     root.innerHTML =
       carsScreenHtml(cars, { interactive: true }) +
-      (detailCar ? detailScreenHtml(detailCar, { interactive: true, editingMileage: istate.editingMileage, confirmDelete: istate.confirmDelete }) : '') +
+      (detailCar ? detailScreenHtml(detailCar, { interactive: true, editingMileage: istate.editingMileage, confirmDelete: istate.confirmDelete, doneTaskId: istate.doneTaskId, unmarkTaskId: istate.unmarkTaskId }) : '') +
       (detailCar ? historyScreenHtml(detailCar, { interactive: true }) : '') +
-      newScreenHtml({ interactive: true, edit: istate.screen === 'edit' ? detailCar : null, form: istate.form }, istate.taskBlocks) +
+      newScreenHtml({ interactive: true, edit: istate.screen === 'edit' ? detailCar : null, form: istate.form, showErrors: istate.formErrors }, istate.taskBlocks) +
       settingsScreenHtml(istate.settings, { interactive: true });
     root.parentElement.classList.add('interactive');
     wireInteractive();
@@ -1255,11 +1331,12 @@
 
     root.querySelectorAll('[data-open-car]').forEach(function (row) {
       row.addEventListener('click', function () {
-        istate.detailId = row.getAttribute('data-open-car'); istate.editingMileage = false; istate.confirmDelete = false; istate.screen = 'detail'; paintInteractive();
+        istate.detailId = row.getAttribute('data-open-car'); istate.editingMileage = false; istate.confirmDelete = false;
+        istate.doneTaskId = null; istate.unmarkTaskId = null; istate.screen = 'detail'; paintInteractive();
       });
     });
     root.querySelectorAll('[data-open-new]').forEach(function (b) {
-      b.addEventListener('click', function () { istate.taskBlocks = [{ n: 1 }]; istate.nextBlockN = 2; istate.form = { brand: '', mileage: '', vin: '' }; istate.screen = 'new'; paintInteractive(); });
+      b.addEventListener('click', function () { istate.taskBlocks = []; istate.nextBlockN = 1; istate.form = { brand: '', mileage: '', vin: '' }; istate.formErrors = false; istate.screen = 'new'; paintInteractive(); });
     });
     root.querySelectorAll('[data-back]').forEach(function (b) {
       b.addEventListener('click', function () { istate.screen = b.getAttribute('data-back'); paintInteractive(); });
@@ -1277,7 +1354,7 @@
       istate.form = { brand: car.brand, mileage: car.mileageKm, vin: car.vin === '—' ? '' : car.vin };
       istate.taskBlocks = car.tasks.map(function (t, i) { return taskToBlock(t, i + 1, false); });
       istate.nextBlockN = car.tasks.length + 1;
-      istate.editingMileage = false; istate.screen = 'edit'; paintInteractive();
+      istate.editingMileage = false; istate.formErrors = false; istate.screen = 'edit'; paintInteractive();
     });
 
     /* --- delete car with confirmation --- */
@@ -1306,18 +1383,56 @@
       istate.editingMileage = false; paintInteractive();
     });
 
-    /* --- mark task done --- */
+    /* --- mark task done: details dialog, then the mark; a marked task can be unmarked --- */
     root.querySelectorAll('[data-mark-done]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var car = currentDetailCar();
-        var task = car.tasks.find(function (t) { return t.id === b.getAttribute('data-mark-done'); });
-        if (!task) return;
-        task.lastKm = car.mileageKm;
-        if (task.intervalMonths) task.lastDate = TODAY;
-        car.history = car.history || [];
-        car.history.push({ id: 'h' + Date.now(), taskName: task.name, date: TODAY, mileageKm: car.mileageKm, costRub: null, service: null });
-        paintInteractive();
+      b.addEventListener('click', function () { istate.doneTaskId = b.getAttribute('data-mark-done'); paintInteractive(); });
+    });
+    root.querySelectorAll('[data-cancel-done]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        if (e.target !== el) return;
+        istate.doneTaskId = null; paintInteractive();
       });
+    });
+    var saveDoneBtn = root.querySelector('[data-save-done]');
+    if (saveDoneBtn) saveDoneBtn.addEventListener('click', function () {
+      var car = currentDetailCar();
+      var task = car.tasks.find(function (t) { return t.id === istate.doneTaskId; });
+      istate.doneTaskId = null;
+      if (!task) { paintInteractive(); return; }
+      var historyId = 'h' + Date.now();
+      var cost = parseInt(root.querySelector('#doneCost').value, 10);
+      task.doneMark = { mileageKm: car.mileageKm, prevLastKm: task.lastKm, prevLastDate: task.lastDate, historyId: historyId };
+      task.lastKm = car.mileageKm;
+      if (task.intervalMonths) task.lastDate = TODAY;
+      car.history = car.history || [];
+      car.history.push({
+        id: historyId, taskName: task.name, date: TODAY, mileageKm: car.mileageKm,
+        costRub: cost > 0 ? cost : null,
+        service: root.querySelector('#doneService').value.trim() || null,
+        comment: root.querySelector('#doneComment').value.trim() || null
+      });
+      paintInteractive();
+    });
+    root.querySelectorAll('[data-unmark]').forEach(function (b) {
+      b.addEventListener('click', function () { istate.unmarkTaskId = b.getAttribute('data-unmark'); paintInteractive(); });
+    });
+    root.querySelectorAll('[data-cancel-unmark]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        if (e.target !== el) return;
+        istate.unmarkTaskId = null; paintInteractive();
+      });
+    });
+    var confirmUnmarkBtn = root.querySelector('[data-confirm-unmark]');
+    if (confirmUnmarkBtn) confirmUnmarkBtn.addEventListener('click', function () {
+      var car = currentDetailCar();
+      var task = car.tasks.find(function (t) { return t.id === istate.unmarkTaskId; });
+      istate.unmarkTaskId = null;
+      if (task && task.doneMark) {
+        var mark = task.doneMark;
+        task.lastKm = mark.prevLastKm; task.lastDate = mark.prevLastDate; task.doneMark = null;
+        car.history = (car.history || []).filter(function (h) { return h.id !== mark.historyId; });
+      }
+      paintInteractive();
     });
 
     /* --- car form (add & edit): presets & custom blocks --- */
@@ -1349,9 +1464,11 @@
         var n = +b.getAttribute('data-remove-block');
         syncForm();
         istate.taskBlocks = istate.taskBlocks.filter(function (x) { return x.n !== n; });
-        if (istate.taskBlocks.length === 0 && istate.screen !== 'edit') istate.taskBlocks = [{ n: istate.nextBlockN++ }];
         paintInteractive();
       });
+    });
+    root.querySelectorAll('.error').forEach(function (el) {
+      el.addEventListener('input', function () { if (el.value.trim()) el.classList.remove('error'); });
     });
     var saveBtn = root.querySelector('#saveCarBtn');
     if (saveBtn) saveBtn.addEventListener('click', function () {
@@ -1360,23 +1477,20 @@
       var editedCar = editing ? currentDetailCar() : null;
       var brand = istate.form.brand.trim();
       var mileage = parseInt(istate.form.mileage, 10);
-      if (!brand || !mileage) return;
+      var blocksValid = istate.taskBlocks.every(function (b) { return !blockNameMissing(b) && !blockIntervalMissing(b); });
+      /* пустое обязательное поле: форма не сохраняется, поля подсвечиваются красной рамкой */
+      if (!brand || !(mileage > 0) || !blocksValid) { istate.formErrors = true; paintInteractive(); return; }
+      istate.formErrors = false;
       var vin = istate.form.vin.trim() || '—';
-      var tasks = [];
-      istate.taskBlocks.forEach(function (block) {
+      var tasks = istate.taskBlocks.map(function (block, index) {
         var existing = editedCar && block.taskId ? editedCar.tasks.find(function (t) { return t.id === block.taskId; }) : null;
-        var name = String(block.name || '').trim();
+        var name = String(block.name).trim();
         var intervalKm = parseInt(block.intervalKm, 10);
-        if (!name || !intervalKm) {
-          /* незаполненный блок: новая работа не создаётся, существующая остаётся как была */
-          if (existing) tasks.push(existing);
-          return;
-        }
         var intervalMonths = block.intervalMonths ? parseInt(block.intervalMonths, 10) : undefined;
         var lastKm = block.lastKm ? parseInt(block.lastKm, 10) : 0;
         var lastDateIso = intervalMonths ? isoFromRu(block.lastDate) : undefined;
         var reminderKm = block.reminderKm ? parseInt(block.reminderKm, 10) : Math.round(intervalKm * 0.15);
-        tasks.push({ id: existing ? existing.id : 'nt' + tasks.length + Date.now(), name: name, icon: pickIcon(name), intervalKm: intervalKm, lastKm: lastKm, reminderKm: reminderKm, intervalMonths: intervalMonths, lastDate: lastDateIso });
+        return { id: existing ? existing.id : 'nt' + index + Date.now(), name: name, icon: pickIcon(name), intervalKm: intervalKm, lastKm: lastKm, reminderKm: reminderKm, intervalMonths: intervalMonths, lastDate: lastDateIso };
       });
       if (editing) {
         /* при правке работа по умолчанию не подставляется: авто может остаться без работ */
