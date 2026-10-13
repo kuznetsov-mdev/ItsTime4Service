@@ -8,7 +8,7 @@ import ru.kuznetsov.pitstop.domain.usecase.CalculateTaskStatusUseCase
 import ru.kuznetsov.pitstop.domain.usecase.CarAlertsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.DeleteCarUseCase
 import ru.kuznetsov.pitstop.domain.usecase.DeleteTaskUseCase
-import ru.kuznetsov.pitstop.domain.usecase.GetTaskRemindersUseCase
+import ru.kuznetsov.pitstop.domain.usecase.GetNowUseCase
 import ru.kuznetsov.pitstop.domain.usecase.GetTodayUseCase
 import ru.kuznetsov.pitstop.domain.usecase.MarkTaskDoneUseCase
 import ru.kuznetsov.pitstop.domain.usecase.NormalizeTaskUseCase
@@ -16,7 +16,9 @@ import ru.kuznetsov.pitstop.domain.usecase.ObserveCarByIdUseCase
 import ru.kuznetsov.pitstop.domain.usecase.ObserveCarsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.ObserveHistoryUseCase
 import ru.kuznetsov.pitstop.domain.usecase.ObserveSettingsUseCase
+import ru.kuznetsov.pitstop.domain.usecase.PlanRemindersUseCase
 import ru.kuznetsov.pitstop.domain.usecase.SortedTaskStatsUseCase
+import ru.kuznetsov.pitstop.domain.usecase.SyncRemindersUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateCarUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateHistoryEntryUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateMileageUseCase
@@ -43,5 +45,7 @@ val domainModule = module {
     factoryOf(::UpdateTaskUseCase)
     factoryOf(::DeleteTaskUseCase)
     factoryOf(::UpdateHistoryEntryUseCase)
-    factoryOf(::GetTaskRemindersUseCase)
+    factoryOf(::GetNowUseCase)
+    factoryOf(::PlanRemindersUseCase)
+    factoryOf(::SyncRemindersUseCase)
 }
