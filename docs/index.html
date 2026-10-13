@@ -1196,26 +1196,42 @@
 
   /* ---------------- dialog: one service history record ---------------- */
   /* Дата и пробег записи только показываются; сервис, стоимость и комментарий можно править. */
-  function historyEntryDialogHtml(entry, opts) {
+  function historyEntryDialogHtml(entry, ownerLabel, opts) {
     var cancelAttr = opts.interactive ? ' data-close-entry' : '';
     var saveAttr = opts.interactive ? ' data-save-entry' : '';
     function staticField(kind, value, placeholder, multiline) {
       return '<div class="' + kind + '-input static' + (multiline ? ' multiline' : '') + '">' + (value || placeholder) + '</div>';
     }
     var fields = opts.interactive
-      ? '<div><span class="mini-label">Где обслуживались</span><input class="text-input" id="entryService" placeholder="Например, АвтоСервис Юг" value="' + (entry.service || '') + '"></div>' +
+      ? '<div class="filter-pair">' +
+        '<div><span class="mini-label">Дата<span class="req"> *</span></span><input class="text-input" id="entryDate" placeholder="дд.мм.гггг" value="' + formatDateRu(entry.date) + '"></div>' +
+        '<div><span class="mini-label">Пробег, км<span class="req"> *</span></span><input class="num-input" id="entryMileage" type="number" placeholder="78000" value="' + entry.mileageKm + '"></div>' +
+        '</div>' +
+        '<div><span class="mini-label">Где обслуживались</span><input class="text-input" id="entryService" placeholder="Например, АвтоСервис Юг" value="' + (entry.service || '') + '"></div>' +
         '<div><span class="mini-label">Сколько стоило, ₽</span><input class="num-input" id="entryCost" type="number" placeholder="2400" value="' + (entry.costRub || '') + '"></div>' +
         '<div><span class="mini-label">Комментарий</span><textarea class="text-input" id="entryComment" placeholder="Что меняли, какие запчасти">' + (entry.comment || '') + '</textarea></div>'
-      : '<div><span class="mini-label">Где обслуживались</span>' + staticField('text', entry.service, 'Например, АвтоСервис Юг') + '</div>' +
+      : '<div class="filter-pair">' +
+        '<div><span class="mini-label">Дата<span class="req"> *</span></span>' + staticField('text', formatDateRu(entry.date), 'дд.мм.гггг') + '</div>' +
+        '<div><span class="mini-label">Пробег, км<span class="req"> *</span></span>' + staticField('num', entry.mileageKm, '78000') + '</div>' +
+        '</div>' +
+        '<div><span class="mini-label">Где обслуживались</span>' + staticField('text', entry.service, 'Например, АвтоСервис Юг') + '</div>' +
         '<div><span class="mini-label">Сколько стоило, ₽</span>' + staticField('num', entry.costRub, '2400') + '</div>' +
         '<div><span class="mini-label">Комментарий</span>' + staticField('text', entry.comment, 'Что меняли, какие запчасти', true) + '</div>';
     return '<div class="dialog-scrim"' + cancelAttr + '><div class="dialog" role="dialog" aria-modal="true">' +
       '<div class="dialog-icon accent">' + icon('wrench', 19) + '</div>' +
       '<div class="dialog-title">' + entry.taskName + '</div>' +
-      '<div class="dialog-text">' + formatDateRu(entry.date) + ' · ' + fmtKm(entry.mileageKm) + '</div>' +
+      '<div class="dialog-text">' + ownerLabel + '</div>' +
       '<div class="dialog-fields">' + fields + '</div>' +
       '<div class="dialog-actions"><button class="dialog-btn"' + cancelAttr + '>Отмена</button><button class="dialog-btn primary"' + saveAttr + '>Сохранить</button></div>' +
       '</div></div>';
+  }
+  /* дата из «дд.мм.гггг» в ISO; undefined, если такой даты не существует */
+  function validIsoFromRu(text) {
+    var m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(String(text || '').trim());
+    if (!m) return undefined;
+    var d = +m[1], mo = +m[2], y = +m[3], date = new Date(y, mo - 1, d);
+    if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return undefined;
+    return m[3] + '-' + ('0' + mo).slice(-2) + '-' + ('0' + d).slice(-2);
   }
 
   /* ---------------- dialog: history filter ---------------- */
@@ -1328,7 +1344,7 @@
       bar +
       '<div class="history-list">' + rows + '</div>' +
       tabbarHtml('history', opts) +
-      (openEntry ? historyEntryDialogHtml(openEntry.e, opts) : '') +
+      (openEntry ? historyEntryDialogHtml(openEntry.e, ownerLabel(openEntry.owner), opts) : '') +
       (h.filterOpen ? historyFilterDialogHtml(h.filterDraft || filters, opts) : '') +
       '</div>';
   }
@@ -1713,6 +1729,16 @@
         (c.history || []).forEach(function (h) { if (h.id === istate.historyEntryId) entry = h; });
       });
       if (entry) {
+        /* дата и пробег обязательны: с ошибкой запись не сохраняется, поле получает красную рамку */
+        var dateInput = root.querySelector('#entryDate'), mileageInput = root.querySelector('#entryMileage');
+        var newDate = validIsoFromRu(dateInput.value), newMileage = parseInt(mileageInput.value, 10);
+        dateInput.classList.toggle('error', !newDate); mileageInput.classList.toggle('error', !(newMileage > 0));
+        if (!newDate || !(newMileage > 0)) return;
+        if (newMileage !== entry.mileageKm) {
+          /* запись с другим пробегом больше не считается отметкой: работа остаётся как есть, снять отметку нельзя */
+          cars.forEach(function (c) { c.tasks.forEach(function (t) { if (t.doneMark && t.doneMark.historyId === entry.id) t.doneMark = null; }); });
+        }
+        entry.date = newDate; entry.mileageKm = newMileage;
         var cost = parseInt(root.querySelector('#entryCost').value, 10);
         entry.service = root.querySelector('#entryService').value.trim() || null;
         entry.costRub = cost > 0 ? cost : null;
