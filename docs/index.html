@@ -256,7 +256,7 @@
 
   /* ---------- Add car form ---------- */
   .field-label { font-size: 11.5px; font-weight: 700; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; padding: 0 18px; margin-bottom: 8px; display: block; }
-  .field-label .req { color: var(--tier-due); }
+  .field-label .req, .mini-label .req { color: var(--tier-due); }
   .form-body { padding: 10px 0 0; flex: 1; overflow-y: auto; }
   .text-input, .num-input {
     width: calc(100% - 36px); margin: 0 18px 18px; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 10px;
@@ -1152,6 +1152,9 @@
 
   function blockNameMissing(block) { return !String(block.name || '').trim(); }
   function blockIntervalMissing(block) { return !(parseInt(block.intervalKm, 10) > 0); }
+  /* «Последний раз, км» обязательно и без значения по умолчанию; 0 — допустимый ответ («ещё не проводилась») */
+  function blockLastKmMissing(block) { return !(parseInt(block.lastKm, 10) >= 0); }
+  function blockInvalid(block) { return blockNameMissing(block) || blockIntervalMissing(block) || blockLastKmMissing(block); }
 
   function taskBlockHtml(block, opts) {
     block = block || {};
@@ -1166,11 +1169,11 @@
         '<div class="task-block-head"><span class="task-block-title">Работа ' + n + '</span><button class="icon-btn">' + icon('trash', 14) + '</button></div>' +
         '<div class="text-input static' + (block.errorName ? ' error' : '') + '">' + staticVal(block.name, 'Замена масла и фильтра') + '</div>' +
         '<div class="mini-row">' +
-        '<div><span class="mini-label">Интервал замены, км</span><div class="num-input static' + (block.errorInterval ? ' error' : '') + '">' + staticVal(block.intervalKm, '10 000') + '</div></div>' +
+        '<div><span class="mini-label">Интервал замены, км<span class="req"> *</span></span><div class="num-input static' + (block.errorInterval ? ' error' : '') + '">' + staticVal(block.intervalKm, '10 000') + '</div></div>' +
         '<div><span class="mini-label">Интервал по времени, мес (опц.)</span><div class="num-input static">' + staticVal(block.intervalMonths, '12') + '</div></div>' +
         '</div>' +
         '<div class="mini-row">' +
-        '<div><span class="mini-label">Последний раз, км</span><div class="num-input static">' + staticVal(block.lastKm, '78 000') + '</div></div>' +
+        '<div><span class="mini-label">Последний раз, км<span class="req"> *</span></span><div class="num-input static' + (block.errorLastKm ? ' error' : '') + '">' + staticVal(block.lastKm, '78 000') + '</div></div>' +
         '<div><span class="mini-label">Дата последней замены (опц.)</span><div class="text-input static">' + staticVal(block.lastDate, '15.01.2026') + '</div></div>' +
         '</div>' +
         '<span class="mini-label">Напоминать за N тыс. км до срока</span><div class="num-input static">' + staticVal(block.reminderKm, '1 500') + '</div>' +
@@ -1178,15 +1181,16 @@
     }
     var nameError = opts.showErrors && blockNameMissing(block) ? ' error' : '';
     var intervalError = opts.showErrors && blockIntervalMissing(block) ? ' error' : '';
+    var lastKmError = opts.showErrors && blockLastKmMissing(block) ? ' error' : '';
     return '<div class="task-block" data-block="' + n + '">' +
       '<div class="task-block-head"><span class="task-block-title">Работа ' + n + '</span><button class="icon-btn" data-remove-block="' + n + '">' + icon('trash', 14) + '</button></div>' +
       '<input class="text-input' + nameError + '" placeholder="Например, Замена масла и фильтра" value="' + inputVal(block.name) + '">' +
       '<div class="mini-row">' +
-      '<div><span class="mini-label">Интервал замены, км</span><input class="num-input' + intervalError + '" type="number" placeholder="10000" value="' + inputVal(block.intervalKm) + '"></div>' +
+      '<div><span class="mini-label">Интервал замены, км<span class="req"> *</span></span><input class="num-input' + intervalError + '" type="number" placeholder="10000" value="' + inputVal(block.intervalKm) + '"></div>' +
       '<div><span class="mini-label">Интервал по времени, мес (опц.)</span><input class="num-input" type="number" placeholder="12" value="' + inputVal(block.intervalMonths) + '"></div>' +
       '</div>' +
       '<div class="mini-row">' +
-      '<div><span class="mini-label">Последний раз, км</span><input class="num-input" type="number" placeholder="не проводилась" value="' + inputVal(block.lastKm) + '"></div>' +
+      '<div><span class="mini-label">Последний раз, км<span class="req"> *</span></span><input class="num-input' + lastKmError + '" type="number" placeholder="78000" value="' + inputVal(block.lastKm) + '"></div>' +
       '<div><span class="mini-label">Дата последней замены (опц.)</span><input class="text-input" placeholder="дд.мм.гггг" value="' + inputVal(block.lastDate) + '"></div>' +
       '</div>' +
       '<span class="mini-label">Напоминать за N тыс. км до срока</span><input class="num-input" type="number" placeholder="1500" value="' + inputVal(block.reminderKm) + '">' +
@@ -1268,6 +1272,7 @@
     }
     var nameError = opts.showErrors && blockNameMissing(form);
     var intervalError = opts.showErrors && blockIntervalMissing(form);
+    var lastKmError = opts.showErrors && blockLastKmMissing(form);
     var backAttr = opts.interactive ? ' data-back="detail"' : '';
     var deleteBtn = editing ? '<div class="icon-row"><button class="icon-btn"' + (opts.interactive ? ' data-delete-task' : '') + '>' + icon('trash', 16) + '</button></div>' : '<span></span>';
     var saveBtn = opts.interactive ? '<button class="save-btn" id="saveTaskBtn">Сохранить</button>' : '<div class="save-btn">Сохранить</div>';
@@ -1284,7 +1289,7 @@
       '<div><span class="field-label" style="padding:0 0 8px">Интервал, мес</span>' + field('num', 'taskMonths', '12', form.intervalMonths) + '</div>' +
       '</div>' +
       '<div class="row-2">' +
-      '<div><span class="field-label" style="padding:0 0 8px">Последний раз, км</span>' + field('num', 'taskLastKm', 'не проводилась', form.lastKm) + '</div>' +
+      '<div><span class="field-label" style="padding:0 0 8px">Последний раз, км<span class="req"> *</span></span>' + field('num', 'taskLastKm', '78000', form.lastKm, lastKmError) + '</div>' +
       '<div><span class="field-label" style="padding:0 0 8px">Дата замены</span>' + field('text', 'taskLastDate', 'дд.мм.гггг', form.lastDate) + '</div>' +
       '</div>' +
       '<span class="field-label">Напоминать за N км до срока</span>' +
@@ -1362,7 +1367,7 @@
         { themeIdx: settingsState.themeIdx, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00', timeDraft: { h: 9, m: 0 } },
         { interactive: false })) +
       phoneWrap('09', 'Незаполненные поля', newScreenHtml({ interactive: false, staticErrors: true },
-        [{ n: 1, filled: true, errorName: true, errorInterval: true, name: 'Например, Замена масла и фильтра', intervalKm: '10000', intervalMonths: '12', lastKm: 'не проводилась', lastDate: 'дд.мм.гггг', reminderKm: '1500' }])) +
+        [{ n: 1, filled: true, errorName: true, errorInterval: true, errorLastKm: true, name: 'Например, Замена масла и фильтра', intervalKm: '10000', intervalMonths: '12', lastKm: '78000', lastDate: 'дд.мм.гггг', reminderKm: '1500' }])) +
       phoneWrap('10', 'Работа выполнена', detailScreenHtml(cars[0], { interactive: false, doneTaskId: 't3' })) +
       phoneWrap('11', 'Снятие отметки', detailScreenHtml(markedCar, { interactive: false, unmarkTaskId: 't3' })) +
       phoneWrap('12', 'Новая работа', taskScreenHtml(cars[0], emptyTaskForm(), { interactive: false })) +
@@ -1480,13 +1485,13 @@
     if (saveTaskBtn) saveTaskBtn.addEventListener('click', function () {
       syncTaskForm();
       var f = istate.taskForm, car = currentDetailCar();
-      if (blockNameMissing(f) || blockIntervalMissing(f)) { istate.taskFormErrors = true; paintInteractive(); return; }
+      if (blockInvalid(f)) { istate.taskFormErrors = true; paintInteractive(); return; }
       var name = String(f.name).trim();
       var intervalKm = parseInt(f.intervalKm, 10);
       var intervalMonths = f.intervalMonths ? parseInt(f.intervalMonths, 10) : undefined;
       var values = {
         name: name, icon: pickIcon(name), intervalKm: intervalKm, intervalMonths: intervalMonths,
-        lastKm: f.lastKm ? parseInt(f.lastKm, 10) : 0,
+        lastKm: parseInt(f.lastKm, 10),
         lastDate: intervalMonths ? isoFromRu(f.lastDate) : undefined,
         reminderKm: f.reminderKm ? parseInt(f.reminderKm, 10) : Math.round(intervalKm * 0.15)
       };
@@ -1633,7 +1638,7 @@
       syncForm();
       var brand = istate.form.brand.trim();
       var mileage = parseInt(istate.form.mileage, 10);
-      var blocksValid = istate.taskBlocks.every(function (b) { return !blockNameMissing(b) && !blockIntervalMissing(b); });
+      var blocksValid = istate.taskBlocks.every(function (b) { return !blockInvalid(b); });
       /* пустое обязательное поле: форма не сохраняется, поля подсвечиваются красной рамкой */
       if (!brand || !(mileage > 0) || !blocksValid) { istate.formErrors = true; paintInteractive(); return; }
       istate.formErrors = false;
@@ -1642,7 +1647,7 @@
         var name = String(block.name).trim();
         var intervalKm = parseInt(block.intervalKm, 10);
         var intervalMonths = block.intervalMonths ? parseInt(block.intervalMonths, 10) : undefined;
-        var lastKm = block.lastKm ? parseInt(block.lastKm, 10) : 0;
+        var lastKm = parseInt(block.lastKm, 10);
         var lastDateIso = intervalMonths ? isoFromRu(block.lastDate) : undefined;
         var reminderKm = block.reminderKm ? parseInt(block.reminderKm, 10) : Math.round(intervalKm * 0.15);
         return { id: 'nt' + index + Date.now(), name: name, icon: pickIcon(name), intervalKm: intervalKm, lastKm: lastKm, reminderKm: reminderKm, intervalMonths: intervalMonths, lastDate: lastDateIso };
