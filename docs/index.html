@@ -253,10 +253,10 @@
   .history-year::before, .history-year::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
   .history-month { border: 1px solid var(--rule); border-radius: 12px; padding: 0 12px 2px; margin: 0 0 12px; min-width: 0; }
   .history-month legend { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); padding: 0 6px; margin-left: 2px; }
-  .history-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .history-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 4px; }
   .history-name { font-size: 13.5px; font-weight: 700; }
   .history-date { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); flex-shrink: 0; white-space: nowrap; }
-  .history-meta { font-family: var(--mono); font-size: 11px; color: var(--ink-muted); margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .history-meta { font-family: var(--mono); font-size: 11px; color: var(--ink-muted); display: flex; gap: 12px; flex-wrap: wrap; }
   .history-empty { padding: 48px 18px; text-align: center; color: var(--ink-faint); font-size: 13px; line-height: 1.5; }
 
   /* ---------- Confirm dialog ---------- */
@@ -750,7 +750,7 @@
             <div class="component-meta"><div class="name">Сегмент-контрол</div><div class="pkg">&lt;Segmented options active /&gt;</div><div class="note">Группа взаимоисключающих кнопок: тема, единицы измерения.</div></div>
           </div>
           <div class="component-card">
-            <div class="component-preview"><div class="tabbar" style="border-top:none;width:210px;"><button class="active">Авто</button><button>История</button><button>Настройки</button></div></div>
+            <div class="component-preview"><div class="tabbar" style="border-top:none;width:210px;"><button><span class="icon-slot" data-icon="clock" data-size="19"></span>История</button><button class="active"><span class="icon-slot" data-icon="car" data-size="19"></span>Авто</button><button><span class="icon-slot" data-icon="gear" data-size="19"></span>Настройки</button></div></div>
             <div class="component-meta"><div class="name">Пункт таб-бара</div><div class="pkg">&lt;TabBarItem label icon active /&gt;</div><div class="note">Нижняя навигация, активный пункт подсвечен accent-цветом.</div></div>
           </div>
         </div>
@@ -951,9 +951,9 @@
   function cloneSold() { return JSON.parse(JSON.stringify(INITIAL_SOLD)); }
   function emptyHistoryFilters() { return { from: '', to: '', query: '', kmFrom: '', kmTo: '' }; }
   function tabbarHtml(active, opts) {
-    var tabs = [['cars', 'Авто'], ['history', 'История'], ['settings', 'Настройки']];
+    var tabs = [['history', 'История', 'clock'], ['cars', 'Авто', 'car'], ['settings', 'Настройки', 'gear']];
     return '<nav class="tabbar">' + tabs.map(function (t) {
-      return '<button' + (t[0] === active ? ' class="active"' : '') + (opts.interactive ? ' data-tab="' + t[0] + '"' : '') + '>' + t[1] + '</button>';
+      return '<button' + (t[0] === active ? ' class="active"' : '') + (opts.interactive ? ' data-tab="' + t[0] + '"' : '') + '>' + icon(t[2], 19) + t[1] + '</button>';
     }).join('') + '</nav>';
   }
 
@@ -1258,12 +1258,14 @@
     function ownerLabel(o) { return o.brand + (o.sold ? ' [продано]' : ''); }
     function rowHtml(x) {
       var e = x.e;
-      return '<div class="history-row"' + (opts.interactive ? ' data-open-entry="' + e.id + '"' : '') + '><div class="history-top"><span class="history-name">' + e.taskName + '</span><span class="history-date">' + formatDateRu(e.date) + '</span></div>' +
+      /* сверху — авто, пробег, стоимость и сервис; ниже — вид работы и дата */
+      return '<div class="history-row"' + (opts.interactive ? ' data-open-entry="' + e.id + '"' : '') + '>' +
         '<div class="history-meta">' +
         (selected ? '' : '<span class="history-car' + (x.owner.sold ? ' sold-car' : '') + '">' + ownerLabel(x.owner) + '</span>') +
         '<span>' + fmtKm(e.mileageKm) + '</span>' +
         (e.costRub ? '<span>' + e.costRub.toLocaleString('ru-RU') + ' ₽</span>' : '') +
         (e.service ? '<span>' + e.service + '</span>' : '') + '</div>' +
+        '<div class="history-top"><span class="history-name">' + e.taskName + '</span><span class="history-date">' + formatDateRu(e.date) + '</span></div>' +
         (e.comment ? '<div class="history-comment">' + e.comment + '</div>' : '') + '</div>';
     }
     var html = '', lastYear = null, lastMonth = null;
