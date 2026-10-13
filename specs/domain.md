@@ -26,7 +26,7 @@ ServiceHistoryEntry          TaskStat ──▶ TaskStatus
                                 │
                  TaskWithStat = MaintenanceTask + TaskStat
                  CarAlerts    = счётчики TaskStatus по всем работам машины
-                 TaskReminder = Car + TaskWithStat
+                 PlannedReminder = работа + её состояние + момент показа уведомления
 
 Settings ──▶ ThemeMode, DistanceUnit        (от машин не зависит)
 ```
@@ -135,9 +135,13 @@ Settings ──▶ ThemeMode, DistanceUnit        (от машин не зави
 | `total` | `Int` | вычисляемое: `soon + due` |
 | `worstStatus` | `TaskStatus` | вычисляемое: `DUE`, если есть просроченные; иначе `SOON`, если есть «скоро»; иначе `OK` |
 
-#### `TaskReminder`
+#### `PlannedReminder`
 
-Работа, о которой нужно уведомить, вместе с её машиной (`car`, `task: TaskWithStat`). Используется только заготовкой `GetTaskRemindersUseCase`.
+Одно запланированное уведомление о скорой или просроченной работе: `carId`, `taskId`, `carBrand`, `taskName`, `status`, `remainingKm`, `remainingMonths`, `fireAt: LocalDateTime` (в часовом поясе устройства). Состояние работы — на день показа при пробеге, известном на момент планирования.
+
+#### `ReminderRecord`
+
+След запланированного уведомления в хранилище: `taskId` и `fireAt`. Запись с `fireAt` в прошлом считается уже показанным уведомлением. Единственная из «напоминательных» моделей, которая сохраняется в базу.
 
 ## Репозитории
 
@@ -174,9 +178,26 @@ Settings ──▶ ThemeMode, DistanceUnit        (от машин не зави
 | `observeSettings(): Flow<Settings>` | текущие настройки |
 | `updateSettings(settings)` | заменяет настройки целиком |
 
+### `ReminderRepository`
+
+| Метод | Что делает |
+|---|---|
+| `getRecords(): List<ReminderRecord>` | сохранённый план уведомлений |
+| `replaceRecords(records)` | заменяет план целиком |
+
+### `ReminderScheduler`
+
+Не хранилище, а выход в систему уведомлений; реализация — `data/notification/ReminderSchedulerImpl` поверх платформенного `LocalNotifications` (Android — отложенные задачи `WorkManager`, iOS — `UNUserNotificationCenter`).
+
+| Метод | Что делает |
+|---|---|
+| `schedule(reminders, distanceUnit)` | снимает все ещё не показанные уведомления и ставит переданные; пустой список — просто отмена |
+
+Текст уведомления: «{марка}: {работа} — {состояние}», где состояние — «осталось N км», «просрочено на N км» или «время истекло»; расстояние — в единицах из настроек.
+
 ## Use case-ы
 
-Всего 19: 13 реализованных и 6 заготовок.
+Всего 22: 21 реализованный и 1 заготовка.
 
 ### Расчётные
 
@@ -188,10 +209,20 @@ Settings ──▶ ThemeMode, DistanceUnit        (от машин не зави
 | `SortedTaskStatsUseCase` | `car`, `today` | `List<TaskWithStat>` |
 | `CarAlertsUseCase` | `car`, `today` | `CarAlerts` |
 | `GetTodayUseCase` | — | `LocalDate` |
+| `GetNowUseCase` | — | `LocalDateTime` |
+| `PlanRemindersUseCase` | `cars`, `settings`, `now`, `lastShown` | `List<PlannedReminder>` |
 
 `SortedTaskStatsUseCase` и `CarAlertsUseCase` своих правил статуса не содержат: оба вызывают `CalculateTaskStatusUseCase` для каждой работы.
 
-`GetTodayUseCase` возвращает сегодняшнюю дату в часовом поясе устройства. Это единственное место, где domain читает системные часы.
+`GetTodayUseCase` возвращает сегодняшнюю дату, `GetNowUseCase` — текущие дату и время в часовом поясе устройства. Это единственные места, где domain читает системные часы.
+
+#### Правила планирования уведомлений (`PlanRemindersUseCase`)
+
+- Push выключен в настройках → пустой план.
+- Уведомления ставятся на «время напоминаний» из настроек. Первый день — сегодня, если это время ещё впереди, иначе завтра; горизонт — 30 дней.
+- На каждый день статус работы считает `CalculateTaskStatusUseCase` при текущем пробеге машины и дате этого дня. Поэтому работа с интервалом по времени попадает в план с того дня, когда станет «скоро», даже если приложение больше не открывали; изменение пробега учитывается только после перепланирования.
+- Работа со статусом `SOON` или `DUE` получает уведомление, если с предыдущего уведомления о ней прошло не меньше 3 дней. `lastShown` — день последнего уже показанного уведомления по `id` работы.
+- План упорядочен по времени и обрезается до 60 самых ранних уведомлений (iOS держит не больше 64 ожидающих).
 
 #### Правила расчёта статуса (`CalculateTaskStatusUseCase`)
 
@@ -287,6 +318,20 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 | `ObserveSettingsUseCase` | — | `Flow<Settings>` | проброс `observeSettings()` |
 | `UpdateSettingsUseCase` | `settings` | — | `defaultReminderWindowKm` приводится к диапазону 1 000..9 000 км (диапазон степпера на экране настроек) |
 
+### Уведомления
+
+| Use case | Вход | Выход | Правила |
+|---|---|---|---|
+| `SyncRemindersUseCase` | `cars`, `settings` | — | см. ниже |
+
+#### `SyncRemindersUseCase`
+
+- Читает сохранённый план; записи с временем показа в прошлом по ещё существующим работам считает показанными и берёт последнюю на каждую работу.
+- Строит новый план через `PlanRemindersUseCase`.
+- Сохраняет «последние показанные + новый план» (`ReminderRepository.replaceRecords`) и передаёт новый план в `ReminderScheduler.schedule`.
+- Вызывается из `AppViewModel` при запуске приложения и после каждого изменения машин или настроек.
+- Показанным считается всё, что было запланировано и чьё время прошло; доставило ли уведомление система (например, при отозванном разрешении), domain не знает.
+
 ### Заготовки
 
 Классы и сигнатуры есть, методы пустые: в макете для них нет экранов. Use case-ы пока не обращаются к репозиториям, хотя нужные методы в интерфейсах уже объявлены.
@@ -294,7 +339,6 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 | Use case | Сигнатура | Метод репозитория | Что нужно решить |
 |---|---|---|---|
 | `UpdateHistoryEntryUseCase` | `(entry: ServiceHistoryEntry)` | `ServiceHistoryRepository.updateEntry` | решено: меняются только стоимость и сервис, тапом по записи истории; экрана пока нет |
-| `GetTaskRemindersUseCase` | `(today): List<TaskReminder>` — сейчас всегда пустой список | — | какие работы попадают в уведомления и правило «не чаще N дней» (этап 8) |
 
 ## Открытые вопросы
 
@@ -306,5 +350,5 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 
 ## Что ещё не реализовано
 
-- Две заготовки use case-ов из таблицы выше.
-- Юнит-тесты на всё, кроме `CalculateTaskStatusUseCase` и `NormalizeTaskUseCase` (покрыты `CalculateTaskStatusUseCaseTest` и `NormalizeTaskUseCaseTest`).
+- Заготовка `UpdateHistoryEntryUseCase` из таблицы выше.
+- Юнит-тесты на всё, кроме `CalculateTaskStatusUseCase`, `NormalizeTaskUseCase` и `PlanRemindersUseCase` (покрыты одноимёнными `*Test`).

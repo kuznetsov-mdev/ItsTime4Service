@@ -154,10 +154,14 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 - ⬜ Правка записи истории ТО (стоимость и сервис) — решение принято, экрана и `UpdateHistoryEntryUseCase` нет.
 
 ### Этап 8 — Локальные уведомления
-- ⬜ Android: `WorkManager`/`AlarmManager` для периодической проверки статусов (опц. `androidx.work:work-runtime-ktx`, только `androidMain`).
-- ⬜ iOS: `UNUserNotificationCenter` через `expect/actual`, без новых библиотек.
-- ⬜ Источник данных для уведомлений — `CalculateTaskStatusUseCase`/`CarAlertsUseCase` из этапа 5.
-- ⬜ Анти-спам правило по README (не напоминать об одной и той же работе чаще N дней).
+Уведомления не считаются в фоне, а **планируются заранее**: при запуске и после каждого изменения машин или настроек общий код строит план на 30 дней, платформа только ставит его в систему.
+- ✅ Android: отложенные задачи `WorkManager` (`androidx.work:work-runtime-ktx:2.11.0`, `androidMain`) — `LocalNotifications` + `ReminderWorker`; разрешение `POST_NOTIFICATIONS` в манифесте. *Вместо периодической проверки: план переживает перезагрузку, отдельное хранилище «когда напоминали» не нужно. Заодно в `androidMain` добавлены `androidx.core:core-ktx` и `activity-compose`.*
+- ✅ iOS: `UNUserNotificationCenter` через `expect/actual class LocalNotifications`, без новых библиотек.
+- ✅ Источник данных — `PlanRemindersUseCase` поверх `CalculateTaskStatusUseCase` из этапа 5; `SyncRemindersUseCase` вызывается из `AppViewModel`. Заготовка `GetTaskRemindersUseCase` удалена.
+- ✅ Анти-спам: не чаще раза в 3 дня на работу (как в макете); уже показанные уведомления берутся из таблицы `planned_reminders` (миграция `1.sqm`).
+- ✅ Запрос разрешения — когда push включён и есть хотя бы одно авто (`rememberNotificationPermissionRequest` в `ui/notification/`); отказ выключает push в настройках.
+- ✅ «Время напоминаний» в настройках редактируется: `TimePickerDialog` (часы и минуты с шагом 5), экран «08 · Время напоминаний» в макете.
+- ⬜ Проверка на устройствах. *Собрано: `:androidApp:assembleDebug`, `:shared:compileKotlinIosSimulatorArm64`, `:shared:compileTestKotlinIosSimulatorArm64`. Не запускалось ничего: ни `PlanRemindersUseCaseTest` (10 тестов), ни приложение — приход уведомлений, запрос разрешения, миграция базы и диалог времени на Android и iOS не проверены.*
 
 ### Этап 9 — Полировка
 Без новых библиотек.
@@ -181,7 +185,7 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 | 5 | `kotlinx-coroutines-core:1.11.0`, `kotlinx-datetime:0.8.0` | `commonMain` |
 | 6 | — | — |
 | 7 | `app.cash.sqldelight:2.4.0` (plugin + runtime/coroutines-extensions/android-driver/native-driver) | plugin: root+`shared`; driver-deps: `androidMain`/`iosMain` |
-| 8 | (опц.) `androidx.work:work-runtime-ktx` | `androidMain` |
+| 8 | `androidx.work:work-runtime-ktx:2.11.0`, `androidx.core:core-ktx`, `androidx.activity:activity-compose` | `androidMain` |
 
 ## Верификация
 
