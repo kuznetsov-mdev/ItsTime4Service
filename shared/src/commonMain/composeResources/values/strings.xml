@@ -85,10 +85,14 @@
     <string name="settings_push_subtitle">About tasks due soon and overdue</string>
     <string name="notification_sample_full">Kia Rio: time to replace the air filter — 700 km left</string>
     <string name="notification_caption">We will remind you again no sooner than in 3 days, so the same task does not spam you</string>
+    <string name="notification_reminder_text">%1$s: %2$s — %3$s</string>
     <string name="settings_remind_ahead">Remind in advance</string>
     <string name="settings_remind_ahead_subtitle">thousand km before due, by default</string>
     <string name="settings_reminder_time">Reminder time</string>
     <string name="settings_reminder_time_subtitle">Daily mileage check</string>
+    <string name="reminder_time_dialog_text">Notifications about soon and overdue tasks arrive at this time.</string>
+    <string name="field_hours">Hours</string>
+    <string name="field_minutes">Minutes</string>
     <plurals name="cars_count">
         <item quantity="one">%1$d car</item>
         <item quantity="other">%1$d cars</item>

@@ -1,0 +1,14 @@
+CREATE TABLE planned_reminders (
+    task_id TEXT NOT NULL,
+    fire_at TEXT NOT NULL
+);
+
+selectAll:
+SELECT * FROM planned_reminders ORDER BY fire_at;
+
+insert:
+INSERT INTO planned_reminders (task_id, fire_at)
+VALUES (?, ?);
+
+deleteAll:
+DELETE FROM planned_reminders;

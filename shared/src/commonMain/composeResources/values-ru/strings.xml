@@ -85,10 +85,14 @@
     <string name="settings_push_subtitle">О скорых и просроченных работах</string>
     <string name="notification_sample_full">Kia Rio: пора заменить воздушный фильтр — осталось 700 км</string>
     <string name="notification_caption">Повторно напомним не раньше чем через 3 дня — чтобы не спамить одной и той же работой</string>
+    <string name="notification_reminder_text">%1$s: %2$s — %3$s</string>
     <string name="settings_remind_ahead">Напоминать заранее</string>
     <string name="settings_remind_ahead_subtitle">тыс. км до срока по умолчанию</string>
     <string name="settings_reminder_time">Время напоминаний</string>
     <string name="settings_reminder_time_subtitle">Ежедневная проверка пробега</string>
+    <string name="reminder_time_dialog_text">В это время приходят уведомления о скорых и просроченных работах.</string>
+    <string name="field_hours">Часы</string>
+    <string name="field_minutes">Минуты</string>
     <plurals name="cars_count">
         <item quantity="one">%1$d автомобиль</item>
         <item quantity="few">%1$d автомобиля</item>

@@ -85,10 +85,14 @@
     <string name="settings_push_subtitle">Sobre tareas próximas y vencidas</string>
     <string name="notification_sample_full">Kia Rio: toca cambiar el filtro de aire — quedan 700 km</string>
     <string name="notification_caption">Volveremos a avisar no antes de 3 días, para no repetir la misma tarea</string>
+    <string name="notification_reminder_text">%1$s: %2$s — %3$s</string>
     <string name="settings_remind_ahead">Avisar con antelación</string>
     <string name="settings_remind_ahead_subtitle">miles de km antes del plazo, por defecto</string>
     <string name="settings_reminder_time">Hora de los avisos</string>
     <string name="settings_reminder_time_subtitle">Revisión diaria del kilometraje</string>
+    <string name="reminder_time_dialog_text">A esta hora llegan las notificaciones sobre trabajos próximos y vencidos.</string>
+    <string name="field_hours">Horas</string>
+    <string name="field_minutes">Minutos</string>
     <plurals name="cars_count">
         <item quantity="one">%1$d coche</item>
         <item quantity="many">%1$d coches</item>
