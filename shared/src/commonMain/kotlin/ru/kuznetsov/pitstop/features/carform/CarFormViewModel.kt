@@ -17,9 +17,10 @@ import ru.kuznetsov.pitstop.ui.format.kmFrom
 
 /**
  * Drives the add-car form: the car fields and a list of task blocks filled by hand or from presets.
- * The form opens without task blocks; one appears on the add-task button or a preset chip.
- * Saving with an empty required field — in the car or in any task block — stores nothing and switches
- * the form to showing errors; an unwanted block has to be removed, it is not skipped silently.
+ * The form opens without task blocks; one appears on the add-task button or a preset chip, always expanded.
+ * A block can be collapsed to two lines and expanded back.
+ * Saving with an empty required field — in the car or in any task block — stores nothing, switches
+ * the form to showing errors and expands every collapsed block with such a field; an unwanted block has to be removed, it is not skipped silently.
  * When the form has no blocks at all, the car gets a default oil-change task counted from its current
  * mileage, as in the design mockup. Distances are typed in the unit chosen in settings and stored in kilometers.
  */
@@ -55,6 +56,10 @@ class CarFormViewModel(
         it.copy(tasks = it.tasks + TaskBlockState(key = nextKey++, fields = preset.toFields(name, it.distanceUnit)))
     }
 
+    fun onToggleTask(key: Int) = _state.update { state ->
+        state.copy(tasks = state.tasks.map { if (it.key == key) it.copy(isCollapsed = !it.isCollapsed) else it })
+    }
+
     fun onRemoveTask(key: Int) = _state.update { state ->
         state.copy(tasks = state.tasks.filterNot { it.key == key })
     }
@@ -62,7 +67,12 @@ class CarFormViewModel(
     fun onSave(defaultTaskName: String) {
         val form = _state.value
         if (!form.isValid) {
-            _state.update { it.copy(showErrors = true) }
+            _state.update { state ->
+                state.copy(
+                    showErrors = true,
+                    tasks = state.tasks.map { if (it.fields.isValid) it else it.copy(isCollapsed = false) },
+                )
+            }
             return
         }
         val mileageKm = form.mileageKm.toInt().kmFrom(form.distanceUnit)

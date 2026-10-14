@@ -5,13 +5,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -19,7 +21,6 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,12 +30,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -44,15 +43,17 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import pitstop.shared.generated.resources.Res
-import pitstop.shared.generated.resources.action_add_custom_task
+import pitstop.shared.generated.resources.action_add_task_button
+import pitstop.shared.generated.resources.action_collapse_task
+import pitstop.shared.generated.resources.action_expand_task
 import pitstop.shared.generated.resources.action_remove_task
 import pitstop.shared.generated.resources.action_save_car
 import pitstop.shared.generated.resources.car_name_placeholder
 import pitstop.shared.generated.resources.date_placeholder
 import pitstop.shared.generated.resources.field_brand
 import pitstop.shared.generated.resources.field_interval_months
-import pitstop.shared.generated.resources.field_last_done_date
 import pitstop.shared.generated.resources.field_last_done
+import pitstop.shared.generated.resources.field_last_done_date
 import pitstop.shared.generated.resources.field_mileage
 import pitstop.shared.generated.resources.field_reminder_window
 import pitstop.shared.generated.resources.field_task_interval
@@ -60,25 +61,32 @@ import pitstop.shared.generated.resources.field_vin
 import pitstop.shared.generated.resources.screen_add_car
 import pitstop.shared.generated.resources.section_tasks
 import pitstop.shared.generated.resources.task_block_title
+import pitstop.shared.generated.resources.task_every
+import pitstop.shared.generated.resources.task_interval_missing
+import pitstop.shared.generated.resources.task_last_done
+import pitstop.shared.generated.resources.task_last_done_missing
 import pitstop.shared.generated.resources.task_name_oil
 import pitstop.shared.generated.resources.task_name_placeholder
 import pitstop.shared.generated.resources.tasks_added
 import pitstop.shared.generated.resources.vin_placeholder
-import ru.kuznetsov.pitstop.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.pitstop.domain.model.DistanceUnit
 import ru.kuznetsov.pitstop.ui.components.ScreenPreview
-import ru.kuznetsov.pitstop.ui.components.screen.ScreenTitle
-import ru.kuznetsov.pitstop.ui.components.screen.ScreenTopBar
 import ru.kuznetsov.pitstop.ui.components.buttons.AppIconButton
+import ru.kuznetsov.pitstop.ui.components.buttons.OutlineButton
 import ru.kuznetsov.pitstop.ui.components.buttons.PresetChip
 import ru.kuznetsov.pitstop.ui.components.buttons.PrimaryButton
 import ru.kuznetsov.pitstop.ui.components.fields.AppNumberField
 import ru.kuznetsov.pitstop.ui.components.fields.AppTextField
 import ru.kuznetsov.pitstop.ui.components.fields.FieldLabel
 import ru.kuznetsov.pitstop.ui.components.fields.LabeledMiniField
+import ru.kuznetsov.pitstop.ui.components.screen.ScreenHorizontalPadding
+import ru.kuznetsov.pitstop.ui.components.screen.ScreenTitle
+import ru.kuznetsov.pitstop.ui.components.screen.ScreenTopBar
+import ru.kuznetsov.pitstop.ui.format.DateInputFormat
 import ru.kuznetsov.pitstop.ui.format.TaskFields
 import ru.kuznetsov.pitstop.ui.format.TaskPreset
 import ru.kuznetsov.pitstop.ui.format.chipLabel
+import ru.kuznetsov.pitstop.ui.format.grouped
 import ru.kuznetsov.pitstop.ui.format.taskName
 import ru.kuznetsov.pitstop.ui.format.unitGenitive
 import ru.kuznetsov.pitstop.ui.format.unitLabel
@@ -104,6 +112,7 @@ fun CarFormScreen(
         onTaskChange = viewModel::onTaskChange,
         onAddTask = viewModel::onAddTask,
         onAddPreset = viewModel::onAddPreset,
+        onToggleTask = viewModel::onToggleTask,
         onRemoveTask = viewModel::onRemoveTask,
         onSave = viewModel::onSave,
         modifier = modifier,
@@ -121,6 +130,7 @@ internal fun CarFormContent(
     onTaskChange: (key: Int, fields: TaskFields) -> Unit,
     onAddTask: () -> Unit,
     onAddPreset: (TaskPreset, String) -> Unit,
+    onToggleTask: (key: Int) -> Unit,
     onRemoveTask: (key: Int) -> Unit,
     onSave: (defaultTaskName: String) -> Unit,
     modifier: Modifier = Modifier,
@@ -197,24 +207,36 @@ internal fun CarFormContent(
                     TaskBlock(
                         number = index + 1,
                         fields = task.fields,
+                        isCollapsed = task.isCollapsed,
                         showErrors = state.showErrors,
                         distanceUnit = state.distanceUnit,
                         onChange = { onTaskChange(task.key, it) },
+                        onToggle = { onToggleTask(task.key) },
                         onRemove = { onRemoveTask(task.key) },
                         modifier = Modifier.padding(bottom = 14.dp),
                     )
                 }
             }
-            AddTaskButton(onClick = onAddTask)
         }
         val defaultTaskName = stringResource(Res.string.task_name_oil)
-        PrimaryButton(
-            text = stringResource(Res.string.action_save_car),
-            onClick = { onSave(defaultTaskName) },
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(IntrinsicSize.Min)
                 .padding(start = ScreenHorizontalPadding, end = ScreenHorizontalPadding, top = 12.dp, bottom = 20.dp),
-        )
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            OutlineButton(
+                text = stringResource(Res.string.action_add_task_button),
+                onClick = onAddTask,
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+            )
+            PrimaryButton(
+                text = stringResource(Res.string.action_save_car),
+                onClick = { onSave(defaultTaskName) },
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+            )
+        }
     }
 }
 
@@ -223,9 +245,11 @@ internal fun CarFormContent(
 private fun TaskBlock(
     number: Int,
     fields: TaskFields,
+    isCollapsed: Boolean,
     showErrors: Boolean,
     distanceUnit: DistanceUnit,
     onChange: (TaskFields) -> Unit,
+    onToggle: () -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -239,19 +263,39 @@ private fun TaskBlock(
             .fillMaxWidth()
             .clip(shape)
             .background(colors.surface)
-            .border(1.dp, colors.rule, shape)
+            .border(1.dp, if (isCollapsed && showErrors && !fields.isValid) colors.tierDue else colors.rule, shape)
+            .then(if (isCollapsed) Modifier.clickable(onClick = onToggle) else Modifier)
             .padding(15.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(if (isCollapsed) 4.dp else 10.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                stringResource(Res.string.task_block_title, number).uppercase(),
-                style = PitStopTheme.typography.mono.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.04f.em),
-                color = colors.inkMuted,
+            if (isCollapsed) {
+                Text(
+                    fields.name.ifBlank { stringResource(Res.string.task_block_title, number) },
+                    style = PitStopTheme.typography.sans.copy(fontSize = 13.5.sp, lineHeight = 18.sp, fontWeight = FontWeight.Bold),
+                    color = colors.ink,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
+                Text(
+                    stringResource(Res.string.task_block_title, number).uppercase(),
+                    style = PitStopTheme.typography.mono.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.04f.em),
+                    color = colors.inkMuted,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            AppIconButton(
+                icon = PitStopIcons.ChevronDown,
+                onClick = onToggle,
+                contentDescription = stringResource(if (isCollapsed) Res.string.action_expand_task else Res.string.action_collapse_task),
+                iconSize = 14.dp,
+                modifier = Modifier.rotate(if (isCollapsed) 0f else 180f),
             )
             AppIconButton(
                 icon = PitStopIcons.Trash,
@@ -259,6 +303,16 @@ private fun TaskBlock(
                 contentDescription = stringResource(Res.string.action_remove_task),
                 iconSize = 14.dp,
             )
+        }
+        if (isCollapsed) {
+            Text(
+                collapsedSummary(fields, distanceUnit),
+                style = PitStopTheme.typography.sans.copy(fontSize = 11.5.sp, lineHeight = 15.sp),
+                color = colors.inkMuted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            return@Column
         }
         AppTextField(
             value = fields.name,
@@ -303,6 +357,8 @@ private fun TaskBlock(
                 value = fields.lastDoneDate,
                 onValueChange = { onChange(fields.copy(lastDoneDate = it)) },
                 placeholder = stringResource(Res.string.date_placeholder),
+                keyboardType = KeyboardType.Number,
+                visualTransformation = DateInputFormat.current.visualTransformation,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -318,36 +374,16 @@ private fun TaskBlock(
 }
 
 @Composable
-private fun AddTaskButton(onClick: () -> Unit) {
-    val colors = PitStopTheme.colors
-    val radius = PitStopTheme.dimens.radiusL
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(radius))
-            .background(colors.surface2)
-            .drawBehind {
-                drawRoundRect(
-                    color = colors.rule,
-                    cornerRadius = CornerRadius(radius.toPx()),
-                    style = Stroke(
-                        width = 1.5.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx())),
-                    ),
-                )
-            }
-            .clickable(onClick = onClick)
-            .padding(13.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(PitStopIcons.Plus, contentDescription = null, tint = colors.accent, modifier = Modifier.size(14.dp))
-        Text(
-            stringResource(Res.string.action_add_custom_task),
-            style = PitStopTheme.typography.sans.copy(fontSize = 12.5.sp, fontWeight = FontWeight.Bold),
-            color = colors.accent,
-        )
-    }
+private fun collapsedSummary(fields: TaskFields, distanceUnit: DistanceUnit): String {
+    val interval = fields.intervalKm.toIntOrNull()?.takeIf { it > 0 }
+    val lastDone = fields.lastDoneKm.toIntOrNull()
+    val unit = unitGenitive(distanceUnit)
+    return listOf(
+        interval?.let { stringResource(Res.string.task_every, "${it.grouped()} $unit") }
+            ?: stringResource(Res.string.task_interval_missing),
+        lastDone?.let { stringResource(Res.string.task_last_done, "${it.grouped()} $unit") }
+            ?: stringResource(Res.string.task_last_done_missing),
+    ).joinToString(" · ")
 }
 
 private val previewState = CarFormUiState(
@@ -364,7 +400,9 @@ private val previewState = CarFormUiState(
                 lastDoneKm = "78000",
                 reminderWindowKm = "1500",
             ),
+            isCollapsed = true,
         ),
+        TaskBlockState(key = 1, fields = TaskFields(name = "Воздушный фильтр", intervalKm = "15000", lastDoneKm = "70000")),
     ),
 )
 
@@ -379,6 +417,7 @@ private fun CarFormPreviewContent() {
         onTaskChange = { _, _ -> },
         onAddTask = {},
         onAddPreset = { _, _ -> },
+        onToggleTask = {},
         onRemoveTask = {},
         onSave = {},
     )

@@ -34,6 +34,7 @@ import ru.kuznetsov.pitstop.domain.model.DistanceUnit
 import ru.kuznetsov.pitstop.ui.components.dialogs.DialogButton
 import ru.kuznetsov.pitstop.ui.components.dialogs.DialogCard
 import ru.kuznetsov.pitstop.ui.components.fields.LabeledMiniField
+import ru.kuznetsov.pitstop.ui.format.DateInputFormat
 import ru.kuznetsov.pitstop.ui.format.unitLabel
 import ru.kuznetsov.pitstop.ui.icons.PitStopIcons
 import ru.kuznetsov.pitstop.ui.theme.PitStopTheme
@@ -74,6 +75,8 @@ internal fun HistoryFilterCard(
                     value = filter.dateFrom,
                     onValueChange = { onChange(filter.copy(dateFrom = it)) },
                     placeholder = stringResource(Res.string.date_placeholder),
+                    keyboardType = KeyboardType.Number,
+                    visualTransformation = DateInputFormat.current.visualTransformation,
                     isError = filter.showErrors && filter.isDateFromInvalid,
                     modifier = Modifier.weight(1f),
                 )
@@ -82,6 +85,8 @@ internal fun HistoryFilterCard(
                     value = filter.dateTo,
                     onValueChange = { onChange(filter.copy(dateTo = it)) },
                     placeholder = stringResource(Res.string.date_placeholder),
+                    keyboardType = KeyboardType.Number,
+                    visualTransformation = DateInputFormat.current.visualTransformation,
                     isError = filter.showErrors && filter.isDateToInvalid,
                     modifier = Modifier.weight(1f),
                 )
@@ -162,6 +167,8 @@ internal fun HistoryEntryCard(
                     value = form.date,
                     onValueChange = { onChange(form.copy(date = it)) },
                     placeholder = stringResource(Res.string.date_placeholder),
+                    keyboardType = KeyboardType.Number,
+                    visualTransformation = DateInputFormat.current.visualTransformation,
                     isError = form.showErrors && form.isDateInvalid,
                     required = true,
                     modifier = Modifier.weight(1f),

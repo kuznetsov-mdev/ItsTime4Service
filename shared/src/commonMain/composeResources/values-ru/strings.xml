@@ -69,7 +69,6 @@
     <string name="field_last_done_date">Дата последней замены (опц.)</string>
     <string name="date_placeholder">дд.мм.гггг</string>
     <string name="field_reminder_window">Напоминать за столько %1$s до срока</string>
-    <string name="action_add_custom_task">Добавить произвольную работу</string>
     <string name="action_remove_task">Удалить работу</string>
     <string name="settings_theme">Тема</string>
     <string name="settings_units">Единицы измерения</string>
@@ -138,6 +137,12 @@
     <string name="dialog_purge_title">Удалить %1$s полностью?</string>
     <string name="dialog_purge_text">Авто, его регламентные работы и вся история ТО будут удалены без возможности восстановления.</string>
     <string name="action_delete_car_with_history">Удалить %1$s с историей</string>
+    <string name="action_add_task_button">+ Добавить работу</string>
+    <string name="action_expand_task">Развернуть работу</string>
+    <string name="action_collapse_task">Свернуть работу</string>
+    <string name="task_last_done">последний раз %1$s</string>
+    <string name="task_interval_missing">интервал не указан</string>
+    <string name="task_last_done_missing">последний раз не указан</string>
     <string-array name="months">
         <item>Январь</item>
         <item>Февраль</item>

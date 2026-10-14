@@ -20,10 +20,9 @@ import ru.kuznetsov.pitstop.domain.usecase.ObserveCarsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.ObserveHistoryUseCase
 import ru.kuznetsov.pitstop.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateHistoryEntryUseCase
+import ru.kuznetsov.pitstop.ui.format.DateInputFormat
 import ru.kuznetsov.pitstop.ui.format.keepKm
 import ru.kuznetsov.pitstop.ui.format.kmIn
-import ru.kuznetsov.pitstop.ui.format.parseDisplayDate
-import ru.kuznetsov.pitstop.ui.format.toDisplayText
 
 /**
  * Drives the service history screen: the records of every car in one list, a car picker,
@@ -95,6 +94,8 @@ class HistoryViewModel(
     fun onFilterChange(filter: HistoryFilter) = view.update {
         it.copy(
             filterDraft = filter.copy(
+                dateFrom = DateInputFormat.current.digits(filter.dateFrom),
+                dateTo = DateInputFormat.current.digits(filter.dateTo),
                 mileageFrom = filter.mileageFrom.digits(),
                 mileageTo = filter.mileageTo.digits(),
             ),
@@ -120,7 +121,7 @@ class HistoryViewModel(
                 entryId = row.entry.id,
                 taskName = row.entry.taskName,
                 car = row.car,
-                date = row.entry.date.toDisplayText(),
+                date = DateInputFormat.current.digitsOf(row.entry.date),
                 mileage = row.entry.mileageKm.kmIn(state.value.distanceUnit).toString(),
                 serviceName = row.entry.serviceName.orEmpty(),
                 cost = row.entry.costRub?.toString().orEmpty(),
@@ -129,12 +130,18 @@ class HistoryViewModel(
     }
 
     fun onEntryChange(form: HistoryEntryForm) = view.update {
-        it.copy(entryForm = form.copy(mileage = form.mileage.digits(), cost = form.cost.digits()))
+        it.copy(
+            entryForm = form.copy(
+                date = DateInputFormat.current.digits(form.date),
+                mileage = form.mileage.digits(),
+                cost = form.cost.digits(),
+            ),
+        )
     }
 
     fun onEntrySave() {
         val form = view.value.entryForm ?: return
-        val date = parseDisplayDate(form.date)
+        val date = DateInputFormat.current.parse(form.date)
         val mileage = form.mileage.toIntOrNull()
         val original = state.value.years
             .flatMap { year -> year.months.flatMap { it.rows } }
@@ -165,8 +172,8 @@ class HistoryViewModel(
 
     private fun HistoryFilter.matches(row: HistoryRow, unit: DistanceUnit): Boolean {
         val entry = row.entry
-        val from = parseDisplayDate(dateFrom)
-        val to = parseDisplayDate(dateTo)
+        val from = DateInputFormat.current.parse(dateFrom)
+        val to = DateInputFormat.current.parse(dateTo)
         val minKm = mileageFrom.toIntOrNull()
         val maxKm = mileageTo.toIntOrNull()
         val text = query.trim()

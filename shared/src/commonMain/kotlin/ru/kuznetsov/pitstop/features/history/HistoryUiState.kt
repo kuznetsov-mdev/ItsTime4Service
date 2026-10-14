@@ -2,7 +2,7 @@ package ru.kuznetsov.pitstop.features.history
 
 import ru.kuznetsov.pitstop.domain.model.DistanceUnit
 import ru.kuznetsov.pitstop.domain.model.ServiceHistoryEntry
-import ru.kuznetsov.pitstop.ui.format.parseDisplayDate
+import ru.kuznetsov.pitstop.ui.format.DateInputFormat
 
 /**
  * State of the service history screen — one list for every car.
@@ -40,6 +40,7 @@ data class HistoryCar(
  * The history filter as typed in its window: a date range, a search string for the task name
  * and a mileage range in the unit chosen in settings. Empty fields do not filter; all filled conditions
  * must hold together.
+ * Dates are kept as their typed digits in the [DateInputFormat] of the app language.
  * A date that is typed but cannot be read makes the filter invalid: it is not applied, and once
  * [showErrors] is on such a date is outlined in red.
  */
@@ -51,8 +52,8 @@ data class HistoryFilter(
     val mileageTo: String = "",
     val showErrors: Boolean = false,
 ) {
-    val isDateFromInvalid: Boolean get() = dateFrom.isNotBlank() && parseDisplayDate(dateFrom) == null
-    val isDateToInvalid: Boolean get() = dateTo.isNotBlank() && parseDisplayDate(dateTo) == null
+    val isDateFromInvalid: Boolean get() = dateFrom.isNotBlank() && DateInputFormat.current.parse(dateFrom) == null
+    val isDateToInvalid: Boolean get() = dateTo.isNotBlank() && DateInputFormat.current.parse(dateTo) == null
     val isValid: Boolean get() = !isDateFromInvalid && !isDateToInvalid
 
     val isActive: Boolean
@@ -85,8 +86,8 @@ data class HistoryRow(
 )
 
 /**
- * The editable copy of a record shown in its window; everything is kept as text, the mileage in the unit
- * chosen in settings.
+ * The editable copy of a record shown in its window; everything is kept as text: the date as its typed digits
+ * in the [DateInputFormat] of the app language, the mileage in the unit chosen in settings.
  * The date and the mileage are required; [showErrors] turns on after a save attempt with either of them
  * invalid and outlines them in red.
  */
@@ -100,7 +101,7 @@ data class HistoryEntryForm(
     val cost: String = "",
     val showErrors: Boolean = false,
 ) {
-    val isDateInvalid: Boolean get() = parseDisplayDate(date) == null
+    val isDateInvalid: Boolean get() = DateInputFormat.current.parse(date) == null
     val isMileageInvalid: Boolean get() = (mileage.toIntOrNull() ?: 0) <= 0
     val isValid: Boolean get() = !isDateInvalid && !isMileageInvalid
 }

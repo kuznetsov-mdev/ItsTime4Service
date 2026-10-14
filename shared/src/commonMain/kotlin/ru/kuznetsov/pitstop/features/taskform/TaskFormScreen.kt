@@ -52,6 +52,7 @@ import ru.kuznetsov.pitstop.ui.components.fields.FieldLabel
 import ru.kuznetsov.pitstop.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.pitstop.ui.components.screen.ScreenTitle
 import ru.kuznetsov.pitstop.ui.components.screen.ScreenTopBar
+import ru.kuznetsov.pitstop.ui.format.DateInputFormat
 import ru.kuznetsov.pitstop.ui.format.TaskFields
 import ru.kuznetsov.pitstop.ui.format.TaskPreset
 import ru.kuznetsov.pitstop.ui.format.chipLabel
@@ -187,10 +188,11 @@ internal fun TaskFormContent(
                     }
                     Column(Modifier.weight(1f)) {
                         FieldLabel(stringResource(Res.string.field_last_done_date_short))
-                        AppTextField(
+                        AppNumberField(
                             value = fields.lastDoneDate,
                             onValueChange = { onFieldsChange(fields.copy(lastDoneDate = it)) },
                             placeholder = stringResource(Res.string.date_placeholder),
+                            visualTransformation = DateInputFormat.current.visualTransformation,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }

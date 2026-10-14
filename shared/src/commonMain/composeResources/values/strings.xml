@@ -67,9 +67,8 @@
     <string name="field_interval_months">Time interval, months (opt.)</string>
     <string name="field_last_done">Last done at, %1$s</string>
     <string name="field_last_done_date">Last replacement date (opt.)</string>
-    <string name="date_placeholder">dd.mm.yyyy</string>
+    <string name="date_placeholder">mm/dd/yyyy</string>
     <string name="field_reminder_window">Remind this many %1$s before due</string>
-    <string name="action_add_custom_task">Add a custom task</string>
     <string name="action_remove_task">Remove task</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_units">Units</string>
@@ -138,6 +137,12 @@
     <string name="dialog_purge_title">Delete %1$s completely?</string>
     <string name="dialog_purge_text">The car, its maintenance tasks and all service history will be deleted for good.</string>
     <string name="action_delete_car_with_history">Delete %1$s with history</string>
+    <string name="action_add_task_button">+ Add task</string>
+    <string name="action_expand_task">Expand task</string>
+    <string name="action_collapse_task">Collapse task</string>
+    <string name="task_last_done">last done at %1$s</string>
+    <string name="task_interval_missing">no interval</string>
+    <string name="task_last_done_missing">last done not set</string>
     <string-array name="months">
         <item>January</item>
         <item>February</item>

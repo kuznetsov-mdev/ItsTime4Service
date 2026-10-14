@@ -67,9 +67,8 @@
     <string name="field_interval_months">Intervalo de tiempo, meses (opc.)</string>
     <string name="field_last_done">Última vez, %1$s</string>
     <string name="field_last_done_date">Fecha del último cambio (opc.)</string>
-    <string name="date_placeholder">dd.mm.aaaa</string>
+    <string name="date_placeholder">dd/mm/aaaa</string>
     <string name="field_reminder_window">Avisar tantos %1$s antes del plazo</string>
-    <string name="action_add_custom_task">Añadir una tarea propia</string>
     <string name="action_remove_task">Quitar tarea</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_units">Unidades</string>
@@ -138,6 +137,12 @@
     <string name="dialog_purge_title">¿Eliminar %1$s por completo?</string>
     <string name="dialog_purge_text">El coche, sus tareas de mantenimiento y todo el historial se eliminarán definitivamente.</string>
     <string name="action_delete_car_with_history">Eliminar %1$s con el historial</string>
+    <string name="action_add_task_button">+ Añadir tarea</string>
+    <string name="action_expand_task">Desplegar tarea</string>
+    <string name="action_collapse_task">Plegar tarea</string>
+    <string name="task_last_done">última vez %1$s</string>
+    <string name="task_interval_missing">sin intervalo</string>
+    <string name="task_last_done_missing">última vez sin indicar</string>
     <string-array name="months">
         <item>Enero</item>
         <item>Febrero</item>
