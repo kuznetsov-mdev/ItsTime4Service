@@ -22,7 +22,7 @@ import ru.kuznetsov.pitstop.ui.format.kmFrom
  * Saving with an empty required field — in the car or in any task block — stores nothing, switches
  * the form to showing errors and expands every collapsed block with such a field; an unwanted block has to be removed, it is not skipped silently.
  * When the form has no blocks at all, the car gets a default oil-change task counted from its current
- * mileage, as in the design mockup. Distances are typed in the unit chosen in settings and stored in kilometers.
+ * mileage, as in the design mockup. Repeated taps on save while the car is being stored are ignored. Distances are typed in the unit chosen in settings and stored in kilometers.
  */
 class CarFormViewModel(
     private val addCar: AddCarUseCase,
@@ -33,6 +33,7 @@ class CarFormViewModel(
     val state: StateFlow<CarFormUiState> = _state.asStateFlow()
 
     private var nextKey = 0
+    private var isSaving = false
 
     init {
         viewModelScope.launch {
@@ -75,6 +76,8 @@ class CarFormViewModel(
             }
             return
         }
+        if (isSaving) return
+        isSaving = true
         val mileageKm = form.mileageKm.toInt().kmFrom(form.distanceUnit)
         viewModelScope.launch {
             val tasks = form.tasks.mapNotNull { it.fields.toNewTask(form.distanceUnit) }.ifEmpty {
@@ -88,7 +91,7 @@ class CarFormViewModel(
                 )
             }
             val carId = addCar(NewCar(brand = form.brand, mileageKm = mileageKm, vin = form.vin, tasks = tasks))
-            if (carId != null) _state.update { it.copy(isSaved = true) }
+            if (carId != null) _state.update { it.copy(isSaved = true) } else isSaving = false
         }
     }
 

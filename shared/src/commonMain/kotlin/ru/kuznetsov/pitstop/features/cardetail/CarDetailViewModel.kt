@@ -35,8 +35,8 @@ import ru.kuznetsov.pitstop.ui.format.kmIn
  * multiplier; every step is stored right away and the mileage never drops to zero or below. Steps and a mileage
  * typed by hand are applied one after another, each to the mileage as stored at that moment.
  * Marking a task as done first opens a window for the service name, the cost and a comment.
- * Temporary until the storage supports it: the done marks and the values from that window live only in
- * this view model's memory — the window's fields are not written to the service history, and removing
+ * The window's service name and cost go into the service history record.
+ * Temporary until the storage supports it: the done marks live only in this view model's memory, and removing
  * a mark only forgets it, without rolling the task back or deleting the history record.
  */
 class CarDetailViewModel(
@@ -121,13 +121,12 @@ class CarDetailViewModel(
 
     fun onTaskDoneDismiss() = overlay.update { it.copy(doneDialogTaskId = null) }
 
-    @Suppress("UNUSED_PARAMETER")
-    fun onTaskDoneConfirm(serviceName: String, cost: String, comment: String) {
+    fun onTaskDoneConfirm(serviceName: String, cost: String) {
         val taskId = overlay.value.doneDialogTaskId ?: return
         overlay.update { it.copy(doneDialogTaskId = null) }
         viewModelScope.launch {
             val car = observeCarById(carId).first() ?: return@launch
-            if (markTaskDone(carId, taskId, getToday())) {
+            if (markTaskDone(carId, taskId, getToday(), serviceName, cost.toIntOrNull())) {
                 overlay.update { it.copy(doneMarks = it.doneMarks + (taskId to car.mileageKm)) }
             }
         }

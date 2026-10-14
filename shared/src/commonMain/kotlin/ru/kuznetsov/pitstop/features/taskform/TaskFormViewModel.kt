@@ -24,6 +24,7 @@ import ru.kuznetsov.pitstop.ui.format.toFields
  * and the reminder window, and "add another" stores the task and clears the form for the next one.
  * With a [taskId] it edits that task and can delete it after a confirmation; its service history stays.
  * Saving with an empty required field stores nothing and switches the form to showing errors.
+ * Repeated taps on save or "add another" while a task is being stored are ignored.
  * Distances are typed in the unit chosen in settings and stored in kilometers; a distance left as it was
  * keeps its stored value.
  */
@@ -41,6 +42,7 @@ class TaskFormViewModel(
     val state: StateFlow<TaskFormUiState> = _state.asStateFlow()
 
     private var original: MaintenanceTask? = null
+    private var isSaving = false
 
     init {
         viewModelScope.launch { load() }
@@ -90,8 +92,11 @@ class TaskFormViewModel(
             _state.update { it.copy(showErrors = true) }
             return
         }
+        if (isSaving) return
+        isSaving = true
         viewModelScope.launch {
             val saved = if (taskId != null) updateTask(carId, taskId, task) else addTask(carId, task)
+            isSaving = false
             if (!saved) return@launch
             _state.update {
                 if (addAnother) {

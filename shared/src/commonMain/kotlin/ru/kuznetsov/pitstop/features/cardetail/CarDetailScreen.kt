@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -124,7 +125,7 @@ internal fun CarDetailContent(
     onMileageStep: (direction: Int) -> Unit,
     onMultiplierSelect: (Int) -> Unit,
     onMarkTaskDone: (taskId: String) -> Unit,
-    onTaskDoneConfirm: (serviceName: String, cost: String, comment: String) -> Unit,
+    onTaskDoneConfirm: (serviceName: String, cost: String) -> Unit,
     onTaskDoneDismiss: () -> Unit,
     onUnmarkRequest: (taskId: String) -> Unit,
     onUnmarkConfirm: () -> Unit,
@@ -135,6 +136,11 @@ internal fun CarDetailContent(
     modifier: Modifier = Modifier,
 ) {
     val car = state.car
+    val taskListState = rememberLazyListState()
+    val mileageKm = car?.mileageKm
+    LaunchedEffect(mileageKm) {
+        if (mileageKm != null) taskListState.animateScrollToItem(0)
+    }
     val layout = remember { EditLayout() }
     val editBounds = Modifier.onGloballyPositioned { layout.edit = it }
     Box(
@@ -188,6 +194,7 @@ internal fun CarDetailContent(
                 } else {
                     LazyColumn(
                         modifier = Modifier.weight(1f),
+                        state = taskListState,
                         contentPadding = PaddingValues(start = ScreenHorizontalPadding, end = ScreenHorizontalPadding, top = 4.dp, bottom = 84.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
@@ -371,7 +378,7 @@ private fun CarDetailPreviewContent() {
         onMileageStep = {},
         onMultiplierSelect = {},
         onMarkTaskDone = {},
-        onTaskDoneConfirm = { _, _, _ -> },
+        onTaskDoneConfirm = { _, _ -> },
         onTaskDoneDismiss = {},
         onUnmarkRequest = {},
         onUnmarkConfirm = {},
