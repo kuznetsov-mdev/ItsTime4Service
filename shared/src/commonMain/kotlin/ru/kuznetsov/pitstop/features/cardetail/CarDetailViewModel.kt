@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import ru.kuznetsov.pitstop.domain.model.Car
 import ru.kuznetsov.pitstop.domain.usecase.CarAlertsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.DeleteCarUseCase
@@ -21,6 +23,7 @@ import ru.kuznetsov.pitstop.domain.usecase.SortedTaskStatsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateCarUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateMileageUseCase
 import ru.kuznetsov.pitstop.ui.format.keepKm
+import ru.kuznetsov.pitstop.ui.format.kmIn
 
 /**
  * Drives the car screen: the task list sorted by urgency, in-place editing of the name, the VIN and
@@ -28,6 +31,9 @@ import ru.kuznetsov.pitstop.ui.format.keepKm
  * Only one header value is edited at a time and only its check button saves it; [onCancelEdit] drops
  * the edit and the value stays as it was. The mileage is typed in the unit chosen in settings and stored in
  * kilometers; saved unchanged, it keeps its stored value.
+ * The mileage can also be stepped up and down by buttons: 100 units of the chosen distance unit times the chosen
+ * multiplier; every step is stored right away, steps are applied one after another, and the mileage never drops
+ * to zero or below.
  * Marking a task as done first opens a window for the service name, the cost and a comment.
  * Temporary until the storage supports it: the done marks and the values from that window live only in
  * this view model's memory — the window's fields are not written to the service history, and removing
@@ -47,6 +53,7 @@ class CarDetailViewModel(
 ) : ViewModel() {
 
     private val overlay = MutableStateFlow(Overlay())
+    private val mileageMutex = Mutex()
 
     val state: StateFlow<CarDetailUiState> = combine(
         observeCarById(carId),
@@ -62,6 +69,7 @@ class CarDetailViewModel(
             isConfirmingDelete = overlay.isConfirmingDelete,
             taskDoneDialog = details?.tasks?.firstOrNull { it.id == overlay.doneDialogTaskId },
             isConfirmingUnmark = overlay.unmarkTaskId != null,
+            mileageMultiplier = overlay.mileageMultiplier,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), CarDetailUiState())
 
@@ -89,6 +97,21 @@ class CarDetailViewModel(
         viewModelScope.launch {
             val car = observeCarById(carId).first() ?: return@launch
             if (updateMileage(carId, keepKm(car.mileageKm, mileage, unit))) onCancelEdit()
+        }
+    }
+
+    fun onMultiplierSelect(multiplier: Int) = overlay.update { it.copy(mileageMultiplier = multiplier) }
+
+    fun onMileageStep(direction: Int) {
+        val unit = state.value.distanceUnit
+        val step = direction * overlay.value.mileageMultiplier * CarDetailUiState.MILEAGE_STEP
+        overlay.update { it.copy(editingField = null) }
+        viewModelScope.launch {
+            mileageMutex.withLock {
+                val car = observeCarById(carId).first() ?: return@withLock
+                val mileage = car.mileageKm.kmIn(unit) + step
+                if (mileage > 0) updateMileage(carId, keepKm(car.mileageKm, mileage, unit))
+            }
         }
     }
 
@@ -160,6 +183,7 @@ class CarDetailViewModel(
         val doneDialogTaskId: String? = null,
         val unmarkTaskId: String? = null,
         val doneMarks: Map<String, Int> = emptyMap(),
+        val mileageMultiplier: Int = 1,
     )
 
     private companion object {

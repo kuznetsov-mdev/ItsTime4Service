@@ -16,13 +16,11 @@
     <string name="field_last_replacement_date">Дата последней замены</string>
     <string name="car_name_placeholder">Например, Kia Rio</string>
     <string name="status_ok">В порядке</string>
-    <string name="status_soon">Скоро</string>
+    <string name="status_soon">Пора менять</string>
     <string name="status_due">Просрочено</string>
     <string name="app_name">PitStop</string>
     <string name="stat_mileage">Пробег</string>
-    <string name="stat_soon_overdue">Скоро / просрочено</string>
     <string name="mileage_km">%1$s км</string>
-    <string name="count_of_total">%1$d из %2$d</string>
     <string name="notification_time_now">сейчас</string>
     <string name="notification_sample_text">Пора заменить фильтр</string>
     <string name="screen_cars">Мои авто</string>
@@ -143,6 +141,13 @@
     <string name="task_last_done">последний раз %1$s</string>
     <string name="task_interval_missing">интервал не указан</string>
     <string name="task_last_done_missing">последний раз не указан</string>
+    <string name="mileage_step_hint">Шаг %1$s · тап по числу — ввести вручную</string>
+    <string name="alert_count_due">%1$d из %2$d пора менять</string>
+    <string name="action_mileage_down">Уменьшить пробег</string>
+    <string name="action_mileage_up">Увеличить пробег</string>
+    <string name="task_left_suffix">%1$s осталось</string>
+    <string name="task_overdue_suffix">%1$s просрочено</string>
+    <string name="action_done_unmark">Выполнено — снять отметку</string>
     <string-array name="months">
         <item>Январь</item>
         <item>Февраль</item>

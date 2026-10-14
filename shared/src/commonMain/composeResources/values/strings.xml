@@ -16,13 +16,11 @@
     <string name="field_last_replacement_date">Last replacement date</string>
     <string name="car_name_placeholder">e.g. Kia Rio</string>
     <string name="status_ok">OK</string>
-    <string name="status_soon">Soon</string>
+    <string name="status_soon">Time to replace</string>
     <string name="status_due">Overdue</string>
     <string name="app_name">PitStop</string>
     <string name="stat_mileage">Mileage</string>
-    <string name="stat_soon_overdue">Soon / overdue</string>
     <string name="mileage_km">%1$s km</string>
-    <string name="count_of_total">%1$d of %2$d</string>
     <string name="notification_time_now">now</string>
     <string name="notification_sample_text">Time to replace the filter</string>
     <string name="screen_cars">My cars</string>
@@ -143,6 +141,13 @@
     <string name="task_last_done">last done at %1$s</string>
     <string name="task_interval_missing">no interval</string>
     <string name="task_last_done_missing">last done not set</string>
+    <string name="mileage_step_hint">Step %1$s · tap the number to type it</string>
+    <string name="alert_count_due">%1$d of %2$d need replacing</string>
+    <string name="action_mileage_down">Decrease mileage</string>
+    <string name="action_mileage_up">Increase mileage</string>
+    <string name="task_left_suffix">%1$s left</string>
+    <string name="task_overdue_suffix">%1$s overdue</string>
+    <string name="action_done_unmark">Done — remove the mark</string>
     <string-array name="months">
         <item>January</item>
         <item>February</item>

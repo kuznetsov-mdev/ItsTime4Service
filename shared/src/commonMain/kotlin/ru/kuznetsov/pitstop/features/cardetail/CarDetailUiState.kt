@@ -19,8 +19,14 @@ data class CarDetailUiState(
     val isConfirmingDelete: Boolean = false,
     val taskDoneDialog: TaskItem? = null,
     val isConfirmingUnmark: Boolean = false,
+    val mileageMultiplier: Int = 1,
 ) {
     val isMissing: Boolean get() = !isLoading && car == null
+
+    companion object {
+        const val MILEAGE_STEP = 100
+        val MILEAGE_MULTIPLIERS = listOf(1, 2, 5, 10)
+    }
 }
 
 /**
