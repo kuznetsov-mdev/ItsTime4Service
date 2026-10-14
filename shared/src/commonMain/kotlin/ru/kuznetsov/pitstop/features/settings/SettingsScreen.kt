@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -23,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -33,13 +36,24 @@ import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import pitstop.shared.generated.resources.Res
-import pitstop.shared.generated.resources.reminder_time_dialog_text
+import pitstop.shared.generated.resources.action_cancel
+import pitstop.shared.generated.resources.action_delete
+import pitstop.shared.generated.resources.action_delete_car_with_history
 import pitstop.shared.generated.resources.app_name
+import pitstop.shared.generated.resources.dialog_purge_text
+import pitstop.shared.generated.resources.dialog_purge_title
 import pitstop.shared.generated.resources.notification_caption
 import pitstop.shared.generated.resources.notification_sample_full
 import pitstop.shared.generated.resources.notification_time_now
+import pitstop.shared.generated.resources.reminder_time_dialog_text
 import pitstop.shared.generated.resources.screen_settings
+import pitstop.shared.generated.resources.settings_delete_cars
+import pitstop.shared.generated.resources.settings_delete_note
+import pitstop.shared.generated.resources.settings_launch
 import pitstop.shared.generated.resources.settings_notifications
+import pitstop.shared.generated.resources.settings_open_default
+import pitstop.shared.generated.resources.settings_open_default_off
+import pitstop.shared.generated.resources.settings_open_default_on
 import pitstop.shared.generated.resources.settings_push_subtitle
 import pitstop.shared.generated.resources.settings_push_title
 import pitstop.shared.generated.resources.settings_remind_ahead
@@ -56,15 +70,19 @@ import pitstop.shared.generated.resources.units_mi
 import ru.kuznetsov.pitstop.domain.model.DistanceUnit
 import ru.kuznetsov.pitstop.domain.model.Settings
 import ru.kuznetsov.pitstop.domain.model.ThemeMode
-import ru.kuznetsov.pitstop.ui.components.dialogs.TimePickerDialog
-import ru.kuznetsov.pitstop.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.pitstop.ui.components.ScreenPreview
-import ru.kuznetsov.pitstop.ui.components.screen.ScreenTitle
-import ru.kuznetsov.pitstop.ui.format.toDisplayText
+import ru.kuznetsov.pitstop.ui.components.buttons.AppIconButton
 import ru.kuznetsov.pitstop.ui.components.buttons.SegmentedControl
 import ru.kuznetsov.pitstop.ui.components.cards.NotificationPreviewCard
+import ru.kuznetsov.pitstop.ui.components.dialogs.ConfirmDialog
+import ru.kuznetsov.pitstop.ui.components.dialogs.TimePickerDialog
 import ru.kuznetsov.pitstop.ui.components.indicators.AppSwitch
+import ru.kuznetsov.pitstop.ui.components.screen.ScreenHorizontalPadding
+import ru.kuznetsov.pitstop.ui.components.screen.ScreenTitle
 import ru.kuznetsov.pitstop.ui.components.steppers.Stepper
+import ru.kuznetsov.pitstop.ui.format.distanceText
+import ru.kuznetsov.pitstop.ui.format.toDisplayText
+import ru.kuznetsov.pitstop.ui.format.unitGenitive
 import ru.kuznetsov.pitstop.ui.icons.PitStopIcons
 import ru.kuznetsov.pitstop.ui.theme.PitStopTheme
 
@@ -86,6 +104,11 @@ fun SettingsScreen(
         onReminderTimeClick = viewModel::onReminderTimeClick,
         onReminderTimeDismiss = viewModel::onReminderTimeDismiss,
         onReminderTimeChange = viewModel::onReminderTimeChange,
+        onOpenDefaultToggle = viewModel::onOpenDefaultToggle,
+        onDefaultCarSelect = viewModel::onDefaultCarSelect,
+        onPurgeRequest = viewModel::onPurgeRequest,
+        onPurgeDismiss = viewModel::onPurgeDismiss,
+        onPurgeConfirm = viewModel::onPurgeConfirm,
         modifier = modifier,
     )
 }
@@ -96,12 +119,28 @@ internal fun SettingsContent(
     onThemeSelect: (ThemeMode) -> Unit,
     onUnitSelect: (DistanceUnit) -> Unit,
     onPushToggle: (Boolean) -> Unit,
-    onReminderWindowChange: (thousandKm: Int) -> Unit,
+    onReminderWindowChange: (steps: Int) -> Unit,
     onReminderTimeClick: () -> Unit,
     onReminderTimeDismiss: () -> Unit,
     onReminderTimeChange: (LocalTime) -> Unit,
+    onOpenDefaultToggle: (Boolean) -> Unit,
+    onDefaultCarSelect: (carId: String) -> Unit,
+    onPurgeRequest: (carId: String) -> Unit,
+    onPurgeDismiss: () -> Unit,
+    onPurgeConfirm: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val purgeCar = state.purgeCar
+    if (purgeCar != null) {
+        ConfirmDialog(
+            title = stringResource(Res.string.dialog_purge_title, purgeCar.brand),
+            text = stringResource(Res.string.dialog_purge_text),
+            confirmLabel = stringResource(Res.string.action_delete),
+            dismissLabel = stringResource(Res.string.action_cancel),
+            onConfirm = onPurgeConfirm,
+            onDismiss = onPurgeDismiss,
+        )
+    }
     val settings = state.settings
     if (settings != null && state.isPickingReminderTime) {
         TimePickerDialog(
@@ -143,6 +182,31 @@ internal fun SettingsContent(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+            if (state.cars.isNotEmpty()) {
+                SettingsGroup(stringResource(Res.string.settings_launch)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SettingRow(
+                            icon = PitStopIcons.Car,
+                            title = stringResource(Res.string.settings_open_default),
+                            subtitle = stringResource(
+                                if (state.openDefault) Res.string.settings_open_default_on else Res.string.settings_open_default_off,
+                            ),
+                        ) {
+                            AppSwitch(checked = state.openDefault, onCheckedChange = onOpenDefaultToggle)
+                        }
+                        if (state.openDefault) {
+                            CarList(state.cars) { car ->
+                                CarOption(
+                                    car = car,
+                                    distanceUnit = settings.distanceUnit,
+                                    selected = car.id == state.defaultCarId,
+                                    onClick = { onDefaultCarSelect(car.id) },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
             SettingsGroup(stringResource(Res.string.settings_notifications)) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     SettingRow(
@@ -155,20 +219,20 @@ internal fun SettingsContent(
                     NotificationPreviewCard(
                         title = stringResource(Res.string.app_name),
                         time = stringResource(Res.string.notification_time_now),
-                        text = stringResource(Res.string.notification_sample_full),
+                        text = stringResource(Res.string.notification_sample_full, distanceText(SAMPLE_REMAINING_KM, settings.distanceUnit)),
                         caption = stringResource(Res.string.notification_caption),
                         modifier = Modifier.fillMaxWidth(),
                     )
                     SettingRow(
                         icon = PitStopIcons.Gauge,
                         title = stringResource(Res.string.settings_remind_ahead),
-                        subtitle = stringResource(Res.string.settings_remind_ahead_subtitle),
+                        subtitle = stringResource(Res.string.settings_remind_ahead_subtitle, unitGenitive(settings.distanceUnit)),
                     ) {
                         Stepper(
-                            value = settings.defaultReminderWindowKm / SettingsViewModel.KM_PER_STEP,
+                            value = state.reminderSteps,
                             onValueChange = onReminderWindowChange,
-                            min = 1,
-                            max = 9,
+                            min = SettingsUiState.MIN_REMINDER_STEPS,
+                            max = SettingsUiState.MAX_REMINDER_STEPS,
                         )
                     }
                     SettingRow(
@@ -185,7 +249,101 @@ internal fun SettingsContent(
                     }
                 }
             }
+            if (state.cars.isNotEmpty()) {
+                SettingsGroup(stringResource(Res.string.settings_delete_cars)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            stringResource(Res.string.settings_delete_note),
+                            style = PitStopTheme.typography.sans.copy(fontSize = 11.5.sp, lineHeight = 16.sp),
+                            color = PitStopTheme.colors.inkFaint,
+                        )
+                        CarList(state.cars) { car ->
+                            PurgeRow(car = car, distanceUnit = settings.distanceUnit, onDelete = { onPurgeRequest(car.id) })
+                        }
+                    }
+                }
+            }
         }
+    }
+}
+
+private const val SAMPLE_REMAINING_KM = 700
+
+@Composable
+private fun CarList(cars: List<SettingsCar>, row: @Composable (SettingsCar) -> Unit) {
+    val colors = PitStopTheme.colors
+    val shape = RoundedCornerShape(PitStopTheme.dimens.radiusM)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(colors.surface)
+            .border(1.dp, colors.rule, shape),
+    ) {
+        cars.forEachIndexed { index, car ->
+            if (index > 0) Box(Modifier.padding(horizontal = 14.dp).fillMaxWidth().height(1.dp).background(colors.rule))
+            row(car)
+        }
+    }
+}
+
+@Composable
+private fun CarTitle(car: SettingsCar, distanceUnit: DistanceUnit, modifier: Modifier = Modifier) {
+    val colors = PitStopTheme.colors
+    val typography = PitStopTheme.typography
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(1.dp)) {
+        Text(
+            car.brand,
+            style = typography.sans.copy(fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold),
+            color = if (car.isSold) colors.inkFaint else colors.ink,
+        )
+        Text(
+            distanceText(car.mileageKm, distanceUnit),
+            style = typography.mono.copy(fontSize = 10.5.sp, lineHeight = 14.sp, fontWeight = FontWeight.Normal),
+            color = colors.inkFaint,
+        )
+    }
+}
+
+@Composable
+private fun CarOption(car: SettingsCar, distanceUnit: DistanceUnit, selected: Boolean, onClick: () -> Unit) {
+    val colors = PitStopTheme.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CarTitle(car, distanceUnit, Modifier.weight(1f))
+        Box(
+            modifier = Modifier
+                .size(18.dp)
+                .clip(CircleShape)
+                .border(1.5.dp, if (selected) colors.accent else colors.inkFaint, CircleShape)
+                .padding(3.dp),
+        ) {
+            if (selected) Box(Modifier.fillMaxSize().clip(CircleShape).background(colors.accent))
+        }
+    }
+}
+
+@Composable
+private fun PurgeRow(car: SettingsCar, distanceUnit: DistanceUnit, onDelete: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CarTitle(car, distanceUnit, Modifier.weight(1f))
+        AppIconButton(
+            icon = PitStopIcons.Trash,
+            onClick = onDelete,
+            contentDescription = stringResource(Res.string.action_delete_car_with_history, car.brand),
+            iconSize = 15.dp,
+            tint = PitStopTheme.colors.tierDue,
+        )
     }
 }
 
@@ -258,6 +416,9 @@ private val previewState = SettingsUiState(
         defaultReminderWindowKm = 2_000,
         reminderTime = LocalTime(9, 0),
     ),
+    cars = listOf(SettingsCar("c1", "Kia Rio", 84_300), SettingsCar("c2", "Toyota Camry", 152_000)),
+    openDefault = true,
+    defaultCarId = "c2",
 )
 
 @Composable
@@ -271,6 +432,11 @@ private fun SettingsPreviewContent() {
         onReminderTimeClick = {},
         onReminderTimeDismiss = {},
         onReminderTimeChange = {},
+        onOpenDefaultToggle = {},
+        onDefaultCarSelect = {},
+        onPurgeRequest = {},
+        onPurgeDismiss = {},
+        onPurgeConfirm = {},
     )
 }
 

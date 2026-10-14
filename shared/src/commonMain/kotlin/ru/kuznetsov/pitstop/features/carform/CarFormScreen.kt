@@ -52,10 +52,10 @@ import pitstop.shared.generated.resources.date_placeholder
 import pitstop.shared.generated.resources.field_brand
 import pitstop.shared.generated.resources.field_interval_months
 import pitstop.shared.generated.resources.field_last_done_date
-import pitstop.shared.generated.resources.field_last_done_km
-import pitstop.shared.generated.resources.field_mileage_km
-import pitstop.shared.generated.resources.field_reminder_window_km
-import pitstop.shared.generated.resources.field_task_interval_km
+import pitstop.shared.generated.resources.field_last_done
+import pitstop.shared.generated.resources.field_mileage
+import pitstop.shared.generated.resources.field_reminder_window
+import pitstop.shared.generated.resources.field_task_interval
 import pitstop.shared.generated.resources.field_vin
 import pitstop.shared.generated.resources.screen_add_car
 import pitstop.shared.generated.resources.section_tasks
@@ -65,6 +65,7 @@ import pitstop.shared.generated.resources.task_name_placeholder
 import pitstop.shared.generated.resources.tasks_added
 import pitstop.shared.generated.resources.vin_placeholder
 import ru.kuznetsov.pitstop.ui.components.screen.ScreenHorizontalPadding
+import ru.kuznetsov.pitstop.domain.model.DistanceUnit
 import ru.kuznetsov.pitstop.ui.components.ScreenPreview
 import ru.kuznetsov.pitstop.ui.components.screen.ScreenTitle
 import ru.kuznetsov.pitstop.ui.components.screen.ScreenTopBar
@@ -79,6 +80,8 @@ import ru.kuznetsov.pitstop.ui.format.TaskFields
 import ru.kuznetsov.pitstop.ui.format.TaskPreset
 import ru.kuznetsov.pitstop.ui.format.chipLabel
 import ru.kuznetsov.pitstop.ui.format.taskName
+import ru.kuznetsov.pitstop.ui.format.unitGenitive
+import ru.kuznetsov.pitstop.ui.format.unitLabel
 import ru.kuznetsov.pitstop.ui.icons.PitStopIcons
 import ru.kuznetsov.pitstop.ui.theme.PitStopTheme
 
@@ -148,7 +151,7 @@ internal fun CarFormContent(
                 verticalAlignment = Alignment.Bottom,
             ) {
                 Column(Modifier.weight(1f)) {
-                    FieldLabel(stringResource(Res.string.field_mileage_km), required = true)
+                    FieldLabel(stringResource(Res.string.field_mileage, unitLabel(state.distanceUnit)), required = true)
                     AppNumberField(
                         value = state.mileageKm,
                         onValueChange = onMileageChange,
@@ -195,6 +198,7 @@ internal fun CarFormContent(
                         number = index + 1,
                         fields = task.fields,
                         showErrors = state.showErrors,
+                        distanceUnit = state.distanceUnit,
                         onChange = { onTaskChange(task.key, it) },
                         onRemove = { onRemoveTask(task.key) },
                         modifier = Modifier.padding(bottom = 14.dp),
@@ -220,6 +224,7 @@ private fun TaskBlock(
     number: Int,
     fields: TaskFields,
     showErrors: Boolean,
+    distanceUnit: DistanceUnit,
     onChange: (TaskFields) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
@@ -264,7 +269,7 @@ private fun TaskBlock(
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
             LabeledMiniField(
-                label = stringResource(Res.string.field_task_interval_km),
+                label = stringResource(Res.string.field_task_interval, unitLabel(distanceUnit)),
                 value = fields.intervalKm,
                 onValueChange = { onChange(fields.copy(intervalKm = it)) },
                 placeholder = "10000",
@@ -284,7 +289,7 @@ private fun TaskBlock(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
             LabeledMiniField(
-                label = stringResource(Res.string.field_last_done_km),
+                label = stringResource(Res.string.field_last_done, unitLabel(distanceUnit)),
                 value = fields.lastDoneKm,
                 onValueChange = { onChange(fields.copy(lastDoneKm = it)) },
                 placeholder = "78000",
@@ -302,7 +307,7 @@ private fun TaskBlock(
             )
         }
         LabeledMiniField(
-            label = stringResource(Res.string.field_reminder_window_km),
+            label = stringResource(Res.string.field_reminder_window, unitGenitive(distanceUnit)),
             value = fields.reminderWindowKm,
             onValueChange = { onChange(fields.copy(reminderWindowKm = it)) },
             placeholder = "1500",

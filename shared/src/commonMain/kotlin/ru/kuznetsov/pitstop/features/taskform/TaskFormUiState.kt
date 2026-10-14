@@ -1,5 +1,6 @@
 package ru.kuznetsov.pitstop.features.taskform
 
+import ru.kuznetsov.pitstop.domain.model.DistanceUnit
 import ru.kuznetsov.pitstop.ui.format.TaskFields
 
 /**
@@ -8,7 +9,8 @@ import ru.kuznetsov.pitstop.ui.format.TaskFields
  * field left empty and outlines every such field in red until it is filled.
  * [formKey] changes when a saved task is replaced with a fresh empty form by "add another",
  * so the screen can scroll back to the top. [isClosed] tells the screen to close: the task was saved
- * or deleted, or the car or the task no longer exists.
+ * or deleted, or the car or the task no longer exists. Distances are typed in [distanceUnit], the unit
+ * chosen in settings.
  */
 data class TaskFormUiState(
     val isLoading: Boolean = true,
@@ -19,4 +21,5 @@ data class TaskFormUiState(
     val isConfirmingDelete: Boolean = false,
     val formKey: Int = 0,
     val isClosed: Boolean = false,
+    val distanceUnit: DistanceUnit = DistanceUnit.KILOMETERS,
 )

@@ -1,6 +1,7 @@
 package ru.kuznetsov.pitstop.ui.format
 
 import org.jetbrains.compose.resources.StringResource
+import ru.kuznetsov.pitstop.domain.model.DistanceUnit
 import pitstop.shared.generated.resources.Res
 import pitstop.shared.generated.resources.preset_air_filter
 import pitstop.shared.generated.resources.preset_oil
@@ -14,7 +15,8 @@ import pitstop.shared.generated.resources.task_name_timing_belt
 /**
  * Ready-made tasks behind the quick-add chips, with the intervals used by the design mockup.
  * A preset fills the name, the interval and the reminder window; the last-done mileage is left
- * for the user. The task name is localized, so it is supplied by the screen.
+ * for the user. The task name is localized, so it is supplied by the screen. The intervals are in kilometers
+ * and are converted to the unit chosen in settings when they fill a form.
  */
 enum class TaskPreset(val intervalKm: Int, val reminderWindowKm: Int) {
     OIL(10_000, 1_500),
@@ -23,10 +25,10 @@ enum class TaskPreset(val intervalKm: Int, val reminderWindowKm: Int) {
     TIMING_BELT(60_000, 5_000),
     ;
 
-    fun toFields(name: String, current: TaskFields = TaskFields()): TaskFields = current.copy(
+    fun toFields(name: String, unit: DistanceUnit, current: TaskFields = TaskFields()): TaskFields = current.copy(
         name = name,
-        intervalKm = intervalKm.toString(),
-        reminderWindowKm = reminderWindowKm.toString(),
+        intervalKm = intervalKm.kmIn(unit).toString(),
+        reminderWindowKm = reminderWindowKm.kmIn(unit).toString(),
     )
 }
 

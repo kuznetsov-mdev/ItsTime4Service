@@ -20,12 +20,14 @@ import ru.kuznetsov.pitstop.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.SortedTaskStatsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateCarUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateMileageUseCase
+import ru.kuznetsov.pitstop.ui.format.keepKm
 
 /**
  * Drives the car screen: the task list sorted by urgency, in-place editing of the name, the VIN and
  * the mileage, marking a task as done and deleting the car after a confirmation.
  * Only one header value is edited at a time and only its check button saves it; [onCancelEdit] drops
- * the edit and the value stays as it was. The mileage is always entered in kilometers.
+ * the edit and the value stays as it was. The mileage is typed in the unit chosen in settings and stored in
+ * kilometers; saved unchanged, it keeps its stored value.
  * Marking a task as done first opens a window for the service name, the cost and a comment.
  * Temporary until the storage supports it: the done marks and the values from that window live only in
  * this view model's memory — the window's fields are not written to the service history, and removing
@@ -82,9 +84,11 @@ class CarDetailViewModel(
     }
 
     fun onSaveMileage(text: String) {
-        val mileageKm = text.trim().toIntOrNull() ?: return
+        val mileage = text.trim().toIntOrNull() ?: return
+        val unit = state.value.distanceUnit
         viewModelScope.launch {
-            if (updateMileage(carId, mileageKm)) onCancelEdit()
+            val car = observeCarById(carId).first() ?: return@launch
+            if (updateMileage(carId, keepKm(car.mileageKm, mileage, unit))) onCancelEdit()
         }
     }
 

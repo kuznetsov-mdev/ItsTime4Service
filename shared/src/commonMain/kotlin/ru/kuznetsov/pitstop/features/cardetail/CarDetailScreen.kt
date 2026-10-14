@@ -382,7 +382,7 @@ private fun StatPair(
         ) {
             if (isEditingMileage) {
                 InlineEditField(
-                    initialValue = car.mileageKm.toString(),
+                    initialValue = car.mileageKm.kmIn(distanceUnit).toString(),
                     onSave = onSaveMileage,
                     transform = { it.filter(Char::isDigit).take(MAX_MILEAGE_LENGTH) },
                     canSave = { (it.toIntOrNull() ?: 0) > 0 },

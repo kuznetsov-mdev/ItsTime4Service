@@ -12,7 +12,7 @@
     <string name="tab_cars">Авто</string>
     <string name="tab_settings">Настройки</string>
     <string name="unit_km">км</string>
-    <string name="field_interval_km">Интервал, км</string>
+    <string name="field_interval">Интервал, %1$s</string>
     <string name="field_last_replacement_date">Дата последней замены</string>
     <string name="car_name_placeholder">Например, Kia Rio</string>
     <string name="status_ok">В порядке</string>
@@ -51,7 +51,7 @@
     <string name="history_empty">Пока нет записей — отметьте работу выполненной на экране авто, и она появится здесь</string>
     <string name="cost_rub">%1$s ₽</string>
     <string name="field_brand">Марка</string>
-    <string name="field_mileage_km">Пробег, км</string>
+    <string name="field_mileage">Пробег, %1$s</string>
     <string name="field_vin">VIN-номер</string>
     <string name="vin_placeholder">17 символов</string>
     <string name="section_tasks">Регламентные работы</string>
@@ -63,12 +63,12 @@
     <string name="task_name_timing_belt">Ремень ГРМ</string>
     <string name="task_block_title">Работа %1$d</string>
     <string name="task_name_placeholder">Например, Замена масла и фильтра</string>
-    <string name="field_task_interval_km">Интервал замены, км</string>
+    <string name="field_task_interval">Интервал замены, %1$s</string>
     <string name="field_interval_months">Интервал по времени, мес (опц.)</string>
-    <string name="field_last_done_km">Последний раз, км</string>
+    <string name="field_last_done">Последний раз, %1$s</string>
     <string name="field_last_done_date">Дата последней замены (опц.)</string>
     <string name="date_placeholder">дд.мм.гггг</string>
-    <string name="field_reminder_window_km">Напоминать за столько км до срока</string>
+    <string name="field_reminder_window">Напоминать за столько %1$s до срока</string>
     <string name="action_add_custom_task">Добавить произвольную работу</string>
     <string name="action_remove_task">Удалить работу</string>
     <string name="settings_theme">Тема</string>
@@ -78,11 +78,11 @@
     <string name="settings_notifications">Уведомления</string>
     <string name="settings_push_title">Push-уведомления</string>
     <string name="settings_push_subtitle">О скорых и просроченных работах</string>
-    <string name="notification_sample_full">Kia Rio: пора заменить воздушный фильтр — осталось 700 км</string>
+    <string name="notification_sample_full">Kia Rio: пора заменить воздушный фильтр — осталось %1$s</string>
     <string name="notification_caption">Повторно напомним не раньше чем через 3 дня — чтобы не спамить одной и той же работой</string>
     <string name="notification_reminder_text">%1$s: %2$s — %3$s</string>
     <string name="settings_remind_ahead">Напоминать заранее</string>
-    <string name="settings_remind_ahead_subtitle">тыс. км до срока по умолчанию</string>
+    <string name="settings_remind_ahead_subtitle">тыс. %1$s до срока по умолчанию</string>
     <string name="settings_reminder_time">Время напоминаний</string>
     <string name="settings_reminder_time_subtitle">Ежедневная проверка пробега</string>
     <string name="reminder_time_dialog_text">В это время приходят уведомления о скорых и просроченных работах.</string>
@@ -112,6 +112,46 @@
     <string name="dialog_unmark_text">Вы уверены, что хотите снять отметку о выполнении работ? Работа вернётся к прежнему сроку, запись из истории ТО будет удалена.</string>
     <string name="action_ok">Ok</string>
     <string name="vin_prefix">VIN</string>
+    <string name="tab_history">История</string>
+    <string name="history_all_cars">Все авто</string>
+    <string name="history_sold_car">%1$s [продано]</string>
+    <string name="action_filter">Фильтр</string>
+    <string name="field_period">Период, с — по</string>
+    <string name="field_search_task">Поиск по названию работы</string>
+    <string name="search_task_placeholder">Например, масл</string>
+    <string name="field_mileage_range">Пробег, %1$s, с — по</string>
+    <string name="action_reset">Сбросить</string>
+    <string name="action_apply">Применить</string>
+    <string name="history_nothing_found">Ничего не найдено — измените фильтр</string>
+    <string name="field_date">Дата</string>
+    <string name="action_select_car">Выбрать авто</string>
+    <string name="unit_label_km">км</string>
+    <string name="unit_label_mi">мили</string>
+    <string name="unit_genitive_km">км</string>
+    <string name="unit_genitive_mi">миль</string>
+    <string name="settings_launch">Запуск</string>
+    <string name="settings_open_default">Открывать по умолчанию</string>
+    <string name="settings_open_default_off">Сейчас при запуске открывается последнее открытое авто</string>
+    <string name="settings_open_default_on">При запуске открывается выбранное авто</string>
+    <string name="settings_delete_cars">Удаление авто</string>
+    <string name="settings_delete_note">Авто удаляется полностью — вместе с работами и всей историей ТО. Восстановить данные будет нельзя.</string>
+    <string name="dialog_purge_title">Удалить %1$s полностью?</string>
+    <string name="dialog_purge_text">Авто, его регламентные работы и вся история ТО будут удалены без возможности восстановления.</string>
+    <string name="action_delete_car_with_history">Удалить %1$s с историей</string>
+    <string-array name="months">
+        <item>Январь</item>
+        <item>Февраль</item>
+        <item>Март</item>
+        <item>Апрель</item>
+        <item>Май</item>
+        <item>Июнь</item>
+        <item>Июль</item>
+        <item>Август</item>
+        <item>Сентябрь</item>
+        <item>Октябрь</item>
+        <item>Ноябрь</item>
+        <item>Декабрь</item>
+    </string-array>
     <plurals name="cars_count">
         <item quantity="one">%1$d автомобиль</item>
         <item quantity="few">%1$d автомобиля</item>

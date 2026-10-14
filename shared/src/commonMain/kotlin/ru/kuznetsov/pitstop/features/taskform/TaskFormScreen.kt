@@ -31,11 +31,11 @@ import pitstop.shared.generated.resources.action_save
 import pitstop.shared.generated.resources.date_placeholder
 import pitstop.shared.generated.resources.dialog_delete_task_text
 import pitstop.shared.generated.resources.dialog_delete_task_title
-import pitstop.shared.generated.resources.field_interval_km
+import pitstop.shared.generated.resources.field_interval
 import pitstop.shared.generated.resources.field_interval_months_short
 import pitstop.shared.generated.resources.field_last_done_date_short
-import pitstop.shared.generated.resources.field_last_done_km
-import pitstop.shared.generated.resources.field_reminder_window_km
+import pitstop.shared.generated.resources.field_last_done
+import pitstop.shared.generated.resources.field_reminder_window
 import pitstop.shared.generated.resources.field_task_name
 import pitstop.shared.generated.resources.screen_edit_task
 import pitstop.shared.generated.resources.screen_new_task
@@ -56,6 +56,8 @@ import ru.kuznetsov.pitstop.ui.format.TaskFields
 import ru.kuznetsov.pitstop.ui.format.TaskPreset
 import ru.kuznetsov.pitstop.ui.format.chipLabel
 import ru.kuznetsov.pitstop.ui.format.taskName
+import ru.kuznetsov.pitstop.ui.format.unitGenitive
+import ru.kuznetsov.pitstop.ui.format.unitLabel
 import ru.kuznetsov.pitstop.ui.icons.PitStopIcons
 
 @Composable
@@ -149,7 +151,7 @@ internal fun TaskFormContent(
                     verticalAlignment = Alignment.Bottom,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        FieldLabel(stringResource(Res.string.field_interval_km), required = true)
+                        FieldLabel(stringResource(Res.string.field_interval, unitLabel(state.distanceUnit)), required = true)
                         AppNumberField(
                             value = fields.intervalKm,
                             onValueChange = { onFieldsChange(fields.copy(intervalKm = it)) },
@@ -174,7 +176,7 @@ internal fun TaskFormContent(
                     verticalAlignment = Alignment.Bottom,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        FieldLabel(stringResource(Res.string.field_last_done_km), required = true)
+                        FieldLabel(stringResource(Res.string.field_last_done, unitLabel(state.distanceUnit)), required = true)
                         AppNumberField(
                             value = fields.lastDoneKm,
                             onValueChange = { onFieldsChange(fields.copy(lastDoneKm = it)) },
@@ -193,7 +195,7 @@ internal fun TaskFormContent(
                         )
                     }
                 }
-                FieldLabel(stringResource(Res.string.field_reminder_window_km))
+                FieldLabel(stringResource(Res.string.field_reminder_window, unitGenitive(state.distanceUnit)))
                 AppNumberField(
                     value = fields.reminderWindowKm,
                     onValueChange = { onFieldsChange(fields.copy(reminderWindowKm = it)) },

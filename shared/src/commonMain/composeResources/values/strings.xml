@@ -12,7 +12,7 @@
     <string name="tab_cars">Cars</string>
     <string name="tab_settings">Settings</string>
     <string name="unit_km">km</string>
-    <string name="field_interval_km">Interval, km</string>
+    <string name="field_interval">Interval, %1$s</string>
     <string name="field_last_replacement_date">Last replacement date</string>
     <string name="car_name_placeholder">e.g. Kia Rio</string>
     <string name="status_ok">OK</string>
@@ -51,7 +51,7 @@
     <string name="history_empty">No records yet — mark a task as done on the car screen and it will show up here</string>
     <string name="cost_rub">%1$s ₽</string>
     <string name="field_brand">Brand</string>
-    <string name="field_mileage_km">Mileage, km</string>
+    <string name="field_mileage">Mileage, %1$s</string>
     <string name="field_vin">VIN</string>
     <string name="vin_placeholder">17 characters</string>
     <string name="section_tasks">Maintenance tasks</string>
@@ -63,12 +63,12 @@
     <string name="task_name_timing_belt">Timing belt</string>
     <string name="task_block_title">Task %1$d</string>
     <string name="task_name_placeholder">e.g. Oil and filter change</string>
-    <string name="field_task_interval_km">Replacement interval, km</string>
+    <string name="field_task_interval">Replacement interval, %1$s</string>
     <string name="field_interval_months">Time interval, months (opt.)</string>
-    <string name="field_last_done_km">Last done at, km</string>
+    <string name="field_last_done">Last done at, %1$s</string>
     <string name="field_last_done_date">Last replacement date (opt.)</string>
     <string name="date_placeholder">dd.mm.yyyy</string>
-    <string name="field_reminder_window_km">Remind this many km before due</string>
+    <string name="field_reminder_window">Remind this many %1$s before due</string>
     <string name="action_add_custom_task">Add a custom task</string>
     <string name="action_remove_task">Remove task</string>
     <string name="settings_theme">Theme</string>
@@ -78,11 +78,11 @@
     <string name="settings_notifications">Notifications</string>
     <string name="settings_push_title">Push notifications</string>
     <string name="settings_push_subtitle">About tasks due soon and overdue</string>
-    <string name="notification_sample_full">Kia Rio: time to replace the air filter — 700 km left</string>
+    <string name="notification_sample_full">Kia Rio: time to replace the air filter — %1$s left</string>
     <string name="notification_caption">We will remind you again no sooner than in 3 days, so the same task does not spam you</string>
     <string name="notification_reminder_text">%1$s: %2$s — %3$s</string>
     <string name="settings_remind_ahead">Remind in advance</string>
-    <string name="settings_remind_ahead_subtitle">thousand km before due, by default</string>
+    <string name="settings_remind_ahead_subtitle">thousand %1$s before due, by default</string>
     <string name="settings_reminder_time">Reminder time</string>
     <string name="settings_reminder_time_subtitle">Daily mileage check</string>
     <string name="reminder_time_dialog_text">Notifications about soon and overdue tasks arrive at this time.</string>
@@ -112,6 +112,46 @@
     <string name="dialog_unmark_text">Are you sure you want to remove the done mark? The task will return to its previous due point and the service history record will be deleted.</string>
     <string name="action_ok">Ok</string>
     <string name="vin_prefix">VIN</string>
+    <string name="tab_history">History</string>
+    <string name="history_all_cars">All cars</string>
+    <string name="history_sold_car">%1$s [sold]</string>
+    <string name="action_filter">Filter</string>
+    <string name="field_period">Period, from — to</string>
+    <string name="field_search_task">Search in task name</string>
+    <string name="search_task_placeholder">E.g. oil</string>
+    <string name="field_mileage_range">Mileage, %1$s, from — to</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_apply">Apply</string>
+    <string name="history_nothing_found">Nothing found — change the filter</string>
+    <string name="field_date">Date</string>
+    <string name="action_select_car">Choose a car</string>
+    <string name="unit_label_km">km</string>
+    <string name="unit_label_mi">mi</string>
+    <string name="unit_genitive_km">km</string>
+    <string name="unit_genitive_mi">miles</string>
+    <string name="settings_launch">Launch</string>
+    <string name="settings_open_default">Open by default</string>
+    <string name="settings_open_default_off">The car opened last opens at launch</string>
+    <string name="settings_open_default_on">The chosen car opens at launch</string>
+    <string name="settings_delete_cars">Delete a car</string>
+    <string name="settings_delete_note">The car is deleted completely — with its tasks and all service history. The data cannot be restored.</string>
+    <string name="dialog_purge_title">Delete %1$s completely?</string>
+    <string name="dialog_purge_text">The car, its maintenance tasks and all service history will be deleted for good.</string>
+    <string name="action_delete_car_with_history">Delete %1$s with history</string>
+    <string-array name="months">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </string-array>
     <plurals name="cars_count">
         <item quantity="one">%1$d car</item>
         <item quantity="other">%1$d cars</item>

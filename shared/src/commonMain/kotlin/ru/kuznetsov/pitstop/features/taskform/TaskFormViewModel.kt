@@ -8,9 +8,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.kuznetsov.pitstop.domain.model.MaintenanceTask
 import ru.kuznetsov.pitstop.domain.usecase.AddTaskUseCase
 import ru.kuznetsov.pitstop.domain.usecase.DeleteTaskUseCase
 import ru.kuznetsov.pitstop.domain.usecase.ObserveCarByIdUseCase
+import ru.kuznetsov.pitstop.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateTaskUseCase
 import ru.kuznetsov.pitstop.ui.format.TaskFields
 import ru.kuznetsov.pitstop.ui.format.TaskPreset
@@ -22,7 +24,8 @@ import ru.kuznetsov.pitstop.ui.format.toFields
  * and the reminder window, and "add another" stores the task and clears the form for the next one.
  * With a [taskId] it edits that task and can delete it after a confirmation; its service history stays.
  * Saving with an empty required field stores nothing and switches the form to showing errors.
- * Distances are always entered in kilometers.
+ * Distances are typed in the unit chosen in settings and stored in kilometers; a distance left as it was
+ * keeps its stored value.
  */
 class TaskFormViewModel(
     private val carId: String,
@@ -31,10 +34,13 @@ class TaskFormViewModel(
     private val addTask: AddTaskUseCase,
     private val updateTask: UpdateTaskUseCase,
     private val deleteTask: DeleteTaskUseCase,
+    private val observeSettings: ObserveSettingsUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TaskFormUiState(isEditing = taskId != null))
     val state: StateFlow<TaskFormUiState> = _state.asStateFlow()
+
+    private var original: MaintenanceTask? = null
 
     init {
         viewModelScope.launch { load() }
@@ -42,7 +48,8 @@ class TaskFormViewModel(
 
     fun onFieldsChange(fields: TaskFields) = _state.update { it.copy(fields = fields.sanitized()) }
 
-    fun onPreset(preset: TaskPreset, name: String) = _state.update { it.copy(fields = preset.toFields(name, it.fields)) }
+    fun onPreset(preset: TaskPreset, name: String) =
+        _state.update { it.copy(fields = preset.toFields(name, it.distanceUnit, it.fields)) }
 
     fun onSave() = save(addAnother = false)
 
@@ -63,19 +70,21 @@ class TaskFormViewModel(
 
     private suspend fun load() {
         val car = observeCarById(carId).first()
+        val unit = observeSettings().first().distanceUnit
         val task = taskId?.let { id -> car?.tasks?.firstOrNull { it.id == id } }
+        original = task
         if (car == null || (taskId != null && task == null)) {
             _state.update { it.copy(isLoading = false, isClosed = true) }
             return
         }
         _state.update {
-            it.copy(isLoading = false, carBrand = car.brand, fields = task?.toFields() ?: TaskFields())
+            it.copy(isLoading = false, carBrand = car.brand, fields = task?.toFields(unit) ?: TaskFields(), distanceUnit = unit)
         }
     }
 
     private fun save(addAnother: Boolean) {
         val form = _state.value
-        val task = form.fields.toNewTask()
+        val task = form.fields.toNewTask(form.distanceUnit, original)
         if (form.isLoading) return
         if (task == null) {
             _state.update { it.copy(showErrors = true) }

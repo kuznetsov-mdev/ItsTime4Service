@@ -1,5 +1,6 @@
 package ru.kuznetsov.pitstop.features.carform
 
+import ru.kuznetsov.pitstop.domain.model.DistanceUnit
 import ru.kuznetsov.pitstop.ui.format.TaskFields
 
 /**
@@ -9,6 +10,7 @@ import ru.kuznetsov.pitstop.ui.format.TaskFields
  * [showErrors] turns on after a save attempt with a required field left empty: from then on
  * every such field is outlined in red until it is filled.
  * [isSaved] flips to `true` once the car is stored and tells the screen to close.
+ * Distances are typed in [distanceUnit], the unit chosen in settings.
  */
 data class CarFormUiState(
     val brand: String = "",
@@ -17,6 +19,7 @@ data class CarFormUiState(
     val tasks: List<TaskBlockState> = emptyList(),
     val showErrors: Boolean = false,
     val isSaved: Boolean = false,
+    val distanceUnit: DistanceUnit = DistanceUnit.KILOMETERS,
 ) {
     val isBrandMissing: Boolean get() = brand.isBlank()
     val isMileageMissing: Boolean get() = (mileageKm.toIntOrNull() ?: 0) <= 0
