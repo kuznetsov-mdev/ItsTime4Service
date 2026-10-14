@@ -158,6 +158,13 @@ private fun TabBar(currentRoute: String?, onSelect: (route: String) -> Unit) {
 private val tabRoutes = setOf(Destination.History.route, Destination.Cars.route, Destination.Settings.route)
 
 private fun NavHostController.navigateToTab(route: String) {
+    if (route == Destination.Cars.route) {
+        navigate(route) {
+            popUpTo(Destination.Cars.route)
+            launchSingleTop = true
+        }
+        return
+    }
     navigate(route) {
         popUpTo(Destination.Cars.route) { saveState = true }
         launchSingleTop = true
