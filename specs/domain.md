@@ -316,7 +316,7 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 |---|---|---|---|
 | `ObserveHistoryUseCase` | `carId` | `Flow<List<ServiceHistoryEntry>>` | сортирует записи от новых к старым по `date` |
 | `ObserveSettingsUseCase` | — | `Flow<Settings>` | проброс `observeSettings()` |
-| `UpdateSettingsUseCase` | `settings` | — | `defaultReminderWindowKm` приводится к диапазону 1 000..9 000 км (диапазон степпера на экране настроек) |
+| `UpdateSettingsUseCase` | `settings` | — | `defaultReminderWindowKm` приводится к диапазону степпера на экране настроек — 1–9 тыс. выбранных единиц: 1 000..9 000 км в километрах, 1 609..14 484 км в милях; при смене единиц значение подтягивается к новому диапазону |
 
 ### Уведомления
 
