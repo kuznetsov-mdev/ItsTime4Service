@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -32,7 +33,7 @@ import ru.kuznetsov.pitstop.ui.components.ComponentPreview
 import ru.kuznetsov.pitstop.ui.icons.PitStopIcons
 import ru.kuznetsov.pitstop.ui.theme.PitStopTheme
 
-/** Compact field + accent confirm button — in-place edit of the car name, VIN and mileage on the car screen; takes focus as it appears, the button is dimmed while [canSave] rejects the text. */
+/** Compact field + accent confirm button — in-place edit of the car name, VIN and mileage on the car screen; takes focus as it appears, saves on the button or on the keyboard's done key, and neither saves while [canSave] rejects the text. */
 @Composable
 fun InlineEditField(
     initialValue: String,
@@ -64,6 +65,8 @@ fun InlineEditField(
             placeholder = placeholder,
             keyboardType = keyboardType,
             focusRequester = focusRequester,
+            imeAction = ImeAction.Done,
+            onImeAction = { if (canSave(text)) onSave(text) },
         )
         Box(
             modifier = Modifier

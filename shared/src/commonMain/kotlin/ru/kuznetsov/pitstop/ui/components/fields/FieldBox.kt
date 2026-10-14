@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -45,6 +47,8 @@ internal fun FieldBox(
     minLines: Int = 1,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     focusRequester: FocusRequester? = null,
+    imeAction: ImeAction = ImeAction.Default,
+    onImeAction: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val colors = PitStopTheme.colors
@@ -71,7 +75,8 @@ internal fun FieldBox(
                 singleLine = minLines == 1,
                 minLines = minLines,
                 cursorBrush = SolidColor(colors.accent),
-                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+                keyboardActions = KeyboardActions(onAny = { onImeAction?.invoke() }),
                 visualTransformation = visualTransformation,
             )
         }
