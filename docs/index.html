@@ -306,6 +306,18 @@
     position: relative;
   }
   .task-block-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .task-block-head .icon-row { display: flex; gap: 6px; flex-shrink: 0; }
+  .task-block-head .chev { display: flex; transform: rotate(90deg); }
+  .task-block.collapsed .task-block-head { margin-bottom: 0; gap: 10px; }
+  .task-block.collapsed .chev { transform: rotate(-90deg); }
+  .collapsed-main { min-width: 0; cursor: pointer; }
+  .collapsed-name { font-size: 13.5px; font-weight: 700; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .collapsed-meta { font-size: 11.5px; color: var(--ink-muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  .task-block.collapsed.error { border-color: var(--tier-due); }
+  .form-actions { display: flex; gap: 10px; margin: 12px 18px 20px; flex-shrink: 0; }
+  .form-actions .outline-btn, .form-actions .save-btn { flex: 1; width: auto; margin: 0; padding-left: 8px; padding-right: 8px; white-space: nowrap; }
+  .form-actions .outline-btn + .save-btn { margin: 0; }
+  .form-actions .save-btn { border: 1.5px solid var(--accent); padding-top: 13.5px; padding-bottom: 13.5px; }
   .task-block-title { font-size: 12px; font-weight: 700; color: var(--ink-muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.04em; }
   .task-block .text-input, .task-block .num-input { margin: 0 0 10px; width: 100%; }
   .mini-label { font-size: 10.5px; color: var(--ink-faint); margin: 0 0 4px; display: block; }
@@ -484,7 +496,7 @@
   <!-- ================= LIGHT EXHIBIT ================= -->
   <div class="section-block panel locked-light">
     <div class="section-head"><span class="theme-dot light"></span><h2>Экраны · светлая тема</h2></div>
-    <p class="section-sub">Статичный набор — пять ключевых экранов приложения, окно подтверждения удаления авто, экраны редактирования и добавления работы, правка названия и VIN, выбор времени напоминаний, подсветка незаполненных полей, окно деталей выполненной работы, снятие отметки, запись истории ТО, выбор авто и фильтр в истории.</p>
+    <p class="section-sub">Статичный набор — пять ключевых экранов приложения, окно подтверждения удаления авто, экраны редактирования и добавления работы, правка названия и VIN, выбор времени напоминаний, подсветка незаполненных полей, свёрнутые работы в форме авто, окно деталей выполненной работы, снятие отметки, запись истории ТО, выбор авто и фильтр в истории.</p>
     <div class="gallery" id="galleryLight"></div>
   </div>
 
@@ -1240,6 +1252,12 @@
       '<div class="dialog-actions"><button class="dialog-btn"' + cancelAttr + '>Отмена</button><button class="dialog-btn primary"' + saveAttr + '>Сохранить</button></div>' +
       '</div></div>';
   }
+  function maskDate(text) {
+    var d = String(text || '').replace(/\D/g, '').slice(0, 8);
+    if (d.length <= 2) return d;
+    if (d.length <= 4) return d.slice(0, 2) + '.' + d.slice(2);
+    return d.slice(0, 2) + '.' + d.slice(2, 4) + '.' + d.slice(4);
+  }
   /* дата из «дд.мм.гггг» в ISO; undefined, если такой даты не существует */
   function validIsoFromRu(text) {
     var m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(String(text || '').trim());
@@ -1374,6 +1392,13 @@
   function blockLastKmMissing(block) { return !(parseInt(block.lastKm, 10) >= 0); }
   function blockInvalid(block) { return blockNameMissing(block) || blockIntervalMissing(block) || blockLastKmMissing(block); }
 
+  function collapsedMeta(block) {
+    var interval = parseInt(String(block.intervalKm).replace(/\s/g, ''), 10), last = parseInt(String(block.lastKm).replace(/\s/g, ''), 10);
+    var parts = [];
+    parts.push(interval > 0 ? 'каждые ' + interval.toLocaleString('ru-RU') + ' ' + unitWord() : 'интервал не указан');
+    parts.push(last >= 0 ? 'последний раз ' + last.toLocaleString('ru-RU') + ' ' + unitWord() : 'последний раз не указан');
+    return parts.join(' · ');
+  }
   function taskBlockHtml(block, opts) {
     block = block || {};
     var n = block.n;
@@ -1382,9 +1407,9 @@
       return value || fallback;
     }
     function inputVal(value) { return (value === undefined || value === null) ? '' : value; }
-    if (!opts.interactive) {
+    if (!opts.interactive && !block.collapsed) {
       return '<div class="task-block">' +
-        '<div class="task-block-head"><span class="task-block-title">Работа ' + n + '</span><button class="icon-btn">' + icon('trash', 14) + '</button></div>' +
+        '<div class="task-block-head"><span class="task-block-title">Работа ' + n + '</span><div class="icon-row"><button class="icon-btn"><span class="chev">' + icon('chevronLeft', 14) + '</span></button><button class="icon-btn">' + icon('trash', 14) + '</button></div></div>' +
         '<div class="text-input static' + (block.errorName ? ' error' : '') + '">' + staticVal(block.name, 'Замена масла и фильтра') + '</div>' +
         '<div class="mini-row">' +
         '<div><span class="mini-label">Интервал замены, ' + unitLabel() + '<span class="req"> *</span></span><div class="num-input static' + (block.errorInterval ? ' error' : '') + '">' + staticVal(block.intervalKm, '10 000') + '</div></div>' +
@@ -1397,11 +1422,25 @@
         '<span class="mini-label">Напоминать за N ' + unitWord() + ' до срока</span><div class="num-input static">' + staticVal(block.reminderKm, '1 500') + '</div>' +
         '</div>';
     }
+    if (block.collapsed) {
+      /* свёрнутая работа — две строки: название; интервал и последний раз */
+      var invalid = opts.showErrors && blockInvalid(block);
+      var toggleAttr = opts.interactive ? ' data-toggle-block="' + n + '"' : '';
+      var removeAttr = opts.interactive ? ' data-remove-block="' + n + '"' : '';
+      return '<div class="task-block collapsed' + (invalid ? ' error' : '') + '"' + (opts.interactive ? ' data-block="' + n + '"' : '') + '>' +
+        '<div class="task-block-head"><div class="collapsed-main collapsed-name"' + toggleAttr + '>' + (String(block.name || '').trim() || 'Работа ' + n) + '</div>' +
+        '<div class="icon-row"><button class="icon-btn"' + toggleAttr + ' aria-label="Развернуть"><span class="chev">' + icon('chevronLeft', 14) + '</span></button>' +
+        '<button class="icon-btn"' + removeAttr + '>' + icon('trash', 14) + '</button></div></div>' +
+        '<div class="collapsed-meta"' + toggleAttr + '>' + collapsedMeta(block) + '</div>' +
+        '</div>';
+    }
     var nameError = opts.showErrors && blockNameMissing(block) ? ' error' : '';
     var intervalError = opts.showErrors && blockIntervalMissing(block) ? ' error' : '';
     var lastKmError = opts.showErrors && blockLastKmMissing(block) ? ' error' : '';
     return '<div class="task-block" data-block="' + n + '">' +
-      '<div class="task-block-head"><span class="task-block-title">Работа ' + n + '</span><button class="icon-btn" data-remove-block="' + n + '">' + icon('trash', 14) + '</button></div>' +
+      '<div class="task-block-head"><span class="task-block-title">Работа ' + n + '</span>' +
+      '<div class="icon-row"><button class="icon-btn" data-toggle-block="' + n + '" aria-label="Свернуть"><span class="chev">' + icon('chevronLeft', 14) + '</span></button>' +
+      '<button class="icon-btn" data-remove-block="' + n + '">' + icon('trash', 14) + '</button></div></div>' +
       '<input class="text-input' + nameError + '" placeholder="Например, Замена масла и фильтра" value="' + inputVal(block.name) + '">' +
       '<div class="mini-row">' +
       '<div><span class="mini-label">Интервал замены, ' + unitLabel() + '<span class="req"> *</span></span><input class="num-input' + intervalError + '" type="number" placeholder="10000" value="' + inputVal(block.intervalKm) + '"></div>' +
@@ -1436,8 +1475,8 @@
     var blocksHtml = blocks.map(function (b) { return taskBlockHtml(b, opts); }).join('');
     var idWrap = opts.interactive ? ' id="taskBlocks"' : '';
     var addBtn = opts.interactive
-      ? '<button class="add-task-btn" id="addTaskBtn">' + icon('plus', 14) + ' Добавить произвольную работу</button>'
-      : '<div class="add-task-btn">' + icon('plus', 14) + ' Добавить произвольную работу</div>';
+      ? '<button class="outline-btn" id="addTaskBtn">+ Добавить работу</button>'
+      : '<div class="outline-btn">+ Добавить работу</div>';
     var staticBrand = opts.staticErrors ? 'Например, Kia Rio' : 'Kia Rio';
     var staticMileage = opts.staticErrors ? '84300' : '84 300';
     var staticVin = opts.staticErrors ? '17 символов' : 'XWEPC811BB0012345';
@@ -1460,8 +1499,8 @@
       '<div style="height:10px"></div>' +
       presetChipsHtml(opts) +
       '<div' + idWrap + '>' + blocksHtml + '</div>' +
-      addBtn +
-      '</div>' + saveBtn +
+      '</div>' +
+      '<div class="form-actions">' + addBtn + saveBtn + '</div>' +
       '</div>';
   }
 
@@ -1638,7 +1677,12 @@
       phoneWrap('19', 'Настройки: удаление авто', settingsScreenHtml(settingsState, { interactive: false, cars: cars, sold: sold, showEnd: true })) +
       phoneWrap('20', 'Полное удаление авто', settingsScreenHtml(
         { themeIdx: settingsState.themeIdx, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00', purgeCarId: 's1' },
-        { interactive: false, cars: cars, sold: sold, showEnd: true }));
+        { interactive: false, cars: cars, sold: sold, showEnd: true })) +
+      phoneWrap('21', 'Свёрнутые работы', newScreenHtml({ interactive: false }, [
+        { n: 1, collapsed: true, name: 'Замена масла и фильтра', intervalKm: 10000, lastKm: 78000 },
+        { n: 2, collapsed: true, name: 'Тормозные колодки', intervalKm: 30000, lastKm: 60000 },
+        { n: 3, filled: true, name: 'Воздушный фильтр', intervalKm: '15 000', intervalMonths: '', lastKm: '70 000', lastDate: '10.09.2025', reminderKm: '2 000' }
+      ]));
   }
   renderStaticGallery('galleryLight');
   renderStaticGallery('galleryDark');
@@ -2031,10 +2075,25 @@
         var block = istate.taskBlocks.find(function (x) { return x.n === +el.getAttribute('data-block'); });
         if (!block) return;
         var inputs = el.querySelectorAll('input');
+        if (inputs.length < 6) return;
         block.name = inputs[0].value; block.intervalKm = inputs[1].value; block.intervalMonths = inputs[2].value;
         block.lastKm = inputs[3].value; block.lastDate = inputs[4].value; block.reminderKm = inputs[5].value;
       });
     }
+    root.querySelectorAll('[data-toggle-block]').forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        syncForm();
+        var block = istate.taskBlocks.find(function (x) { return x.n === +b.getAttribute('data-toggle-block'); });
+        if (block) block.collapsed = !block.collapsed;
+        paintInteractive();
+      });
+    });
+    /* поля дат — только цифры, точки ставятся сами: дд.мм.гггг (формат русской локали) */
+    root.querySelectorAll('input[placeholder="дд.мм.гггг"]').forEach(function (input) {
+      input.setAttribute('inputmode', 'numeric');
+      input.addEventListener('input', function () { input.value = maskDate(input.value); });
+    });
     var addTaskBtn = root.querySelector('#addTaskBtn');
     if (addTaskBtn) addTaskBtn.addEventListener('click', function () { syncForm(); istate.scrollToBlock = istate.nextBlockN; istate.taskBlocks.push({ n: istate.nextBlockN++ }); paintInteractive(); });
     root.querySelectorAll('[data-preset]').forEach(function (b) {
@@ -2065,7 +2124,11 @@
       var mileage = parseInt(istate.form.mileage, 10);
       var blocksValid = istate.taskBlocks.every(function (b) { return !blockInvalid(b); });
       /* пустое обязательное поле: форма не сохраняется, поля подсвечиваются красной рамкой */
-      if (!brand || !(mileage > 0) || !blocksValid) { istate.formErrors = true; paintInteractive(); return; }
+      if (!brand || !(mileage > 0) || !blocksValid) {
+        /* свёрнутая работа с пустым обязательным полем разворачивается, чтобы ошибку было видно */
+        istate.taskBlocks.forEach(function (b) { if (blockInvalid(b)) b.collapsed = false; });
+        istate.formErrors = true; paintInteractive(); return;
+      }
       mileage = fromUnit(mileage);
       istate.formErrors = false;
       var vin = istate.form.vin.trim() || '—';
