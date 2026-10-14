@@ -32,8 +32,8 @@ import ru.kuznetsov.pitstop.ui.format.kmIn
  * the edit and the value stays as it was. The mileage is typed in the unit chosen in settings and stored in
  * kilometers; saved unchanged, it keeps its stored value.
  * The mileage can also be stepped up and down by buttons: 100 units of the chosen distance unit times the chosen
- * multiplier; every step is stored right away, steps are applied one after another, and the mileage never drops
- * to zero or below.
+ * multiplier; every step is stored right away and the mileage never drops to zero or below. Steps and a mileage
+ * typed by hand are applied one after another, each to the mileage as stored at that moment.
  * Marking a task as done first opens a window for the service name, the cost and a comment.
  * Temporary until the storage supports it: the done marks and the values from that window live only in
  * this view model's memory — the window's fields are not written to the service history, and removing
@@ -95,8 +95,10 @@ class CarDetailViewModel(
         val mileage = text.trim().toIntOrNull() ?: return
         val unit = state.value.distanceUnit
         viewModelScope.launch {
-            val car = observeCarById(carId).first() ?: return@launch
-            if (updateMileage(carId, keepKm(car.mileageKm, mileage, unit))) onCancelEdit()
+            mileageMutex.withLock {
+                val car = observeCarById(carId).first() ?: return@withLock
+                if (updateMileage(carId, keepKm(car.mileageKm, mileage, unit))) onCancelEdit()
+            }
         }
     }
 

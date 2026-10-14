@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -151,6 +152,7 @@ internal fun MileageCard(
                 icon = PitStopIcons.Minus,
                 contentDescription = stringResource(Res.string.action_mileage_down),
                 accent = false,
+                enabled = !isEditing,
                 onClick = { onStep(-1) },
             )
             SegmentedControl(
@@ -163,6 +165,7 @@ internal fun MileageCard(
                 icon = PitStopIcons.Plus,
                 contentDescription = stringResource(Res.string.action_mileage_up),
                 accent = true,
+                enabled = !isEditing,
                 onClick = { onStep(1) },
             )
         }
@@ -176,16 +179,17 @@ internal fun MileageCard(
 }
 
 @Composable
-private fun StepButton(icon: ImageVector, contentDescription: String, accent: Boolean, onClick: () -> Unit) {
+private fun StepButton(icon: ImageVector, contentDescription: String, accent: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val colors = PitStopTheme.colors
     val shape = RoundedCornerShape(PitStopTheme.dimens.radiusL)
     Box(
         modifier = Modifier
             .size(40.dp)
+            .alpha(if (enabled) 1f else 0.4f)
             .clip(shape)
             .background(if (accent) colors.accent else colors.surface2)
             .border(1.dp, if (accent) colors.accent else colors.rule, shape)
-            .clickable(onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = contentDescription, tint = if (accent) colors.onAccent else colors.ink, modifier = Modifier.size(16.dp))
