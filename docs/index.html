@@ -372,6 +372,59 @@
   .purge-row .icon-btn { margin-left: auto; color: var(--tier-due); background: color-mix(in srgb, var(--tier-due) 12%, transparent); flex-shrink: 0; }
   .settings-note { font-size: 11.5px; color: var(--ink-faint); line-height: 1.45; }
   .form-body.show-end { display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
+
+  /* ---------- variants: mileage panel and task cards ---------- */
+  .v-body { flex: 1; overflow-y: auto; padding: 0 0 18px; }
+  .v-card { margin: 14px 18px 4px; background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 14px; }
+  .v-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); }
+  .v-value { font-family: var(--display); font-weight: 800; font-size: 26px; font-variant-numeric: tabular-nums; }
+  .v-value small { font-size: 13px; font-weight: 600; color: var(--ink-faint); margin-left: 4px; }
+  .v-row { display: flex; align-items: center; gap: 8px; }
+  .v-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .v-step { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--rule); background: var(--surface-2); color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .v-step.accent { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .v-mult { flex: 1; display: flex; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 12px; padding: 3px; }
+  .v-mult button { flex: 1; border: none; background: none; border-radius: 9px; padding: 8px 0; font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--ink-muted); cursor: pointer; }
+  .v-mult button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+  .v-hint { font-size: 11px; color: var(--ink-faint); margin-top: 8px; }
+  .v-alert-chip { font-family: var(--mono); font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 999px; color: var(--on-tier); }
+  .v-arrows { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+  .v-arrow { width: 34px; height: 26px; border-radius: 8px; border: 1px solid var(--rule); background: var(--surface-2); color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .v-arrow .up { display: flex; transform: rotate(90deg); }
+  .v-arrow .down { display: flex; transform: rotate(-90deg); }
+  .v-mult-pill { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); border: none; border-radius: 999px; padding: 3px 8px; cursor: pointer; }
+  .v-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .v-chip { border: 1px solid var(--rule); background: var(--surface-2); color: var(--ink); border-radius: 999px; padding: 7px 11px; font-family: var(--mono); font-size: 12px; font-weight: 700; cursor: pointer; }
+  .v-chip.undo { color: var(--ink-muted); font-family: inherit; font-weight: 600; }
+  .v-digits { display: flex; gap: 4px; margin-top: 8px; }
+  .v-digit { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .v-digit button { width: 30px; height: 20px; border: none; border-radius: 6px; background: var(--surface-2); color: var(--ink-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .v-digit .num { width: 30px; height: 38px; border-radius: 8px; background: var(--ink); color: var(--surface); font-family: var(--mono); font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .v-digit.fixed .num { background: var(--surface-3); color: var(--ink-muted); }
+  .v-tasks { padding: 4px 18px 0; }
+  .v-row-task { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--rule); }
+  .v-row-task:last-child { border-bottom: none; }
+  .v-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .v-main { flex: 1; min-width: 0; }
+  .v-name { font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .v-meta { font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); margin-top: 2px; }
+  .v-done { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--rule); background: none; color: var(--ink-faint); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .v-mini-ring { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .v-mini-ring span { width: 24px; height: 24px; border-radius: 50%; background: var(--surface); }
+  .v-task-card { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 12px 13px; margin-top: 10px; }
+  .v-remaining { font-family: var(--display); font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .v-remaining small { font-size: 11px; font-weight: 600; margin-left: 3px; }
+  .v-track { position: relative; height: 6px; border-radius: 999px; background: var(--surface-3); margin: 14px 0 6px; }
+  .v-track .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; }
+  .v-track .now { position: absolute; top: -4px; width: 3px; height: 14px; border-radius: 2px; background: var(--ink); }
+  .v-scale { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--ink-faint); }
+  .v-group { font-family: var(--mono); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 14px 0 2px; display: flex; align-items: center; gap: 6px; }
+  .v-progress-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .v-progress-row .task-track { flex: 1; margin: 0; }
+  .v-done-circle { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--rule); background: var(--surface); color: var(--ink-faint); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; padding: 0; }
+  .v-done-circle.done { background: var(--tier-ok); border-color: var(--tier-ok); color: var(--on-tier); }
+  .v-check-pill.done { background: color-mix(in srgb, var(--tier-ok) 14%, transparent); color: var(--tier-ok); }
+  .v-check-pill { display: flex; align-items: center; gap: 5px; border: none; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); border-radius: 999px; padding: 6px 10px; font-size: 11.5px; font-weight: 700; cursor: pointer; }
   .relaunch-btn { font-family: var(--mono); font-size: 12px; color: var(--accent); background: none; border: 1px solid var(--accent); border-radius: 999px; padding: 6px 14px; margin: -6px 0 16px; cursor: pointer; }
   .setting-text { flex: 1; min-width: 0; }
   .setting-text .t1 { font-size: 13px; font-weight: 600; }
@@ -473,7 +526,7 @@
 
   <div class="legend">
     <div class="legend-item"><div class="legend-swatch" style="background:var(--tier-ok)"></div><div class="range">запас &gt; окна напоминания</div><div class="label">В порядке</div></div>
-    <div class="legend-item"><div class="legend-swatch" style="background:var(--tier-soon)"></div><div class="range">остаток ≤ окна напоминания</div><div class="label">Пора готовиться</div></div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--tier-soon)"></div><div class="range">остаток ≤ окна напоминания</div><div class="label">Пора менять</div></div>
     <div class="legend-item"><div class="legend-swatch" style="background:var(--tier-due)"></div><div class="range">срок по км или по времени истёк</div><div class="label">Просрочено</div></div>
   </div>
   <p class="legend-caption">Окно напоминания задаётся пользователем для каждой работы в тыс. км до срока; если указан ещё и интервал по времени (мес), статус берётся по тому сроку, что наступает раньше. Цвета тиров одинаковые в обеих темах — меняются только нейтральные тона фона и текста.</p>
@@ -505,6 +558,14 @@
     <div class="section-head"><span class="theme-dot dark"></span><h2>Экраны · тёмная тема</h2></div>
     <p class="section-sub">Те же данные, тот же макет — только нейтральные тона инвертированы.</p>
     <div class="gallery" id="galleryDark"></div>
+  </div>
+
+
+  <!-- ================= VARIANTS: MILEAGE & TASKS ================= -->
+  <div class="section-block panel" id="variantsBlock">
+    <div class="section-head"><h2>Варианты: пробег и работы на экране авто</h2></div>
+    <p class="section-sub">Альтернативы правке пробега через поле с галочкой и другие виды карточек работ. Пробег в вариантах меняется кнопками: шаг 100 км, множитель выбирается между кнопками. Блоки пробега кликабельные — можно попробовать; карточки работ статичные. Каждый экран — сочетание одного варианта пробега и одного варианта работ, их можно комбинировать иначе. <strong>Выбрано:</strong> пробег и «скоро / просрочено» — вариант A, работы — карточки из варианта B; перенесено на экран авто (03, 06, 10, 11, 13 и интерактивный макет).</p>
+    <div class="gallery" id="variantsGallery"></div>
   </div>
 
   <!-- ================= STYLE GUIDE: TOKENS ================= -->
@@ -824,7 +885,7 @@
             <div class="component-meta"><div class="name">Switch</div><div class="pkg">&lt;Switch checked onChange /&gt;</div><div class="note">Вкл/выкл push-уведомлений и бинарных настроек.</div></div>
           </div>
           <div class="component-card">
-            <div class="component-preview"><span class="task-status-chip" style="background:#1fab8c;color:#fff;">В порядке</span><span class="task-status-chip" style="background:#e2922e;color:#fff;">Скоро</span><span class="task-status-chip" style="background:#e34b3f;color:#fff;">Просрочено</span></div>
+            <div class="component-preview"><span class="task-status-chip" style="background:#1fab8c;color:#fff;">В порядке</span><span class="task-status-chip" style="background:#e2922e;color:#fff;">Пора менять</span><span class="task-status-chip" style="background:#e34b3f;color:#fff;">Просрочено</span></div>
             <div class="component-meta"><div class="name">Статус-чип</div><div class="pkg">&lt;StatusChip status="ok|soon|due" /&gt;</div><div class="note">Цвет и текст выводятся из одной и той же функции статуса на всех экранах.</div></div>
           </div>
           <div class="component-card">
@@ -1018,7 +1079,7 @@
     return { dueAt: dueAt, remaining: remaining, remainingMonths: remainingMonths, status: status, frac: frac };
   }
   function tierVar(status) { return status === 'due' ? 'var(--tier-due)' : status === 'soon' ? 'var(--tier-soon)' : 'var(--tier-ok)'; }
-  function tierLabel(status) { return status === 'due' ? 'Просрочено' : status === 'soon' ? 'Скоро' : 'В порядке'; }
+  function tierLabel(status) { return status === 'due' ? 'Просрочено' : status === 'soon' ? 'Пора менять' : 'В порядке'; }
   function statusRank(status) { return status === 'due' ? 0 : status === 'soon' ? 1 : 2; }
   function sortedTaskStats(car) {
     return car.tasks.map(function (t) { return { t: t, st: taskStat(car, t) }; }).sort(function (a, b) {
@@ -1131,6 +1192,8 @@
       '<div class="dialog-actions"><button class="dialog-btn"' + cancelAttr + '>Отмена</button><button class="dialog-btn primary"' + confirmAttr + '>Ok</button></div>' +
       '</div></div>';
   }
+  var MILEAGE_STEP = 100;
+  var MULTS = [1, 2, 5, 10];
   function isMarkedDone(car, task) { return !!task.doneMark && task.doneMark.mileageKm === car.mileageKm; }
 
   /* ---------------- dialog: reminder time ---------------- */
@@ -1159,20 +1222,25 @@
   function detailScreenHtml(car, opts) {
     opts = opts || {};
     var a = carAlerts(car);
+    /* работы — карточки с крупным остатком до срока (вариант B), всегда отсортированы от самых срочных:
+       сначала просроченные, затем «пора менять», затем «в порядке», внутри — по остатку до срока */
     var rows = sortedTaskStats(car).map(function (x) {
       var t = x.t, st = x.st;
       var color = tierVar(st.status);
       var marked = isMarkedDone(car, t);
       var doneAttr = opts.interactive ? (marked ? ' data-unmark="' : ' data-mark-done="') + t.id + '"' : '';
-      var doneBtn = marked
-        ? '<button class="mark-done-btn done"' + doneAttr + '>' + icon('check', 12) + ' Выполнено</button>'
-        : '<button class="mark-done-btn"' + doneAttr + '>' + icon('check', 12) + ' Отметить выполненной</button>';
-      return '<div class="task-row"' + (opts.interactive ? ' data-open-task="' + t.id + '"' : '') + '>' +
-        '<div class="task-top"><div class="task-icon">' + icon(t.icon, 16) + '</div>' +
-        '<div class="task-main"><div class="task-name">' + t.name + '</div><div class="task-meta">' + taskMetaHtml(st, t) + '</div></div>' +
+      /* отметка — галочка в кружке в конце полоски: пустой кружок — «отметить», заполненный — «выполнено» */
+      var doneBtn = '<button class="v-done-circle' + (marked ? ' done' : '') + '"' + doneAttr +
+        ' aria-label="' + (marked ? 'Выполнено — снять отметку' : 'Отметить выполненной') + '">' + icon('check', 15) + '</button>';
+      var meta = 'каждые ' + fmtKm(t.intervalKm);
+      if (st.remainingMonths !== null) meta += ' · ' + (st.remainingMonths <= 0 ? 'время истекло' : 'или ' + fmtMonths(st.remainingMonths));
+      return '<div class="v-task-card"' + (opts.interactive ? ' data-open-task="' + t.id + '"' : '') + '>' +
+        '<div class="v-between"><div class="v-remaining" style="color:' + color + '">' + Math.round(toUnit(Math.abs(st.remaining))).toLocaleString('ru-RU') +
+        '<small>' + unitWord() + ' ' + (st.remaining <= 0 ? 'просрочено' : 'осталось') + '</small></div>' +
         '<span class="task-status-chip" style="background:' + color + ';color:var(--on-tier)">' + tierLabel(st.status) + '</span></div>' +
-        '<div class="task-track"><div class="task-fill" style="width:' + Math.round(st.frac * 100) + '%;background:' + color + '"></div></div>' +
-        '<div class="task-actions">' + doneBtn + '</div>' +
+        '<div class="v-name" style="margin-top:4px">' + t.name + '</div>' +
+        '<div class="v-meta">' + meta + '</div>' +
+        '<div class="v-progress-row"><div class="task-track"><div class="task-fill" style="width:' + Math.round(st.frac * 100) + '%;background:' + color + '"></div></div>' + doneBtn + '</div>' +
         '</div>';
     }).join('');
     var backAttr = opts.interactive ? ' data-back="cars"' : '';
@@ -1192,26 +1260,34 @@
         ? '<button class="detail-vin" data-edit-vin aria-label="Изменить VIN">' + vinText + '</button>'
         : '<div class="detail-vin">' + vinText + '</div>');
     var addTaskFab = '<button class="fab no-tabbar"' + (opts.interactive ? ' data-add-task' : '') + ' aria-label="Добавить работу">' + icon('plus', 21) + '</button>';
-    var mileageBlock;
+    /* пробег и «пора менять / просрочено» — карточка со степпером и множителем (вариант A) */
+    var mult = opts.mileageMult || 1;
+    var mileageValue;
     if (opts.interactive && opts.editingMileage) {
-      mileageBlock = '<div class="stat-edit-row"><input type="number" id="mileageEditInput" value="' + toUnit(car.mileageKm) + '">' +
+      mileageValue = '<div class="stat-edit-row" style="margin-top:6px"><input type="number" id="mileageEditInput" value="' + toUnit(car.mileageKm) + '">' +
         '<button id="saveMileageBtn">' + icon('check', 14) + '</button></div>';
     } else {
       var mileageText = toUnit(car.mileageKm).toLocaleString('ru-RU');
-      mileageBlock = '<div class="stat-num-row"><span class="stat-icon">' + icon('gauge', 24) + '</span>' +
-        (opts.interactive
-          ? '<button class="mileage-value" data-edit-mileage aria-label="Изменить пробег">' + mileageText + '</button>'
-          : '<span class="mileage-value">' + mileageText + '</span>') + '</div>';
+      mileageValue = '<div class="v-value" style="margin-top:4px">' +
+        (opts.interactive ? '<button class="mileage-value" data-edit-mileage aria-label="Изменить пробег">' + mileageText + '</button>' : '<span class="mileage-value">' + mileageText + '</span>') +
+        '<small>' + unitWord() + '</small></div>';
     }
+    var stepAttr = function (dir) { return opts.interactive ? ' data-mileage-step="' + dir + '"' : ''; };
+    var mileageCard = '<div class="v-card"><div class="v-between"><span class="v-label">Пробег</span>' +
+      '<span class="v-alert-chip" style="background:' + tierVar(worstStatus(a)) + '">' + a.total + ' из ' + a.count + ' пора менять</span></div>' +
+      mileageValue +
+      '<div class="v-row" style="margin-top:12px"><button class="v-step"' + stepAttr(-1) + ' aria-label="Уменьшить пробег">' + icon('minus', 16) + '</button>' +
+      '<div class="v-mult">' + MULTS.map(function (m) {
+        return '<button class="' + (mult === m ? 'on' : '') + '"' + (opts.interactive ? ' data-mileage-mult="' + m + '"' : '') + '>×' + m + '</button>';
+      }).join('') + '</div>' +
+      '<button class="v-step accent"' + stepAttr(1) + ' aria-label="Увеличить пробег">' + icon('plus', 16) + '</button></div>' +
+      '<div class="v-hint">Шаг ' + toUnit(mult * MILEAGE_STEP).toLocaleString('ru-RU') + ' ' + unitWord() + ' · тап по числу — ввести вручную</div></div>';
     return '<div class="view" data-view="detail">' +
       '<div class="s-topbar"><button class="icon-btn"' + backAttr + '>' + icon('chevronLeft', 16) + '</button>' +
       '<div class="icon-row"><button class="icon-btn"' + histAttr + '>' + icon('clock', 16) + '</button><button class="icon-btn"' + deleteAttr + '>' + icon('trash', 16) + '</button></div></div>' +
       titleBlock + vinBlock +
-      '<div class="stat-pair">' +
-      '<div class="stat-block"><div class="stat-label">Пробег</div>' + mileageBlock + '</div>' +
-      '<div class="stat-block"><div class="stat-label">Скоро / просрочено</div><div class="stat-num" style="color:' + tierVar(worstStatus(a)) + '"><span>' + a.total + ' из ' + a.count + '</span></div></div>' +
-      '</div>' +
-      '<div class="task-list with-fab">' + rows + '</div>' + addTaskFab +
+      mileageCard.replace('class="v-card"', 'class="v-card" style="margin:14px 18px 6px;flex-shrink:0"') +
+      '<div class="task-list with-fab" style="padding-top:0">' + rows + '</div>' + addTaskFab +
       (opts.confirmDelete ? deleteDialogHtml(car, opts) : '') +
       (opts.doneTaskId ? taskDoneDialogHtml(car.tasks.find(function (t) { return t.id === opts.doneTaskId; }), opts) : '') +
       (opts.unmarkTaskId ? unmarkDialogHtml(opts) : '') +
@@ -1686,6 +1762,133 @@
   }
   renderStaticGallery('galleryLight');
   renderStaticGallery('galleryDark');
+  /* ================= variants: mileage panel and task cards ================= */
+  var vstate = { a: { km: 84300, mult: 1 }, b: { km: 84300, mult: 1 }, c: { km: 84300, history: [] }, d: { km: 84300 } };
+  function vHeader(car) {
+    return '<div class="s-topbar"><button class="icon-btn">' + icon('chevronLeft', 16) + '</button>' +
+      '<div class="icon-row"><button class="icon-btn">' + icon('clock', 16) + '</button><button class="icon-btn">' + icon('trash', 16) + '</button></div></div>' +
+      '<div class="detail-title"><span class="tap">' + car.brand + '</span></div>' +
+      '<div class="detail-vin" style="margin-top:7px">VIN <span class="tap">' + car.vin + '</span></div>';
+  }
+  function vCar(km) { var car = cloneCars()[0]; car.mileageKm = km; return car; }
+  function vAlertChip(car) {
+    var a = carAlerts(car);
+    return '<span class="v-alert-chip" style="background:' + tierVar(worstStatus(a)) + '">' + a.total + ' из ' + a.count + ' пора менять</span>';
+  }
+
+  /* --- mileage A: big value, «− [×1 ×2 ×5 ×10] +» under it --- */
+  function mileageA(car, st) {
+    return '<div class="v-card"><div class="v-between"><span class="v-label">Пробег</span>' + vAlertChip(car) + '</div>' +
+      '<div class="v-value" style="margin-top:4px">' + car.mileageKm.toLocaleString('ru-RU') + '<small>км</small></div>' +
+      '<div class="v-row" style="margin-top:12px"><button class="v-step" data-v="a" data-dir="-1">' + icon('minus', 16) + '</button>' +
+      '<div class="v-mult">' + MULTS.map(function (m) { return '<button class="' + (st.mult === m ? 'on' : '') + '" data-v="a" data-mult="' + m + '">×' + m + '</button>'; }).join('') + '</div>' +
+      '<button class="v-step accent" data-v="a" data-dir="1">' + icon('plus', 16) + '</button></div>' +
+      '<div class="v-hint">Шаг ' + (st.mult * MILEAGE_STEP).toLocaleString('ru-RU') + ' км · тап по числу — ввести вручную</div></div>';
+  }
+  /* --- mileage B: value with ▲ ×N ▼ column at the right --- */
+  function mileageB(car, st) {
+    return '<div class="stat-pair"><div class="stat-block" style="flex:1.5"><div class="stat-label">Пробег</div>' +
+      '<div class="v-between" style="margin-top:6px"><div class="stat-num" style="margin-top:0">' + icon('gauge', 20) + '<span>' + car.mileageKm.toLocaleString('ru-RU') + '</span></div>' +
+      '<div class="v-arrows"><button class="v-arrow" data-v="b" data-dir="1"><span class="up">' + icon('chevronLeft', 13) + '</span></button>' +
+      '<button class="v-mult-pill" data-v="b" data-cycle>×' + st.mult + '</button>' +
+      '<button class="v-arrow" data-v="b" data-dir="-1"><span class="down">' + icon('chevronLeft', 13) + '</span></button></div></div></div>' +
+      '<div class="stat-block"><div class="stat-label">Скоро / просрочено</div><div class="stat-num" style="color:' + tierVar(worstStatus(carAlerts(car))) + '"><span>' + carAlerts(car).total + ' из ' + carAlerts(car).count + '</span></div></div></div>';
+  }
+  /* --- mileage C: hero number and quick additions with undo --- */
+  function mileageC(car, st) {
+    return '<div class="v-card"><div class="v-between"><span class="v-label">Пробег сейчас</span>' + vAlertChip(car) + '</div>' +
+      '<div class="v-value" style="font-size:32px;margin-top:2px">' + car.mileageKm.toLocaleString('ru-RU') + '<small>км</small></div>' +
+      '<div class="v-chips">' + [100, 500, 1000, 5000].map(function (d) { return '<button class="v-chip" data-v="c" data-add="' + d + '">+' + d.toLocaleString('ru-RU') + '</button>'; }).join('') +
+      (st.history.length ? '<button class="v-chip undo" data-v="c" data-undo>↶ отменить</button>' : '') + '</div></div>';
+  }
+  /* --- mileage D: odometer, every digit has its own ▲▼ --- */
+  function mileageD(car) {
+    var digits = String(car.mileageKm).padStart(6, '0').split('');
+    return '<div class="v-card"><div class="v-between"><span class="v-label">Одометр</span>' + vAlertChip(car) + '</div>' +
+      '<div class="v-digits">' + digits.map(function (d, i) {
+        var power = digits.length - 1 - i;
+        var fixed = power < 2;
+        if (fixed) return '<div class="v-digit fixed"><button style="visibility:hidden"></button><span class="num">' + d + '</span><button style="visibility:hidden"></button></div>';
+        return '<div class="v-digit"><button data-v="d" data-pow="' + power + '" data-dir="1"><span style="display:flex;transform:rotate(90deg)">' + icon('chevronLeft', 11) + '</span></button><span class="num">' + d + '</span>' +
+          '<button data-v="d" data-pow="' + power + '" data-dir="-1"><span style="display:flex;transform:rotate(-90deg)">' + icon('chevronLeft', 11) + '</span></button></div>';
+      }).join('') + '<div style="align-self:center;margin-left:4px;font-family:var(--mono);font-size:12px;color:var(--ink-faint)">км</div></div>' +
+      '<div class="v-hint">Разряд сотен и выше меняется стрелками; младшие разряды — серые</div></div>';
+  }
+
+  /* --- tasks 1: compact rows, ring with progress, round check button --- */
+  function tasksRows(car) {
+    return '<div class="v-tasks">' + sortedTaskStats(car).map(function (x) {
+      var color = tierVar(x.st.status), pct = Math.round(x.st.frac * 100);
+      return '<div class="v-row-task"><div class="v-mini-ring" style="background:conic-gradient(' + color + ' ' + pct + '%, var(--surface-3) 0)"><span></span></div>' +
+        '<div class="v-main"><div class="v-name">' + x.t.name + '</div><div class="v-meta">' + (x.st.remaining <= 0 ? 'просрочено на ' + fmtKm(-x.st.remaining) : 'осталось ' + fmtKm(x.st.remaining)) + ' · из ' + fmtKm(x.t.intervalKm) + '</div></div>' +
+        '<button class="v-done" title="Отметить выполненной">' + icon('check', 15) + '</button></div>';
+    }).join('') + '</div>';
+  }
+  /* --- tasks 2: cards with a big remaining number --- */
+  function tasksCards(car) {
+    return '<div class="v-tasks">' + sortedTaskStats(car).map(function (x) {
+      var color = tierVar(x.st.status), rem = x.st.remaining;
+      return '<div class="v-task-card"><div class="v-between"><div class="v-remaining" style="color:' + color + '">' + Math.abs(rem).toLocaleString('ru-RU') + '<small>км ' + (rem <= 0 ? 'просрочено' : 'осталось') + '</small></div>' +
+        '<span class="task-status-chip" style="background:' + color + ';color:var(--on-tier)">' + tierLabel(x.st.status) + '</span></div>' +
+        '<div class="v-name" style="margin-top:4px">' + x.t.name + '</div>' +
+        '<div class="task-track" style="margin-top:8px"><div class="task-fill" style="width:' + Math.round(x.st.frac * 100) + '%;background:' + color + '"></div></div>' +
+        '<div class="v-between" style="margin-top:8px"><span class="v-meta">каждые ' + fmtKm(x.t.intervalKm) + '</span><button class="v-check-pill">' + icon('check', 12) + ' Выполнено</button></div></div>';
+    }).join('') + '</div>';
+  }
+  /* --- tasks 3: timeline from last done to due, with the current mileage marker --- */
+  function tasksTimeline(car) {
+    return '<div class="v-tasks">' + sortedTaskStats(car).map(function (x) {
+      var color = tierVar(x.st.status), due = x.t.lastKm + x.t.intervalKm, pct = Math.min(100, Math.round(x.st.frac * 100));
+      var windowStart = Math.max(0, Math.round((1 - x.t.reminderKm / x.t.intervalKm) * 100));
+      return '<div class="v-task-card"><div class="v-between"><div class="v-name">' + x.t.name + '</div><span class="v-meta" style="color:' + color + ';font-weight:700">' + (x.st.remaining <= 0 ? '−' + fmtKm(-x.st.remaining) : fmtKm(x.st.remaining)) + '</span></div>' +
+        '<div class="v-track"><div style="position:absolute;left:' + windowStart + '%;right:0;top:0;bottom:0;border-radius:999px;background:color-mix(in srgb, var(--tier-soon) 30%, transparent)"></div>' +
+        '<div class="fill" style="width:' + pct + '%;background:' + color + '"></div>' +
+        '<div class="now" style="left:calc(' + pct + '% - 1px)"></div></div>' +
+        '<div class="v-scale"><span>' + x.t.lastKm.toLocaleString('ru-RU') + '</span><span>окно ' + fmtKm(x.t.reminderKm) + '</span><span>' + due.toLocaleString('ru-RU') + '</span></div></div>';
+    }).join('') + '</div>';
+  }
+  /* --- tasks 4: grouped by status, compact rows with a check button --- */
+  function tasksGrouped(car) {
+    var groups = [['due', 'Просрочено'], ['soon', 'Пора менять'], ['ok', 'В порядке']];
+    var stats = sortedTaskStats(car);
+    return '<div class="v-tasks">' + groups.map(function (g) {
+      var items = stats.filter(function (x) { return x.st.status === g[0]; });
+      if (!items.length) return '';
+      return '<div class="v-group" style="color:' + tierVar(g[0]) + '"><span class="v-dot" style="background:' + tierVar(g[0]) + '"></span>' + g[1] + ' · ' + items.length + '</div>' +
+        items.map(function (x) {
+          return '<div class="v-row-task"><div class="task-icon">' + icon(x.t.icon, 15) + '</div><div class="v-main"><div class="v-name">' + x.t.name + '</div>' +
+            '<div class="v-meta">' + taskMetaHtml(x.st, x.t).replace(/<\/div><div>/g, ' · ').replace(/<\/?div>/g, '') + '</div></div>' +
+            '<button class="v-done">' + icon('check', 15) + '</button></div>';
+        }).join('');
+    }).join('') + '</div>';
+  }
+
+  function variantScreen(mileageHtml, tasksHtml, car) {
+    return '<div class="view" data-view="detail">' + vHeader(car) + '<div class="v-body">' + mileageHtml + tasksHtml + '</div></div>';
+  }
+  function renderVariants() {
+    var a = vCar(vstate.a.km), b = vCar(vstate.b.km), c = vCar(vstate.c.km), d = vCar(vstate.d.km);
+    document.getElementById('variantsGallery').innerHTML =
+      phoneWrap('A', 'Степпер с множителем · строки', variantScreen(mileageA(a, vstate.a), tasksRows(a), a)) +
+      phoneWrap('B', 'Стрелки ▲▼ и множитель · карточки', variantScreen(mileageB(b, vstate.b), tasksCards(b), b)) +
+      phoneWrap('C', 'Быстрые прибавки · шкала до срока', variantScreen(mileageC(c, vstate.c), tasksTimeline(c), c)) +
+      phoneWrap('D', 'Одометр · группы по статусу', variantScreen(mileageD(d), tasksGrouped(d), d));
+    var root = document.getElementById('variantsGallery');
+    root.querySelectorAll('[data-v]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var st = vstate[b.getAttribute('data-v')];
+        if (b.hasAttribute('data-mult')) st.mult = +b.getAttribute('data-mult');
+        else if (b.hasAttribute('data-cycle')) st.mult = MULTS[(MULTS.indexOf(st.mult) + 1) % MULTS.length];
+        else if (b.hasAttribute('data-add')) { st.history.push(st.km); st.km += +b.getAttribute('data-add'); }
+        else if (b.hasAttribute('data-undo')) { st.km = st.history.pop(); }
+        else if (b.hasAttribute('data-pow')) st.km = Math.max(0, st.km + (+b.getAttribute('data-dir')) * Math.pow(10, +b.getAttribute('data-pow')));
+        else if (b.hasAttribute('data-dir')) st.km = Math.max(0, st.km + (+b.getAttribute('data-dir')) * st.mult * MILEAGE_STEP);
+        renderVariants();
+      });
+    });
+  }
+  renderVariants();
+
 
   /* ================= interactive copy ================= */
   var cars = cloneCars();
@@ -1696,7 +1899,7 @@
     taskBlocks: [], nextBlockN: 1, form: { brand: '', mileage: '', vin: '' }, formErrors: false,
     doneTaskId: null, unmarkTaskId: null, editingBrand: false, editingVin: false, brandError: false,
     taskForm: null, taskFormErrors: false, confirmDeleteTask: false, historyEntryId: null,
-    lastOpenedCarId: null,
+    lastOpenedCarId: null, mileageMult: 1,
     settings: { themeIdx: 0, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00', openDefault: false, defaultCarId: null }
   };
   function carById(id) { return cars.find(function (c) { return c.id === id; }); }
@@ -1714,7 +1917,7 @@
     var prevScroll = prevView ? { screen: prevView.getAttribute('data-view'), top: prevScroller ? prevScroller.scrollTop : 0 } : null;
     root.innerHTML =
       carsScreenHtml(cars, { interactive: true }) +
-      (detailCar ? detailScreenHtml(detailCar, { interactive: true, editingMileage: istate.editingMileage, confirmDelete: istate.confirmDelete, doneTaskId: istate.doneTaskId, unmarkTaskId: istate.unmarkTaskId, editingBrand: istate.editingBrand, editingVin: istate.editingVin }) : '') +
+      (detailCar ? detailScreenHtml(detailCar, { interactive: true, editingMileage: istate.editingMileage, confirmDelete: istate.confirmDelete, doneTaskId: istate.doneTaskId, unmarkTaskId: istate.unmarkTaskId, editingBrand: istate.editingBrand, editingVin: istate.editingVin, mileageMult: istate.mileageMult }) : '') +
       historyScreenHtml(cars, soldCars, {
         carId: istate.history.carId, carsOpen: istate.history.carsOpen, filterOpen: istate.history.filterOpen,
         filters: istate.history.filters, entryId: istate.historyEntryId
@@ -2005,6 +2208,19 @@
     });
 
     /* --- quick mileage edit --- */
+    /* пробег кнопками: шаг 100 × множитель, сохраняется сразу */
+    root.querySelectorAll('[data-mileage-step]').forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        cancelEditing();
+        var car = currentDetailCar();
+        car.mileageKm = Math.max(0, car.mileageKm + fromUnit(+b.getAttribute('data-mileage-step') * istate.mileageMult * MILEAGE_STEP));
+        paintInteractive();
+      });
+    });
+    root.querySelectorAll('[data-mileage-mult]').forEach(function (b) {
+      b.addEventListener('click', function (e) { e.stopPropagation(); istate.mileageMult = +b.getAttribute('data-mileage-mult'); paintInteractive(); });
+    });
     var editMileageBtn = root.querySelector('[data-edit-mileage]');
     if (editMileageBtn) editMileageBtn.addEventListener('click', function () { cancelEditing(); istate.editingMileage = true; paintInteractive(); });
     var saveMileageBtn = root.querySelector('#saveMileageBtn');
