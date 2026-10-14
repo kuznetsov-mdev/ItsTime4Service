@@ -2215,6 +2215,7 @@
         cancelEditing();
         var car = currentDetailCar();
         car.mileageKm = Math.max(0, car.mileageKm + fromUnit(+b.getAttribute('data-mileage-step') * istate.mileageMult * MILEAGE_STEP));
+        istate.resetScroll = true;
         paintInteractive();
       });
     });
@@ -2226,7 +2227,7 @@
     var saveMileageBtn = root.querySelector('#saveMileageBtn');
     if (saveMileageBtn) saveMileageBtn.addEventListener('click', function () {
       var typed = root.querySelector('#mileageEditInput').value;
-      if (parseInt(typed, 10) > 0) currentDetailCar().mileageKm = keepKm(currentDetailCar().mileageKm, typed);
+      if (parseInt(typed, 10) > 0) { currentDetailCar().mileageKm = keepKm(currentDetailCar().mileageKm, typed); istate.resetScroll = true; }
       istate.editingMileage = false; paintInteractive();
     });
 
