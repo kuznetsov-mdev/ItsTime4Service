@@ -28,6 +28,7 @@ import androidx.savedstate.read
 import org.jetbrains.compose.resources.stringResource
 import pitstop.shared.generated.resources.Res
 import pitstop.shared.generated.resources.tab_cars
+import pitstop.shared.generated.resources.tab_history
 import pitstop.shared.generated.resources.tab_settings
 import ru.kuznetsov.pitstop.features.cardetail.CarDetailScreen
 import ru.kuznetsov.pitstop.features.carform.CarFormScreen
@@ -50,7 +51,7 @@ fun PitStopNavGraph(modifier: Modifier = Modifier) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            if (currentRoute == Destination.Cars.route || currentRoute == Destination.Settings.route) {
+            if (currentRoute in tabRoutes) {
                 TabBar(currentRoute = currentRoute, onSelect = navController::navigateToTab)
             }
         },
@@ -76,7 +77,12 @@ fun PitStopNavGraph(modifier: Modifier = Modifier) {
                 CarDetailScreen(
                     carId = carId,
                     onBack = { navController.popBackStack(Destination.Cars.route, inclusive = false) },
-                    onOpenHistory = { navController.navigate(Destination.History.createRoute(carId)) },
+                    onOpenHistory = {
+                        navController.navigate(Destination.History.createRoute(carId)) {
+                            popUpTo(Destination.Cars.route)
+                            launchSingleTop = true
+                        }
+                    },
                     onAddTask = { navController.navigate(Destination.NewTask.createRoute(carId)) },
                     onOpenTask = { taskId -> navController.navigate(Destination.EditTask.createRoute(carId, taskId)) },
                 )
@@ -90,8 +96,17 @@ fun PitStopNavGraph(modifier: Modifier = Modifier) {
             ) { entry ->
                 TaskFormScreen(carId = entry.carId, taskId = entry.taskId, onBack = { navController.popBackStack() })
             }
-            composable(Destination.History.route, arguments = carIdArgument) { entry ->
-                HistoryScreen(carId = entry.carId, onBack = { navController.popBackStack() })
+            composable(
+                Destination.History.route,
+                arguments = listOf(
+                    navArgument(Destination.ARG_CAR_ID) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            ) { entry ->
+                HistoryScreen(initialCarId = entry.arguments?.read { getStringOrNull(Destination.ARG_CAR_ID) })
             }
             composable(Destination.Settings.route) {
                 SettingsScreen()
@@ -101,7 +116,7 @@ fun PitStopNavGraph(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun TabBar(currentRoute: String, onSelect: (Destination) -> Unit) {
+private fun TabBar(currentRoute: String?, onSelect: (route: String) -> Unit) {
     val colors = PitStopTheme.colors
     Column(
         Modifier
@@ -116,25 +131,34 @@ private fun TabBar(currentRoute: String, onSelect: (Destination) -> Unit) {
         )
         Row {
             TabBarItem(
+                icon = PitStopIcons.Clock,
+                label = stringResource(Res.string.tab_history),
+                selected = currentRoute == Destination.History.route,
+                onClick = { onSelect(Destination.History.createRoute()) },
+                modifier = Modifier.weight(1f),
+            )
+            TabBarItem(
                 icon = PitStopIcons.Car,
                 label = stringResource(Res.string.tab_cars),
                 selected = currentRoute == Destination.Cars.route,
-                onClick = { onSelect(Destination.Cars) },
+                onClick = { onSelect(Destination.Cars.route) },
                 modifier = Modifier.weight(1f),
             )
             TabBarItem(
                 icon = PitStopIcons.Gear,
                 label = stringResource(Res.string.tab_settings),
                 selected = currentRoute == Destination.Settings.route,
-                onClick = { onSelect(Destination.Settings) },
+                onClick = { onSelect(Destination.Settings.route) },
                 modifier = Modifier.weight(1f),
             )
         }
     }
 }
 
-private fun NavHostController.navigateToTab(destination: Destination) {
-    navigate(destination.route) {
+private val tabRoutes = setOf(Destination.History.route, Destination.Cars.route, Destination.Settings.route)
+
+private fun NavHostController.navigateToTab(route: String) {
+    navigate(route) {
         popUpTo(Destination.Cars.route) { saveState = true }
         launchSingleTop = true
         restoreState = true

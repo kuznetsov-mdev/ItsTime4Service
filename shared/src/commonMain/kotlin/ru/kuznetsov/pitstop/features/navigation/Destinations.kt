@@ -16,8 +16,8 @@ sealed class Destination(val route: String) {
     data object EditTask : Destination("cars/{$ARG_CAR_ID}/tasks/{$ARG_TASK_ID}") {
         fun createRoute(carId: String, taskId: String) = "cars/$carId/tasks/$taskId"
     }
-    data object History : Destination("cars/{$ARG_CAR_ID}/history") {
-        fun createRoute(carId: String) = "cars/$carId/history"
+    data object History : Destination("history?$ARG_CAR_ID={$ARG_CAR_ID}") {
+        fun createRoute(carId: String? = null) = if (carId == null) "history" else "history?$ARG_CAR_ID=$carId"
     }
 
     data object Settings : Destination("settings")

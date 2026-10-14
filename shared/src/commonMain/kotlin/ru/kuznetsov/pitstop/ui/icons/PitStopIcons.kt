@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.composables.icons.lucide.Bell
 import com.composables.icons.lucide.Car
 import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.ChevronDown
 import com.composables.icons.lucide.ChevronLeft
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Disc
@@ -37,6 +38,7 @@ object PitStopIcons {
     val Clock: ImageVector get() = Lucide.Clock
     val Check: ImageVector get() = Lucide.Check
     val ChevronLeft: ImageVector get() = Lucide.ChevronLeft
+    val ChevronDown: ImageVector get() = Lucide.ChevronDown
     val Pencil: ImageVector get() = Lucide.Pencil
     val Trash: ImageVector get() = Lucide.Trash2
     val Bell: ImageVector get() = Lucide.Bell
