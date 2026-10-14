@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -33,6 +34,7 @@ fun LabeledMiniField(
     isError: Boolean = false,
     required: Boolean = false,
     minLines: Int = 1,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     val colors = PitStopTheme.colors
     Column(modifier = modifier) {
@@ -58,6 +60,7 @@ fun LabeledMiniField(
             keyboardType = keyboardType,
             isError = isError,
             minLines = minLines,
+            visualTransformation = visualTransformation,
         )
     }
 }

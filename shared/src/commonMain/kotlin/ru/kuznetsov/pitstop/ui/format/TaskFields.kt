@@ -9,6 +9,7 @@ import ru.kuznetsov.pitstop.domain.model.NewMaintenanceTask
  * and on the task screen. Everything is kept as text; numbers and the date are parsed only on save.
  * Distances are typed in the unit chosen in settings and converted to kilometers on save; a distance that was
  * shown and left as it was keeps its stored kilometers, so rounding back and forth does not shift it.
+ * The last-done date is kept as its typed digits in the [DateInputFormat] of the app language.
  * The name, the mileage interval and the last-done mileage are required; a last-done mileage of zero
  * is valid and means the task has not been done yet.
  */
@@ -30,6 +31,7 @@ data class TaskFields(
         intervalMonths = intervalMonths.digits(),
         lastDoneKm = lastDoneKm.digits(),
         reminderWindowKm = reminderWindowKm.digits(),
+        lastDoneDate = DateInputFormat.current.digits(lastDoneDate),
     )
 
     fun toNewTask(unit: DistanceUnit, original: MaintenanceTask? = null): NewMaintenanceTask? {
@@ -40,7 +42,7 @@ data class TaskFields(
             lastDoneKm = keepKm(original?.lastDoneKm, lastDoneKm.toInt(), unit),
             reminderWindowKm = reminderWindowKm.toIntOrNull()?.let { keepKm(original?.reminderWindowKm, it, unit) },
             intervalMonths = intervalMonths.toIntOrNull(),
-            lastDoneDate = parseDisplayDate(lastDoneDate),
+            lastDoneDate = DateInputFormat.current.parse(lastDoneDate),
         )
     }
 
@@ -56,6 +58,6 @@ fun MaintenanceTask.toFields(unit: DistanceUnit): TaskFields = TaskFields(
     intervalKm = intervalKm.kmIn(unit).toString(),
     intervalMonths = intervalMonths?.toString().orEmpty(),
     lastDoneKm = lastDoneKm.kmIn(unit).toString(),
-    lastDoneDate = lastDoneDate?.toDisplayText().orEmpty(),
+    lastDoneDate = lastDoneDate?.let { DateInputFormat.current.digitsOf(it) }.orEmpty(),
     reminderWindowKm = reminderWindowKm.kmIn(unit).toString(),
 )

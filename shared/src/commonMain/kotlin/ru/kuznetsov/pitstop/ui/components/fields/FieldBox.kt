@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import ru.kuznetsov.pitstop.ui.theme.PitStopTheme
 
@@ -42,6 +43,7 @@ internal fun FieldBox(
     enabled: Boolean = true,
     isError: Boolean = false,
     minLines: Int = 1,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     focusRequester: FocusRequester? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
@@ -70,6 +72,7 @@ internal fun FieldBox(
                 minLines = minLines,
                 cursorBrush = SolidColor(colors.accent),
                 keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                visualTransformation = visualTransformation,
             )
         }
         if (trailing != null) trailing()

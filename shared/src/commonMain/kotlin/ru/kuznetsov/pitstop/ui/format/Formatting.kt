@@ -66,14 +66,5 @@ fun LocalDate.toDisplayText(): String = "${day.twoDigits()}.${month.number.twoDi
 
 fun LocalTime.toDisplayText(): String = "${hour.twoDigits()}:${minute.twoDigits()}"
 
-fun parseDisplayDate(text: String): LocalDate? {
-    val parts = text.trim().split('.').map { it.toIntOrNull() ?: return null }
-    if (parts.size != 3) return null
-    return try {
-        LocalDate(parts[2], parts[1], parts[0])
-    } catch (_: IllegalArgumentException) {
-        null
-    }
-}
 
 private fun Int.twoDigits(): String = toString().padStart(2, '0')

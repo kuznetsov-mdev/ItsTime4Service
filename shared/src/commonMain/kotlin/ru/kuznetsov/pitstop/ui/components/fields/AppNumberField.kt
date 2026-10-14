@@ -7,6 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,6 +27,7 @@ fun AppNumberField(
     unit: String? = null,
     enabled: Boolean = true,
     isError: Boolean = false,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     val colors = PitStopTheme.colors
     FieldBox(
@@ -39,6 +41,7 @@ fun AppNumberField(
         keyboardType = KeyboardType.Number,
         enabled = enabled,
         isError = isError,
+        visualTransformation = visualTransformation,
         trailing = unit?.let {
             {
                 Text(
