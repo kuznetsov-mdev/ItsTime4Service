@@ -45,7 +45,8 @@
     <string name="action_cancel">Отмена</string>
     <string name="action_delete">Удалить</string>
     <string name="dialog_delete_car_title">Удалить %1$s?</string>
-    <string name="dialog_delete_car_text">Авто, его регламентные работы и история ТО будут удалены. Это действие нельзя отменить.</string>
+    <string name="dialog_delete_car_text">Авто и его регламентные работы будут удалены. История ТО сохранится в разделе «История» с пометкой «продано». Удалить авто вместе с историей можно в настройках.</string>
+    <string name="car_sold">продано</string>
     <string name="history_empty">Пока нет записей — отметьте работу выполненной на экране авто, и она появится здесь</string>
     <string name="cost_rub">%1$s ₽</string>
     <string name="field_brand">Марка</string>

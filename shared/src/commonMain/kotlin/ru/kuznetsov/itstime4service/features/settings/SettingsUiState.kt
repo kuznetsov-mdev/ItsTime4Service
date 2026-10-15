@@ -8,7 +8,8 @@ import kotlin.math.roundToInt
  * State of the settings screen.
  * [settings] is `null` only until the stored settings arrive.
  * [isPickingReminderTime] is `true` while the reminder time dialog is open.
- * [cars] feeds the "open by default" list and the "delete a car" list; both groups are hidden without cars.
+ * [cars] are the cars that are not sold; they feed the "open by default" list, hidden without them.
+ * [purgeCars] are all cars, sold ones last; they feed the "delete a car" list, hidden without them.
  * [openDefault] and [defaultCarId] describe the "open by default" choice; [purgeCar] is the car whose
  * full deletion is being confirmed.
  */
@@ -18,6 +19,7 @@ data class SettingsUiState(
     val cars: List<SettingsCar> = emptyList(),
     val openDefault: Boolean = false,
     val defaultCarId: String? = null,
+    val purgeCars: List<SettingsCar> = emptyList(),
     val purgeCar: SettingsCar? = null,
 ) {
     val reminderSteps: Int

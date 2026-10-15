@@ -2,22 +2,20 @@ package ru.kuznetsov.itstime4service.features.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.number
+import ru.kuznetsov.itstime4service.domain.model.CarSummary
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
-import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarsUseCase
-import ru.kuznetsov.itstime4service.domain.usecase.ObserveHistoryUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.ObserveAllHistoryUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarSummariesUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateHistoryEntryUseCase
 import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
@@ -33,40 +31,30 @@ import ru.kuznetsov.itstime4service.ui.format.kmIn
  * A filter with a date that cannot be read is not applied: its window stays open and marks the date.
  * The record window saves the date, the mileage, the cost, the service name and the comment; an invalid date
  * or mileage keeps it open and marks the field.
- * Temporary until the storage supports it: deleted cars are not listed, because deleting a car still
- * deletes its history.
+ * Sold cars — deleted from their screen with the history kept — are listed after the others and marked;
+ * their records can be edited like any other.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
 class HistoryViewModel(
     initialCarId: String?,
-    observeCars: ObserveCarsUseCase,
-    private val observeHistory: ObserveHistoryUseCase,
+    observeCarSummaries: ObserveCarSummariesUseCase,
+    observeAllHistory: ObserveAllHistoryUseCase,
     observeSettings: ObserveSettingsUseCase,
     private val updateHistoryEntry: UpdateHistoryEntryUseCase,
 ) : ViewModel() {
 
     private val view = MutableStateFlow(View(selectedCarId = initialCarId))
 
-    private val rows: Flow<List<HistoryRow>> = observeCars().flatMapLatest { cars ->
-        if (cars.isEmpty()) {
-            flowOf(emptyList())
-        } else {
-            combine(
-                cars.map { car ->
-                    val owner = HistoryCar(id = car.id, brand = car.brand)
-                    observeHistory(car.id).map { entries -> entries.map { HistoryRow(it, owner) } }
-                },
-            ) { perCar -> perCar.flatMap { it }.sortedByDescending { it.entry.date } }
-        }
+    private val rows: Flow<List<HistoryRow>> = observeAllHistory().map { records ->
+        records.map { HistoryRow(it.entry, it.car.toHistoryCar()) }
     }
 
     val state: StateFlow<HistoryUiState> = combine(
-        observeCars(),
+        observeCarSummaries(),
         rows,
         observeSettings(),
         view,
     ) { cars, rows, settings, view ->
-        val owners = cars.map { HistoryCar(id = it.id, brand = it.brand) }
+        val owners = cars.map { it.toHistoryCar() }
         val selectedCarId = view.selectedCarId?.takeIf { id -> owners.any { it.id == id } }
         val ofCar = rows.filter { selectedCarId == null || it.car.id == selectedCarId }
         HistoryUiState(
@@ -193,6 +181,8 @@ class HistoryViewModel(
                 months = ofYear.groupBy { it.entry.date.month.number }.map { (month, ofMonth) -> HistoryMonth(month, ofMonth) },
             )
         }
+
+    private fun CarSummary.toHistoryCar() = HistoryCar(id = id, brand = brand, isSold = isSold)
 
     private fun String.digits(): String = filter(Char::isDigit).take(MAX_NUMBER_LENGTH)
 

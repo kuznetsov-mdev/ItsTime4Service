@@ -13,9 +13,9 @@ import kotlinx.datetime.LocalTime
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.domain.model.Settings
 import ru.kuznetsov.itstime4service.domain.model.ThemeMode
-import ru.kuznetsov.itstime4service.domain.usecase.DeleteCarUseCase
-import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarsUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarSummariesUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.PurgeCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SetDefaultCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateSettingsUseCase
 import ru.kuznetsov.itstime4service.ui.format.kmFrom
@@ -28,22 +28,22 @@ import ru.kuznetsov.itstime4service.ui.format.kmFrom
  * overwrite each other.
  * "Open by default" and the chosen car are stored with the settings (see [SetDefaultCarUseCase]); the group is
  * shown only while there are cars. Deleting the chosen car picks another one (see [ForgetCarInSettingsUseCase]).
- * "Delete a car" removes the car after a confirmation.
- * Temporary until the storage supports it: sold cars are not listed and deleting a car here is the same as
- * deleting it from its screen.
+ * "Delete a car" lists every car, sold ones last, and deletes the chosen one completely — with its tasks and
+ * its whole service history — after a confirmation (see [PurgeCarUseCase]).
  */
 class SettingsViewModel(
     observeSettings: ObserveSettingsUseCase,
     private val updateSettings: UpdateSettingsUseCase,
-    observeCars: ObserveCarsUseCase,
-    private val deleteCar: DeleteCarUseCase,
+    observeCarSummaries: ObserveCarSummariesUseCase,
+    private val purgeCar: PurgeCarUseCase,
     private val setDefaultCar: SetDefaultCarUseCase,
 ) : ViewModel() {
 
     private val view = MutableStateFlow(View())
 
-    val state: StateFlow<SettingsUiState> = combine(observeSettings(), observeCars(), view) { settings, cars, view ->
-        val owners = cars.map { SettingsCar(id = it.id, brand = it.brand, mileageKm = it.mileageKm) }
+    val state: StateFlow<SettingsUiState> = combine(observeSettings(), observeCarSummaries(), view) { settings, cars, view ->
+        val allCars = cars.map { SettingsCar(id = it.id, brand = it.brand, mileageKm = it.mileageKm, isSold = it.isSold) }
+        val owners = allCars.filterNot { it.isSold }
         val defaultCarId = settings.defaultCarId?.takeIf { id -> owners.any { it.id == id } } ?: owners.firstOrNull()?.id
         SettingsUiState(
             settings = settings,
@@ -51,7 +51,8 @@ class SettingsViewModel(
             cars = owners,
             openDefault = settings.openDefaultCar && owners.isNotEmpty(),
             defaultCarId = defaultCarId,
-            purgeCar = owners.firstOrNull { it.id == view.purgeCarId },
+            purgeCars = allCars,
+            purgeCar = allCars.firstOrNull { it.id == view.purgeCarId },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), SettingsUiState())
 
@@ -88,7 +89,7 @@ class SettingsViewModel(
     fun onPurgeConfirm() {
         val carId = view.value.purgeCarId ?: return
         view.update { it.copy(purgeCarId = null) }
-        viewModelScope.launch { deleteCar(carId) }
+        viewModelScope.launch { purgeCar(carId) }
     }
 
     private fun update(change: (Settings) -> Settings) {

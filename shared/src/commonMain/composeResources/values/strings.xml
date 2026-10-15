@@ -45,7 +45,8 @@
     <string name="action_cancel">Cancel</string>
     <string name="action_delete">Delete</string>
     <string name="dialog_delete_car_title">Delete %1$s?</string>
-    <string name="dialog_delete_car_text">The car, its maintenance tasks and service history will be deleted. This cannot be undone.</string>
+    <string name="dialog_delete_car_text">The car and its maintenance tasks will be deleted. Its service history stays in History marked “sold”. To delete the car together with its history, use Settings.</string>
+    <string name="car_sold">sold</string>
     <string name="history_empty">No records yet — mark a task as done on the car screen and it will show up here</string>
     <string name="cost_rub">%1$s ₽</string>
     <string name="field_brand">Brand</string>

@@ -45,7 +45,8 @@
     <string name="action_cancel">Cancelar</string>
     <string name="action_delete">Eliminar</string>
     <string name="dialog_delete_car_title">¿Eliminar %1$s?</string>
-    <string name="dialog_delete_car_text">Se eliminarán el coche, sus tareas de mantenimiento y el historial de servicio. Esta acción no se puede deshacer.</string>
+    <string name="dialog_delete_car_text">Se eliminarán el coche y sus tareas de mantenimiento. Su historial de servicio se conservará en Historial marcado como «vendido». Para eliminar el coche junto con su historial, ve a Ajustes.</string>
+    <string name="car_sold">vendido</string>
     <string name="history_empty">Aún no hay registros: marca una tarea como hecha en la pantalla del coche y aparecerá aquí</string>
     <string name="cost_rub">%1$s ₽</string>
     <string name="field_brand">Marca</string>

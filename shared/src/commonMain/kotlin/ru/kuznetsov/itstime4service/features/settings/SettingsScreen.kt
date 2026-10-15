@@ -38,6 +38,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_cancel
 import itstime4service.shared.generated.resources.action_delete
+import itstime4service.shared.generated.resources.car_sold
 import itstime4service.shared.generated.resources.action_delete_car_with_history
 import itstime4service.shared.generated.resources.app_name
 import itstime4service.shared.generated.resources.dialog_purge_text
@@ -249,7 +250,7 @@ internal fun SettingsContent(
                     }
                 }
             }
-            if (state.cars.isNotEmpty()) {
+            if (state.purgeCars.isNotEmpty()) {
                 SettingsGroup(stringResource(Res.string.settings_delete_cars)) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
@@ -257,7 +258,7 @@ internal fun SettingsContent(
                             style = ItsTime4ServiceTheme.typography.sans.copy(fontSize = 11.5.sp, lineHeight = 16.sp),
                             color = ItsTime4ServiceTheme.colors.inkFaint,
                         )
-                        CarList(state.cars) { car ->
+                        CarList(state.purgeCars) { car ->
                             PurgeRow(car = car, distanceUnit = settings.distanceUnit, onDelete = { onPurgeRequest(car.id) })
                         }
                     }
@@ -298,7 +299,7 @@ private fun CarTitle(car: SettingsCar, distanceUnit: DistanceUnit, modifier: Mod
             color = if (car.isSold) colors.inkFaint else colors.ink,
         )
         Text(
-            distanceText(car.mileageKm, distanceUnit),
+            if (car.isSold) stringResource(Res.string.car_sold) else distanceText(car.mileageKm, distanceUnit),
             style = typography.mono.copy(fontSize = 10.5.sp, lineHeight = 14.sp, fontWeight = FontWeight.Normal),
             color = colors.inkFaint,
         )
@@ -419,6 +420,11 @@ private val previewState = SettingsUiState(
     cars = listOf(SettingsCar("c1", "Kia Rio", 84_300), SettingsCar("c2", "Toyota Camry", 152_000)),
     openDefault = true,
     defaultCarId = "c2",
+    purgeCars = listOf(
+        SettingsCar("c1", "Kia Rio", 84_300),
+        SettingsCar("c2", "Toyota Camry", 152_000),
+        SettingsCar("s1", "Lada Granta", 120_000, isSold = true),
+    ),
 )
 
 @Composable
