@@ -5,10 +5,11 @@ import ru.kuznetsov.itstime4service.domain.model.Settings
 
 /**
  * Storage of user preferences.
- * [updateSettings] replaces the stored value as a whole.
+ * [updateSettings] applies [change] to the stored value and stores the result in one step, so that changes
+ * made at the same time from different places are not lost.
  */
 interface SettingsRepository {
     fun observeSettings(): Flow<Settings>
 
-    suspend fun updateSettings(settings: Settings)
+    suspend fun updateSettings(change: (Settings) -> Settings)
 }

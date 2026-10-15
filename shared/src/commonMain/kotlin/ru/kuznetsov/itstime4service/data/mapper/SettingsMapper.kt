@@ -12,4 +12,7 @@ internal fun SettingsRow.toDomain() = Settings(
     pushEnabled = push_enabled,
     defaultReminderWindowKm = default_reminder_window_km.toInt(),
     reminderTime = LocalTime.parse(reminder_time),
+    lastOpenedCarId = last_opened_car_id,
+    openDefaultCar = open_default_car,
+    defaultCarId = default_car_id,
 )

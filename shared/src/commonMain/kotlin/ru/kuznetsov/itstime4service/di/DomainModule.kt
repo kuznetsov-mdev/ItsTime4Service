@@ -9,6 +9,8 @@ import ru.kuznetsov.itstime4service.domain.usecase.CarAlertsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.DeleteCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.DeleteTaskUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.DoneMarksUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.ForgetCarInSettingsUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.GetLaunchCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.GetNowUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.GetTodayUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.MarkTaskDoneUseCase
@@ -18,6 +20,8 @@ import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveHistoryUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.PlanRemindersUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.RecordCarOpenedUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.SetDefaultCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SortedTaskStatsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SyncRemindersUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UnmarkTaskDoneUseCase
@@ -41,6 +45,10 @@ val domainModule = module {
     factoryOf(::MarkTaskDoneUseCase)
     factoryOf(::DoneMarksUseCase)
     factoryOf(::UnmarkTaskDoneUseCase)
+    factoryOf(::RecordCarOpenedUseCase)
+    factoryOf(::GetLaunchCarUseCase)
+    factoryOf(::SetDefaultCarUseCase)
+    factoryOf(::ForgetCarInSettingsUseCase)
     factoryOf(::ObserveHistoryUseCase)
     factoryOf(::ObserveSettingsUseCase)
     factoryOf(::UpdateSettingsUseCase)

@@ -5,7 +5,7 @@ import ru.kuznetsov.itstime4service.domain.model.Settings
 import ru.kuznetsov.itstime4service.domain.repository.SettingsRepository
 
 /**
- * Stores the user's settings.
+ * Changes the user's settings: [change] gets the stored settings and returns the new ones, in one step.
  * The default reminder window is kept within 1..9 thousand of the chosen unit — the range of the stepper on the
  * settings screen: 1 000..9 000 km in kilometers, 1 609..14 484 km in miles. Switching the unit therefore also
  * pulls a window that no longer fits into the new range, so the stepper always shows what is stored.
@@ -13,14 +13,15 @@ import ru.kuznetsov.itstime4service.domain.repository.SettingsRepository
 class UpdateSettingsUseCase(
     private val settingsRepository: SettingsRepository,
 ) {
-    suspend operator fun invoke(settings: Settings) {
-        val range = when (settings.distanceUnit) {
-            DistanceUnit.KILOMETERS -> MIN_WINDOW_KM..MAX_WINDOW_KM
-            DistanceUnit.MILES -> MIN_WINDOW_IN_MILES_KM..MAX_WINDOW_IN_MILES_KM
+    suspend operator fun invoke(change: (Settings) -> Settings) {
+        settingsRepository.updateSettings { current ->
+            val settings = change(current)
+            val range = when (settings.distanceUnit) {
+                DistanceUnit.KILOMETERS -> MIN_WINDOW_KM..MAX_WINDOW_KM
+                DistanceUnit.MILES -> MIN_WINDOW_IN_MILES_KM..MAX_WINDOW_IN_MILES_KM
+            }
+            settings.copy(defaultReminderWindowKm = settings.defaultReminderWindowKm.coerceIn(range))
         }
-        settingsRepository.updateSettings(
-            settings.copy(defaultReminderWindowKm = settings.defaultReminderWindowKm.coerceIn(range)),
-        )
     }
 
     private companion object {
