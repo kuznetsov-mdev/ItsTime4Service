@@ -32,8 +32,10 @@ import org.jetbrains.compose.resources.stringResource
 import pitstop.shared.generated.resources.Res
 import pitstop.shared.generated.resources.action_cancel
 import pitstop.shared.generated.resources.action_save
+import pitstop.shared.generated.resources.comment_placeholder
 import pitstop.shared.generated.resources.dialog_task_done_text
 import pitstop.shared.generated.resources.dialog_task_done_title
+import pitstop.shared.generated.resources.field_comment
 import pitstop.shared.generated.resources.field_cost_rub
 import pitstop.shared.generated.resources.field_service_name
 import pitstop.shared.generated.resources.service_name_placeholder
@@ -44,11 +46,11 @@ import ru.kuznetsov.pitstop.ui.theme.PitStopTheme
 
 private const val MAX_COST_LENGTH = 7
 
-/** Modal shown when a task is marked as done — two optional fields: where it was serviced and the cost. */
+/** Modal shown when a task is marked as done — three optional fields: where it was serviced, the cost and a comment. */
 @Composable
 fun TaskDoneDialog(
     taskName: String,
-    onConfirm: (serviceName: String, cost: String) -> Unit,
+    onConfirm: (serviceName: String, cost: String, comment: String) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -60,7 +62,7 @@ fun TaskDoneDialog(
 @Composable
 private fun TaskDoneDialogCard(
     taskName: String,
-    onConfirm: (serviceName: String, cost: String) -> Unit,
+    onConfirm: (serviceName: String, cost: String, comment: String) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -69,6 +71,7 @@ private fun TaskDoneDialogCard(
     val shape = RoundedCornerShape(PitStopTheme.dimens.radiusXxl)
     var serviceName by remember { mutableStateOf("") }
     var cost by remember { mutableStateOf("") }
+    var comment by remember { mutableStateOf("") }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -115,6 +118,14 @@ private fun TaskDoneDialogCard(
                 keyboardType = KeyboardType.Number,
                 modifier = Modifier.fillMaxWidth(),
             )
+            LabeledMiniField(
+                label = stringResource(Res.string.field_comment),
+                value = comment,
+                onValueChange = { comment = it },
+                placeholder = stringResource(Res.string.comment_placeholder),
+                minLines = 2,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
         Spacer(Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -128,7 +139,7 @@ private fun TaskDoneDialogCard(
                 stringResource(Res.string.action_save),
                 background = colors.accent,
                 contentColor = colors.onAccent,
-                onClick = { onConfirm(serviceName, cost) },
+                onClick = { onConfirm(serviceName, cost, comment) },
             )
         }
     }
@@ -138,7 +149,7 @@ private fun TaskDoneDialogCard(
 private fun TaskDoneDialogPreviewContent() {
     TaskDoneDialogCard(
         taskName = "Воздушный фильтр",
-        onConfirm = { _, _ -> },
+        onConfirm = { _, _, _ -> },
         onDismiss = {},
         modifier = Modifier.width(280.dp),
     )
