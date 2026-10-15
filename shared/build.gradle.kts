@@ -24,7 +24,7 @@ kotlin {
     }
     
     android {
-       namespace = "ru.kuznetsov.pitstop.shared"
+       namespace = "ru.kuznetsov.itstime4service.shared"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
        minSdk = libs.versions.android.minSdk.get().toInt()
     
@@ -87,8 +87,8 @@ kotlin {
 
 sqldelight {
     databases {
-        create("PitStopDatabase") {
-            packageName.set("ru.kuznetsov.pitstop.data.local")
+        create("ItsTime4ServiceDatabase") {
+            packageName.set("ru.kuznetsov.itstime4service.data.local")
         }
     }
 }

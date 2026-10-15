@@ -22,11 +22,11 @@ dependencies {
 }
 
 android {
-    namespace = "ru.kuznetsov.pitstop"
+    namespace = "ru.kuznetsov.itstime4service"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "ru.kuznetsov.pitstop"
+        applicationId = "ru.kuznetsov.itstime4service"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

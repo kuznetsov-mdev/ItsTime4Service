@@ -1,23 +1,23 @@
 # Спецификация: presentation-слой
 
-Пакеты: `ru.kuznetsov.pitstop.features`, `ru.kuznetsov.pitstop.ui` и корневые `App.kt`, `AppViewModel.kt` (`shared/src/commonMain/kotlin/ru/kuznetsov/pitstop/`).
+Пакеты: `ru.kuznetsov.itstime4service.features`, `ru.kuznetsov.itstime4service.ui` и корневые `App.kt`, `AppViewModel.kt` (`shared/src/commonMain/kotlin/ru/kuznetsov/itstime4service/`).
 
 Presentation-слой — экраны на Compose Multiplatform, общие для Android и iOS. Из библиотек использует Compose (`foundation`, `material3`, `ui`, `components-resources`), `lifecycle-viewmodel-compose`, `navigation-compose`, Koin (`koin-compose-viewmodel`), иконки Lucide (`com.composables:icons-lucide`) и `kotlinx-datetime`. Внешний вид задаёт макет `docs/index.html`.
 
 ```
 App.kt, AppViewModel.kt   # корень: тема, разрешение на уведомления, пересборка плана напоминаний
 features/
-├── navigation/           # Destination, PitStopNavGraph, таб-бар
+├── navigation/           # Destination, ItsTime4ServiceNavGraph, таб-бар
 ├── cars/                 # список машин
 ├── carform/              # одна форма: добавление и правка машины
 ├── cardetail/            # экран машины с работами
 ├── history/              # история ТО
 └── settings/             # настройки
 ui/
-├── theme/                # цвета, типографика, размеры, PitStopTheme
+├── theme/                # цвета, типографика, размеры, ItsTime4ServiceTheme
 ├── components/           # ui-kit: buttons, fields, steppers, indicators, cards, dialogs, screen
 ├── format/               # форматирование чисел, расстояний, дат; TaskStatus → StatusTier
-├── icons/                # PitStopIcons
+├── icons/                # ItsTime4ServiceIcons
 └── notification/         # expect-функция запроса разрешения на уведомления
 ```
 
@@ -61,9 +61,9 @@ ui/
 
 ### Каркас
 
-`PitStopNavGraph` — `Scaffold` на весь экран: `containerColor = PitStopTheme.colors.bg`, `contentWindowInsets = WindowInsets.safeDrawing`, внутри `NavHost` со стартовым `Destination.Cars`.
+`ItsTime4ServiceNavGraph` — `Scaffold` на весь экран: `containerColor = ItsTime4ServiceTheme.colors.bg`, `contentWindowInsets = WindowInsets.safeDrawing`, внутри `NavHost` со стартовым `Destination.Cars`.
 
-Таб-бар (`bottomBar`) показывается, только когда текущий маршрут — `cars` или `settings`. Это приватный `TabBar` в `NavGraph.kt`: линия `rule` в 1 dp, под ней два `TabBarItem` равной ширины — «Авто» (`PitStopIcons.Car`) и «Настройки» (`PitStopIcons.Gear`); фон `surface`, снизу `navigationBarsPadding()`.
+Таб-бар (`bottomBar`) показывается, только когда текущий маршрут — `cars` или `settings`. Это приватный `TabBar` в `NavGraph.kt`: линия `rule` в 1 dp, под ней два `TabBarItem` равной ширины — «Авто» (`ItsTime4ServiceIcons.Car`) и «Настройки» (`ItsTime4ServiceIcons.Gear`); фон `surface`, снизу `navigationBarsPadding()`.
 
 ## Корень приложения
 
@@ -74,7 +74,7 @@ ui/
 1. Берёт `AppViewModel` через `koinViewModel()`.
 2. Вычисляет тёмную тему: `ThemeMode.LIGHT` → светлая, `DARK` → тёмная, `SYSTEM` → `isSystemInDarkTheme()`.
 3. Через `LaunchedEffect(needsNotificationPermission)` запрашивает системное разрешение на уведомления каждый раз, когда флаг становится `true`.
-4. Оборачивает `PitStopNavGraph()` в `PitStopTheme(darkTheme)`.
+4. Оборачивает `ItsTime4ServiceNavGraph()` в `ItsTime4ServiceTheme(darkTheme)`.
 
 ### `AppViewModel`
 
@@ -290,10 +290,10 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 
 | Ключевые подстроки | Иконка |
 |---|---|
-| `масл`, `oil`, `aceite` | `PitStopIcons.Droplet` |
-| `колод`, `тормоз`, `brake`, `pad`, `freno`, `pastilla` | `PitStopIcons.Disc` |
-| `фильтр`, `filter`, `filtro` | `PitStopIcons.Filter` |
-| остальное | `PitStopIcons.Wrench` |
+| `масл`, `oil`, `aceite` | `ItsTime4ServiceIcons.Droplet` |
+| `колод`, `тормоз`, `brake`, `pad`, `freno`, `pastilla` | `ItsTime4ServiceIcons.Disc` |
+| `фильтр`, `filter`, `filtro` | `ItsTime4ServiceIcons.Filter` |
+| остальное | `ItsTime4ServiceIcons.Wrench` |
 
 `CarDetailUiState`:
 
@@ -415,9 +415,9 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 
 ### Тема
 
-`ui/theme/`. `PitStopTheme(darkTheme, content)` кладёт в `CompositionLocal` три набора токенов и оборачивает содержимое в `MaterialTheme`, чья `colorScheme` собрана из тех же цветов (`primary` = `accent`, `background` = `bg`, `surface`, `surfaceVariant` = `surface2`, `outline` = `rule`, `onBackground`/`onSurface` = `ink`). Доступ — `PitStopTheme.colors`, `PitStopTheme.typography`, `PitStopTheme.dimens`.
+`ui/theme/`. `ItsTime4ServiceTheme(darkTheme, content)` кладёт в `CompositionLocal` три набора токенов и оборачивает содержимое в `MaterialTheme`, чья `colorScheme` собрана из тех же цветов (`primary` = `accent`, `background` = `bg`, `surface`, `surfaceVariant` = `surface2`, `outline` = `rule`, `onBackground`/`onSurface` = `ink`). Доступ — `ItsTime4ServiceTheme.colors`, `ItsTime4ServiceTheme.typography`, `ItsTime4ServiceTheme.dimens`.
 
-Цвета (`PitStopColorScheme`, `Color.kt`):
+Цвета (`ItsTime4ServiceColorScheme`, `Color.kt`):
 
 | Токен | Светлая | Тёмная | Назначение |
 |---|---|---|---|
@@ -436,7 +436,7 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 | `tierDue` | `#E34B3F` | то же | статус «просрочено», опасные действия |
 | `onTier` | `#FFFFFF` | то же | текст на цвете статуса |
 
-Типографика (`PitStopTypography`, `Type.kt`) — три роли; экраны берут роль и подстраивают размер через `copy(...)`:
+Типографика (`ItsTime4ServiceTypography`, `Type.kt`) — три роли; экраны берут роль и подстраивают размер через `copy(...)`:
 
 | Роль | Шрифт | Базовый стиль | Где |
 |---|---|---|---|
@@ -446,7 +446,7 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 
 Своих файлов шрифтов нет — используются системные.
 
-Размеры (`PitStopDimens`, `Dimens.kt`):
+Размеры (`ItsTime4ServiceDimens`, `Dimens.kt`):
 
 | Токен | Значение | Токен | Значение |
 |---|---|---|---|
@@ -515,7 +515,7 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 
 ### Иконки
 
-`ui/icons/PitStopIcons.kt` — объект-обёртка над набором Lucide. Экраны и компоненты обращаются только к `PitStopIcons.*`, чтобы источник иконок можно было сменить в одном месте. 17 иконок: `Car`, `Gauge`, `Droplet`, `Disc`, `Filter`, `Wrench`, `Gear` (`Lucide.Settings`), `Clock`, `Check`, `ChevronLeft`, `Pencil`, `Trash` (`Lucide.Trash2`), `Bell`, `Plus`, `Minus`, `Sun`, `MoonToggle` (`Lucide.Moon`).
+`ui/icons/ItsTime4ServiceIcons.kt` — объект-обёртка над набором Lucide. Экраны и компоненты обращаются только к `ItsTime4ServiceIcons.*`, чтобы источник иконок можно было сменить в одном месте. 17 иконок: `Car`, `Gauge`, `Droplet`, `Disc`, `Filter`, `Wrench`, `Gear` (`Lucide.Settings`), `Clock`, `Check`, `ChevronLeft`, `Pencil`, `Trash` (`Lucide.Trash2`), `Bell`, `Plus`, `Minus`, `Sun`, `MoonToggle` (`Lucide.Moon`).
 
 ### Локализация
 
@@ -525,6 +525,7 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 - Строки с подстановкой — `%1$s` / `%1$d`: расстояния (`mileage_km`, `distance_mi`), `count_of_total`, `vin_label`, `task_*`, `dialog_delete_car_title`, `cost_rub`, `task_block_title`, `notification_reminder_text`.
 - Названия быстрых работ (`task_name_*`) берутся из ресурсов в момент добавления и сохраняются в базу уже текстом на языке устройства.
 - Часть строк читает и data-слой — для текста уведомлений (см. `specs/data.md`).
+- Название приложения `app_name` — «Пора на ТО» на русском, «It’s Time 4 Service» на английском и испанском; оно же заголовок уведомлений. Метка под иконкой задаётся отдельно: на Android — `androidApp/src/main/res/values*/strings.xml`, на iOS — `CFBundleDisplayName` в `Info.plist` и `ru.lproj/InfoPlist.strings`.
 
 ## DI
 
@@ -741,8 +742,8 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 - **Стоимость всегда в рублях** (`cost_rub`, «₽») на всех трёх языках.
 - **Пример уведомления в настройках не совпадает с настоящим текстом.** `notification_sample_full` — «…пора заменить воздушный фильтр — осталось 700 км», а настоящее уведомление строится как «{марка}: {работа} — {состояние}».
 - **Подбор иконки работы по подстроке**: `pad` и `oil` встречаются внутри других слов; для работ с названием на другом языке всегда будет гаечный ключ.
-- **Устаревший KDoc** у `PitStopTheme` (`ui/theme/Theme.kt:27`): написано, что `darkTheme` «будет подключён к настройкам на шаге 6», хотя это уже сделано в `App.kt`.
-- **Неиспользуемое**: иконки `PitStopIcons.Sun` и `PitStopIcons.MoonToggle`; строки `screen_car_detail` и `field_last_replacement_date`; строки `unit_km`, `field_interval_km`, `notification_sample_text` и параметр `unit` у `AppNumberField` используются только в `@Preview`; ветка `ProgressBar` с цветом по доле — экран всегда передаёт `tier`.
+- **Устаревший KDoc** у `ItsTime4ServiceTheme` (`ui/theme/Theme.kt:27`): написано, что `darkTheme` «будет подключён к настройкам на шаге 6», хотя это уже сделано в `App.kt`.
+- **Неиспользуемое**: иконки `ItsTime4ServiceIcons.Sun` и `ItsTime4ServiceIcons.MoonToggle`; строки `screen_car_detail` и `field_last_replacement_date`; строки `unit_km`, `field_interval_km`, `notification_sample_text` и параметр `unit` у `AppNumberField` используются только в `@Preview`; ветка `ProgressBar` с цветом по доле — экран всегда передаёт `tier`.
 
 ## Что ещё не реализовано
 

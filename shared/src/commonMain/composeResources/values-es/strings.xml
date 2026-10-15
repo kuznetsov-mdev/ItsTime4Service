@@ -18,7 +18,7 @@
     <string name="status_ok">En orden</string>
     <string name="status_soon">Hay que cambiar</string>
     <string name="status_due">Vencido</string>
-    <string name="app_name">PitStop</string>
+    <string name="app_name">It’s Time 4 Service</string>
     <string name="stat_mileage">Kilometraje</string>
     <string name="mileage_km">%1$s km</string>
     <string name="notification_time_now">ahora</string>

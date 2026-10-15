@@ -1,6 +1,6 @@
-# PitStop
+# It’s Time 4 Service
 **Track car maintenance by mileage and time — whichever comes first.**
-PitStop is a Kotlin Multiplatform app (Android + iOS, shared UI via Compose Multiplatform) for keeping your car's maintenance schedule under control. Every task — oil change, brake pads, timing belt — is tracked against both a mileage interval and an optional time interval, and its status is colored by whichever limit is closer: calm teal when there's plenty of room, amber once you enter the reminder window, red once it's overdue.
+“It’s Time 4 Service” is a Kotlin Multiplatform app (Android + iOS, shared UI via Compose Multiplatform) for keeping your car's maintenance schedule under control. Every task — oil change, brake pads, timing belt — is tracked against both a mileage interval and an optional time interval, and its status is colored by whichever limit is closer: calm teal when there's plenty of room, amber once you enter the reminder window, red once it's overdue.
 *(Russian version: [README.ru.md](README.ru.md))*
 
 ## Screenshots

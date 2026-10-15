@@ -18,7 +18,7 @@
     <string name="status_ok">В порядке</string>
     <string name="status_soon">Пора менять</string>
     <string name="status_due">Просрочено</string>
-    <string name="app_name">PitStop</string>
+    <string name="app_name">Пора на ТО</string>
     <string name="stat_mileage">Пробег</string>
     <string name="mileage_km">%1$s км</string>
     <string name="notification_time_now">сейчас</string>

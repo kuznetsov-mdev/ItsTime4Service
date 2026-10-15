@@ -17,7 +17,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		2675C2C2BC493082B981D2C3 /* PitStop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PitStop.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2675C2C2BC493082B981D2C3 /* ItsTime4Service.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ItsTime4Service.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1C0FFEE0000000000000001 /* iosAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iosAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -83,7 +83,7 @@
 		9545B48164F98F6784E75123 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				2675C2C2BC493082B981D2C3 /* PitStop.app */,
+				2675C2C2BC493082B981D2C3 /* ItsTime4Service.app */,
 				A1C0FFEE0000000000000001 /* iosAppUITests.xctest */,
 			);
 			name = Products;
@@ -112,7 +112,7 @@
 			packageProductDependencies = (
 			);
 			productName = iosApp;
-			productReference = 2675C2C2BC493082B981D2C3 /* PitStop.app */;
+			productReference = 2675C2C2BC493082B981D2C3 /* ItsTime4Service.app */;
 			productType = "com.apple.product-type.application";
 		};
 		A1C0FFEE0000000000000003 /* iosAppUITests */ = {
@@ -163,6 +163,7 @@
 			knownRegions = (
 				en,
 				Base,
+				ru,
 			);
 			mainGroup = B5A620C719EDE4A6DD69D5B6;
 			minimizedProjectReferenceProxies = 1;
@@ -430,7 +431,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "${TEAM_ID}";
 				GENERATE_INFOPLIST_FILE = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = ru.kuznetsov.pitstop.PitStopUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = ru.kuznetsov.itstime4service.ItsTime4ServiceUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -446,7 +447,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "${TEAM_ID}";
 				GENERATE_INFOPLIST_FILE = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = ru.kuznetsov.pitstop.PitStopUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = ru.kuznetsov.itstime4service.ItsTime4ServiceUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;

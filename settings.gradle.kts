@@ -1,4 +1,4 @@
-rootProject.name = "PitStop"
+rootProject.name = "ItsTime4Service"
 
 pluginManagement {
     repositories {

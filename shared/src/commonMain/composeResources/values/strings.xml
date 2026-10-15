@@ -18,7 +18,7 @@
     <string name="status_ok">OK</string>
     <string name="status_soon">Time to replace</string>
     <string name="status_due">Overdue</string>
-    <string name="app_name">PitStop</string>
+    <string name="app_name">It’s Time 4 Service</string>
     <string name="stat_mileage">Mileage</string>
     <string name="mileage_km">%1$s km</string>
     <string name="notification_time_now">now</string>

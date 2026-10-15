@@ -1,0 +1,63 @@
+package ru.kuznetsov.itstime4service.ui.components.fields
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
+import itstime4service.shared.generated.resources.Res
+import itstime4service.shared.generated.resources.field_brand
+import itstime4service.shared.generated.resources.field_mileage
+import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
+import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
+
+/** Upper-case caption above a form field; a required field gets a red asterisk. */
+@Composable
+fun FieldLabel(text: String, modifier: Modifier = Modifier, required: Boolean = false, bottomPadding: Boolean = true) {
+    val colors = ItsTime4ServiceTheme.colors
+    Text(
+        buildAnnotatedString {
+            append(text.uppercase())
+            if (required) {
+                withStyle(SpanStyle(color = colors.tierDue)) { append(" *") }
+            }
+        },
+        style = ItsTime4ServiceTheme.typography.sans.copy(
+            fontSize = 11.5.sp,
+            lineHeight = 15.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.04f.em,
+        ),
+        color = colors.inkMuted,
+        modifier = modifier.padding(bottom = if (bottomPadding) 8.dp else 0.dp),
+    )
+}
+
+@Composable
+private fun FieldLabelPreviewContent() {
+    Column {
+        FieldLabel(stringResource(Res.string.field_brand), required = true)
+        FieldLabel(stringResource(Res.string.field_mileage, "km"))
+    }
+}
+
+@Preview
+@Composable
+private fun FieldLabelLightPreview() = ComponentPreview(darkTheme = false) {
+    FieldLabelPreviewContent()
+}
+
+@Preview
+@Composable
+private fun FieldLabelDarkPreview() = ComponentPreview(darkTheme = true) {
+    FieldLabelPreviewContent()
+}

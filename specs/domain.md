@@ -1,6 +1,6 @@
 # Спецификация: domain-слой
 
-Пакет: `ru.kuznetsov.pitstop.domain` (`shared/src/commonMain/kotlin/ru/kuznetsov/pitstop/domain/`).
+Пакет: `ru.kuznetsov.itstime4service.domain` (`shared/src/commonMain/kotlin/ru/kuznetsov/itstime4service/domain/`).
 
 Domain-слой — чистый Kotlin без зависимостей от UI и хранилища. Из библиотек использует только `kotlinx-datetime` (`LocalDate`, `LocalTime`) и `kotlinx-coroutines-core` (`Flow`).
 

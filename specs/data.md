@@ -1,6 +1,6 @@
 # Спецификация: data-слой
 
-Пакет: `ru.kuznetsov.pitstop.data` (`shared/src/commonMain/kotlin/ru/kuznetsov/pitstop/data/`), схема базы — `shared/src/commonMain/sqldelight/`, платформенные части — `shared/src/androidMain/` и `shared/src/iosMain/`.
+Пакет: `ru.kuznetsov.itstime4service.data` (`shared/src/commonMain/kotlin/ru/kuznetsov/itstime4service/data/`), схема базы — `shared/src/commonMain/sqldelight/`, платформенные части — `shared/src/androidMain/` и `shared/src/iosMain/`.
 
 Data-слой реализует интерфейсы из `domain/repository/` (см. `specs/domain.md`): хранит машины, работы, историю ТО, настройки и план уведомлений в локальной базе SQLite и ставит локальные уведомления в очередь платформы. Сети нет. Из библиотек использует SQLDelight (`runtime`, `coroutines-extensions`, драйверы `android-driver` и `native-driver`), `kotlinx-coroutines-core`, `kotlinx-datetime`, `kotlin.uuid`, ресурсы Compose Multiplatform (для текста уведомлений); на Android — `androidx.work` и `androidx.core`, на iOS — `UserNotifications`.
 
@@ -12,7 +12,7 @@ data/
 └── notification/   # ReminderSchedulerImpl, LocalNotification, expect LocalNotifications
 
 sqldelight/
-├── ru/kuznetsov/pitstop/data/local/*.sq   # таблицы и именованные запросы
+├── ru/kuznetsov/itstime4service/data/local/*.sq   # таблицы и именованные запросы
 └── migrations/1.sqm                       # миграция 1 → 2
 ```
 
@@ -26,7 +26,7 @@ sqldelight/
 
 ## База данных
 
-SQLDelight, база `PitStopDatabase`, пакет сгенерированного кода — `ru.kuznetsov.pitstop.data.local` (`shared/build.gradle.kts`). Файл базы — `pitstop.db` (`DATABASE_NAME` в `data/local/DatabaseDriverFactory.kt`). Пять таблиц, каждая в своём `.sq`-файле.
+SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенерированного кода — `ru.kuznetsov.itstime4service.data.local` (`shared/build.gradle.kts`). Файл базы — `itstime4service.db` (`DATABASE_NAME` в `data/local/DatabaseDriverFactory.kt`). Пять таблиц, каждая в своём `.sq`-файле.
 
 Как хранятся значения:
 
@@ -153,12 +153,12 @@ SQLDelight, база `PitStopDatabase`, пакет сгенерированно�
 
 ### Версия схемы и миграция
 
-Версия схемы — 2 (`PitStopDatabase.Schema.version`). Единственная миграция — `migrations/1.sqm` — переводит базу с версии 1 на 2: создаёт таблицу `planned_reminders`.
+Версия схемы — 2 (`ItsTime4ServiceDatabase.Schema.version`). Единственная миграция — `migrations/1.sqm` — переводит базу с версии 1 на 2: создаёт таблицу `planned_reminders`.
 
 - Новая установка: драйвер создаёт все пять таблиц из `.sq`-файлов сразу в версии 2.
 - Обновление с версии 1: драйвер выполняет `1.sqm`.
 
-Создание и миграцию запускают сами драйверы при открытии базы по переданной `PitStopDatabase.Schema`; своего кода миграции в проекте нет.
+Создание и миграцию запускают сами драйверы при открытии базы по переданной `ItsTime4ServiceDatabase.Schema`; своего кода миграции в проекте нет.
 
 ## Мапперы
 
@@ -175,7 +175,7 @@ SQLDelight, база `PitStopDatabase`, пакет сгенерированно�
 
 ## Репозитории
 
-`data/repository/`. Каждый получает в конструктор `PitStopDatabase` и берёт из неё нужные `*Queries`.
+`data/repository/`. Каждый получает в конструктор `ItsTime4ServiceDatabase` и берёт из неё нужные `*Queries`.
 
 ### `CarRepositoryImpl`
 
@@ -252,10 +252,10 @@ expect class DatabaseDriverFactory {
 
 | Платформа | Конструктор | `create()` |
 |---|---|---|
-| Android | `DatabaseDriverFactory(context: Context)` | `AndroidSqliteDriver(PitStopDatabase.Schema, context, "pitstop.db")` |
-| iOS | `DatabaseDriverFactory()` | `NativeSqliteDriver(PitStopDatabase.Schema, "pitstop.db")` |
+| Android | `DatabaseDriverFactory(context: Context)` | `AndroidSqliteDriver(ItsTime4ServiceDatabase.Schema, context, "itstime4service.db")` |
+| iOS | `DatabaseDriverFactory()` | `NativeSqliteDriver(ItsTime4ServiceDatabase.Schema, "itstime4service.db")` |
 
-Параметров сверх схемы и имени файла драйверам не передаётся. `PitStopDatabase` создаётся один раз на процесс — как `single` в `dataModule`, при первом обращении к любому репозиторию.
+Параметров сверх схемы и имени файла драйверам не передаётся. `ItsTime4ServiceDatabase` создаётся один раз на процесс — как `single` в `dataModule`, при первом обращении к любому репозиторию.
 
 ## Уведомления
 
@@ -344,7 +344,7 @@ expect class LocalNotifications {
 
 | Что | Регистрация |
 |---|---|
-| `PitStopDatabase` | `single { PitStopDatabase(get<DatabaseDriverFactory>().create()) }` |
+| `ItsTime4ServiceDatabase` | `single { ItsTime4ServiceDatabase(get<DatabaseDriverFactory>().create()) }` |
 | `CarRepository` | `singleOf(::CarRepositoryImpl) bind CarRepository::class` |
 | `ServiceHistoryRepository` | `singleOf(::ServiceHistoryRepositoryImpl) bind …` |
 | `SettingsRepository` | `singleOf(::SettingsRepositoryImpl) bind …` |
@@ -377,7 +377,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
 
 | Платформа | Где вызывается | Как |
 |---|---|---|
-| Android | `PitStopApplication.onCreate()` (`androidApp/`) | `initKoin { androidContext(this@PitStopApplication) }` — контекст нужен `platformModule` |
+| Android | `ItsTime4ServiceApplication.onCreate()` (`androidApp/`) | `initKoin { androidContext(this@ItsTime4ServiceApplication) }` — контекст нужен `platformModule` |
 | iOS | `iOSApp.init()` (`iosApp/iosApp/iOSApp.swift`) | `KoinKt.doInitKoin()` — вариант без параметров |
 
 ## Согласованные изменения (этап 8а)
@@ -432,7 +432,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
 
 ## Открытые вопросы
 
-- **Data зависит от UI.** `ReminderSchedulerImpl` импортирует `ru.kuznetsov.pitstop.ui.format.grouped` и `kmIn` (`ReminderSchedulerImpl.kt:15-16`) и повторяет у себя логику `distanceText` из `ui/format/Formatting.kt` — тот вариант `@Composable` и из data недоступен. Форматирование расстояний живёт в двух местах.
+- **Data зависит от UI.** `ReminderSchedulerImpl` импортирует `ru.kuznetsov.itstime4service.ui.format.grouped` и `kmIn` (`ReminderSchedulerImpl.kt:15-16`) и повторяет у себя логику `distanceText` из `ui/format/Formatting.kt` — тот вариант `@Composable` и из data недоступен. Форматирование расстояний живёт в двух местах.
 - **Нет внешних ключей.** Работы удаляются вместе с машиной вручную в `deleteCar`, а история — отдельным вызовом другого репозитория из `DeleteCarUseCase`, вне этой транзакции. Сбой между вызовами оставит «осиротевшие» записи истории. В `planned_reminders` записи удалённых работ остаются до следующей пересборки плана.
 - **`planned_reminders` без первичного ключа**: ничто не мешает одинаковым строкам.
 - **Ввод-вывод на `Dispatchers.Default`**, а не на `Dispatchers.IO` — во всех четырёх репозиториях.
@@ -454,4 +454,4 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
 - `ServiceHistoryRepository.updateEntry` и запрос `service_history.update` готовы, но не вызываются: `UpdateHistoryEntryUseCase` — заготовка (см. `specs/domain.md`).
 - Изменения из шага 3 блока «Этап 8а — Правки дизайна после прогона» в `dev_plan.md` — см. раздел «Согласованные изменения (этап 8а)» выше. Сейчас ничего из этого в коде нет.
 - Юнит-тесты на репозитории, мапперы и `ReminderSchedulerImpl`; тесты миграции.
-- Синхронизация, резервная копия средствами приложения, экспорт и импорт данных — данные живут только в локальном файле `pitstop.db`.
+- Синхронизация, резервная копия средствами приложения, экспорт и импорт данных — данные живут только в локальном файле `itstime4service.db`.

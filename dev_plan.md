@@ -1,8 +1,10 @@
-# План разработки PitStop (KMP)
+# План разработки ItsTime4Service (KMP)
 
 ## Контекст
 
-Проект `PitStop` (Android + iOS, Kotlin Multiplatform) сейчас — это чистый wizard-скаффолд: `shared/src/commonMain` содержит только дефолтные `App.kt`/`Greeting.kt`/`Platform.kt`, `androidApp` и `iosApp` уже корректно хостят общий Compose-экран (`MainActivity` → `setContent { App() }`, `ContentView.swift` → `MainViewController()`), но никакой прикладной логики, экранов, темы или данных ещё нет.
+Название приложения для пользователя — «Пора на ТО» (английский и испанский — «It’s Time 4 Service»); прежнее рабочее имя PitStop занято в RuStore. В коде проект называется `ItsTime4Service`, пакет — `ru.kuznetsov.itstime4service`.
+
+Проект `ItsTime4Service` (Android + iOS, Kotlin Multiplatform) сейчас — это чистый wizard-скаффолд: `shared/src/commonMain` содержит только дефолтные `App.kt`/`Greeting.kt`/`Platform.kt`, `androidApp` и `iosApp` уже корректно хостят общий Compose-экран (`MainActivity` → `setContent { App() }`, `ContentView.swift` → `MainViewController()`), но никакой прикладной логики, экранов, темы или данных ещё нет.
 
 Цель — пошагово построить приложение по дизайн-макету (`docs/index.html`): сначала design-tokens и переиспользуемые компоненты, затем экраны на фейковых данных, затем domain/data слой и связка через domain, затем уведомления и полировка. Подключение каждой новой библиотеки привязано к конкретному шагу, на котором она впервые понадобится — ничего не тянем заранее "про запас".
 
@@ -10,12 +12,12 @@
 
 ## Структура пакетов
 
-Базовый пакет: `ru.kuznetsov.pitstop` (`shared/src/commonMain/kotlin/ru/kuznetsov/pitstop/`).
+Базовый пакет: `ru.kuznetsov.itstime4service` (`shared/src/commonMain/kotlin/ru/kuznetsov/itstime4service/`).
 
 Как и просил пользователь — `features`, `domain`, `data`, `di`. Плюс один дополнительный пакет `ui` — для темы, переиспользуемых компонентов и иконок, которые не относятся ни к одной конкретной фиче и нужны до того, как появится хоть один экран:
 
 ```
-ru.kuznetsov.pitstop/
+ru.kuznetsov.itstime4service/
 ├── ui/
 │   ├── theme/        # Color.kt, Type.kt, Theme.kt, Dimens.kt
 │   ├── components/   # ComponentPreview.kt (общий @Preview-хелпер) + подпакеты по группам из каталога макета:
@@ -27,7 +29,7 @@ ru.kuznetsov.pitstop/
 │   │   ├── dialogs/      # ConfirmDialog
 │   │   └── screen/       # ScreenTopBar, ScreenTitle — общая шапка экранов
 │   ├── format/        # форматирование чисел/дат/расстояний, TaskStatus → StatusTier
-│   └── icons/         # PitStopIcons.kt — иконки из макета как ImageVector
+│   └── icons/         # ItsTime4ServiceIcons.kt — иконки из макета как ImageVector
 ├── domain/
 │   ├── model/         # Car, MaintenanceTask, ServiceHistoryEntry, TaskStatus, TaskStat
 │   ├── usecase/        # CalculateTaskStatus, SortedTaskStats, CarAlerts, MarkTaskDone...
@@ -57,14 +59,14 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 **Библиотеки:** не требуются — Compose Multiplatform уже подключён.
 - ✅ `ui/theme/Color.kt` — нейтральные токены (light/dark): `--bg/--surface/--surface-2/--surface-3/--ink/--ink-muted/--ink-faint/--rule`, плюс 3 статус-константы `tier-ok/soon/due` и акцент `#0ea5b7`, одинаковые в обеих темах.
 - ✅ `ui/theme/Type.kt` — три роли шрифта из макета: display/sans (`FontFamily.Default`, т.к. это уже системный шрифт на каждой платформе — San Francisco на iOS, Roboto на Android, кастомные файлы не нужны) и mono (`FontFamily.Monospace`) для чисел/VIN/дат.
-- ✅ `ui/theme/Theme.kt` — `PitStopTheme` поверх `MaterialTheme`, плюс свой `CompositionLocal` для tier-цветов (их нет в стандартной `ColorScheme` Material3).
+- ✅ `ui/theme/Theme.kt` — `ItsTime4ServiceTheme` поверх `MaterialTheme`, плюс свой `CompositionLocal` для tier-цветов (их нет в стандартной `ColorScheme` Material3).
 - ✅ `ui/theme/Dimens.kt` — отступы/радиусы (8/10/12/14/24px и т.д.) по макету.
 - ✅ Проверка: тема подключена в `App.kt`, палитра и три шрифтовые роли проверены на Android-эмуляторе в светлой и тёмной теме, сборка под Android и iOS (`:androidApp:assembleDebug`, `:shared:compileKotlinIosSimulatorArm64`) зелёная.
 
 ### Этап 2 — Общие компоненты (ui-kit)
 **Библиотека:** `com.composables:icons-lucide:1.1.0` (KMP-порт [Lucide Icons](https://lucide.dev), Android/iOS/JVM/Wasm/JS) — alias в `gradle/libs.versions.toml`, зависимость в `commonMain.dependencies` модуля `shared`. Решение заменить ручной перенос SVG из макета: все 17 иконок макета 1:1 совпадают по имени с иконками Lucide (car, gauge, droplet, disc, filter, wrench, settings, clock, check, chevron-left, pencil, trash-2, bell, plus, minus, sun, moon) — похоже, макет изначально на них и ориентировался.
 - ✅ Подключить `com.composables:icons-lucide:1.1.0`, проверено на Android (`:androidApp:assembleDebug`) и iOS (`:shared:compileKotlinIosSimulatorArm64`).
-- ✅ `ui/icons/PitStopIcons.kt` — тонкая обёртка: 17 семантических имён из макета (car, gauge, droplet, disc, filter, wrench, gear, clock, check, chevronLeft, pencil, trash, bell, plus, minus, sun, moonToggle) смаплены на `Lucide.*`, чтобы экраны не зависели от конкретной иконочной библиотеки напрямую.
+- ✅ `ui/icons/ItsTime4ServiceIcons.kt` — тонкая обёртка: 17 семантических имён из макета (car, gauge, droplet, disc, filter, wrench, gear, clock, check, chevronLeft, pencil, trash, bell, plus, minus, sun, moonToggle) смаплены на `Lucide.*`, чтобы экраны не зависели от конкретной иконочной библиотеки напрямую.
 
 Кнопки (`ui.components.buttons`):
 - ✅ `PrimaryButton`
@@ -106,13 +108,13 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 ### Этап 3 — Навигация
 - ✅ Подключить `org.jetbrains.androidx.navigation:navigation-compose:2.10.0-beta01` (JetBrains-форк Navigation Compose для Compose Multiplatform; "чистый" `androidx.navigation` 2.10.2 — Android-only) — alias в `gradle/libs.versions.toml`, зависимость в `commonMain.dependencies` модуля `shared`.
 - ✅ `features/navigation/Destinations.kt` — sealed-класс: `Cars`, `AddCar`, `CarDetail(carId)`, `History(carId)`, `Settings`.
-- ✅ `features/navigation/NavGraph.kt` — `NavHost`, становится новым корневым composable вместо временной витрины темы из этапа 1. *Корень — `PitStopNavGraph` (`Scaffold` + таб-бар на `Cars`/`Settings`); маршруты пока ведут на временный `PlaceholderScreen` — заменится экранами на этапе 6.*
+- ✅ `features/navigation/NavGraph.kt` — `NavHost`, становится новым корневым composable вместо временной витрины темы из этапа 1. *Корень — `ItsTime4ServiceNavGraph` (`Scaffold` + таб-бар на `Cars`/`Settings`); маршруты пока ведут на временный `PlaceholderScreen` — заменится экранами на этапе 6.*
 
 *Почему именно сейчас: экраны на следующем этапе сразу пишутся с переходами между собой, retrofit-навигацию потом не делаем.*
 
 ### Этап 4 — DI (Koin)
 - ✅ Подключить `io.insert-koin:koin-bom:4.2.2` + `koin-core`, `koin-compose`, `koin-compose-viewmodel` — alias'ы в каталог, зависимости в `commonMain.dependencies`. Проверено на Android (`:androidApp:assembleDebug`) и iOS (`:shared:compileKotlinIosSimulatorArm64`).
-- ✅ `di/` — `featureModule` (все зависимости для UI)/`domainModule`/`dataModule`, каждый в своём файле (`FeatureModule.kt`, `DomainModule.kt`, `DataModule.kt`), и `initKoin()` в `Koin.kt`. *Модули пока пустые. `initKoin()` вызывается из `PitStopApplication.onCreate()` (Android, класс зарегистрирован в манифесте) и из `iOSApp.init()` (iOS; в Swift функция называется `KoinKt.doInitKoin()`). Проверено запуском на Android-устройстве и в iOS-симуляторе.*
+- ✅ `di/` — `featureModule` (все зависимости для UI)/`domainModule`/`dataModule`, каждый в своём файле (`FeatureModule.kt`, `DomainModule.kt`, `DataModule.kt`), и `initKoin()` в `Koin.kt`. *Модули пока пустые. `initKoin()` вызывается из `ItsTime4ServiceApplication.onCreate()` (Android, класс зарегистрирован в манифесте) и из `iOSApp.init()` (iOS; в Swift функция называется `KoinKt.doInitKoin()`). Проверено запуском на Android-устройстве и в iOS-симуляторе.*
 - ✅ Зарегистрировать в `dataModule` **фейковые** реализации репозиториев (см. этап 5) — реальные появятся на этапе 7 без изменений в `di`-API, только подменой binding'а. *Сделано вместе с этапом 5: три `Fake*RepositoryImpl` зарегистрированы как `single` с привязкой к domain-интерфейсам.*
 
 *Почему именно сейчас: экраны (этап 6) с первого дня инжектят `ViewModel` через `koinViewModel()`, как подтверждено пользователем.*
@@ -137,7 +139,7 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 
 ### Этап 7 — Реальное хранилище (SQLDelight) и связка presentation ↔ data через domain
 - ✅ Подключить `app.cash.sqldelight` plugin `2.4.0` (`apply false` в корневом `build.gradle.kts`, применяется в `shared/build.gradle.kts`) + `app.cash.sqldelight:runtime`, `coroutines-extensions` (`commonMain`), `android-driver` (`androidMain`), `native-driver` (`iosMain`). *Дополнительно: `koin-android` (нужен `androidContext()` для драйвера) и `-lsqlite3` в `OTHER_LDFLAGS` таргета `iosApp` — без него статический фреймворк с native-драйвером не линкуется.*
-- ✅ `.sq`-схемы в `data/local/` по схеме из README: `cars`, `maintenance_tasks`, `service_history` (+ таблица/key-value для настроек из этапа 6). *Лежат в `shared/src/commonMain/sqldelight/ru/kuznetsov/pitstop/data/local/`; настройки — таблица `settings` из одной строки. Внешних ключей нет: связанные строки удаляются явно в транзакции. Даты и время хранятся как ISO-текст.*
+- ✅ `.sq`-схемы в `data/local/` по схеме из README: `cars`, `maintenance_tasks`, `service_history` (+ таблица/key-value для настроек из этапа 6). *Лежат в `shared/src/commonMain/sqldelight/ru/kuznetsov/itstime4service/data/local/`; настройки — таблица `settings` из одной строки. Внешних ключей нет: связанные строки удаляются явно в транзакции. Даты и время хранятся как ISO-текст.*
 - ✅ `expect/actual DatabaseDriverFactory` (Android: `AndroidSqliteDriver` с `Context` из Koin; iOS: `NativeSqliteDriver`).
 - ✅ `data/repository/*RepositoryImpl` на SQLDelight + `data/mapper/` для маппинга строк в domain-модели. *`id` — случайные UUID; `markTaskDone` читает пробег и обновляет работу в одной транзакции.*
 - ✅ Подменить binding'и в `dataModule` (этап 4): `Fake*RepositoryImpl` → реальные `*RepositoryImpl` — `ViewModel`/экраны из этапа 6 не меняются вообще, потому что изначально зависели от `domain`-интерфейсов, а не от конкретной реализации. Это и есть прямая реализация "свяжем presentation и data слои через domain" из исходного запроса. *Фейковые репозитории и `FakeSeed` удалены — приложение стартует с пустой базой; `DatabaseDriverFactory` регистрируется в новом `expect/actual platformModule`.*
