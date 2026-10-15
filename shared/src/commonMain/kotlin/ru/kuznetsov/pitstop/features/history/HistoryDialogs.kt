@@ -19,7 +19,9 @@ import pitstop.shared.generated.resources.action_cancel
 import pitstop.shared.generated.resources.action_filter
 import pitstop.shared.generated.resources.action_reset
 import pitstop.shared.generated.resources.action_save
+import pitstop.shared.generated.resources.comment_placeholder
 import pitstop.shared.generated.resources.date_placeholder
+import pitstop.shared.generated.resources.field_comment
 import pitstop.shared.generated.resources.field_cost_rub
 import pitstop.shared.generated.resources.field_date
 import pitstop.shared.generated.resources.field_mileage
@@ -197,6 +199,14 @@ internal fun HistoryEntryCard(
                 onValueChange = { onChange(form.copy(cost = it)) },
                 placeholder = "2400",
                 keyboardType = KeyboardType.Number,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            LabeledMiniField(
+                label = stringResource(Res.string.field_comment),
+                value = form.comment,
+                onValueChange = { onChange(form.copy(comment = it)) },
+                placeholder = stringResource(Res.string.comment_placeholder),
+                minLines = 2,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

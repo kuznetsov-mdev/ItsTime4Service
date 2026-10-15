@@ -15,11 +15,14 @@ import kotlinx.coroutines.sync.withLock
 import ru.kuznetsov.pitstop.domain.model.Car
 import ru.kuznetsov.pitstop.domain.usecase.CarAlertsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.DeleteCarUseCase
+import ru.kuznetsov.pitstop.domain.usecase.DoneMarksUseCase
 import ru.kuznetsov.pitstop.domain.usecase.GetTodayUseCase
 import ru.kuznetsov.pitstop.domain.usecase.MarkTaskDoneUseCase
 import ru.kuznetsov.pitstop.domain.usecase.ObserveCarByIdUseCase
+import ru.kuznetsov.pitstop.domain.usecase.ObserveHistoryUseCase
 import ru.kuznetsov.pitstop.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.SortedTaskStatsUseCase
+import ru.kuznetsov.pitstop.domain.usecase.UnmarkTaskDoneUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateCarUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateMileageUseCase
 import ru.kuznetsov.pitstop.ui.format.keepKm
@@ -34,10 +37,9 @@ import ru.kuznetsov.pitstop.ui.format.kmIn
  * The mileage can also be stepped up and down by buttons: 100 units of the chosen distance unit times the chosen
  * multiplier; every step is stored right away and the mileage never drops to zero or below. Steps and a mileage
  * typed by hand are applied one after another, each to the mileage as stored at that moment.
- * Marking a task as done first opens a window for the service name, the cost and a comment.
- * The window's service name and cost go into the service history record.
- * Temporary until the storage supports it: the done marks live only in this view model's memory, and removing
- * a mark only forgets it, without rolling the task back or deleting the history record.
+ * Marking a task as done first opens a window for the service name, the cost and a comment, which go into
+ * the service history record. A task shows as done while its mark holds (see [DoneMarksUseCase]); removing
+ * the mark after a confirmation rolls the task back and deletes the record.
  */
 class CarDetailViewModel(
     private val carId: String,
@@ -49,6 +51,9 @@ class CarDetailViewModel(
     private val updateCar: UpdateCarUseCase,
     private val updateMileage: UpdateMileageUseCase,
     private val markTaskDone: MarkTaskDoneUseCase,
+    private val unmarkTaskDone: UnmarkTaskDoneUseCase,
+    observeHistory: ObserveHistoryUseCase,
+    private val doneMarks: DoneMarksUseCase,
     private val deleteCar: DeleteCarUseCase,
 ) : ViewModel() {
 
@@ -57,10 +62,11 @@ class CarDetailViewModel(
 
     val state: StateFlow<CarDetailUiState> = combine(
         observeCarById(carId),
+        observeHistory(carId),
         observeSettings(),
         overlay,
-    ) { car, settings, overlay ->
-        val details = car?.toDetails(overlay.doneMarks)
+    ) { car, history, settings, overlay ->
+        val details = car?.toDetails(doneMarks(car, history).keys)
         CarDetailUiState(
             isLoading = false,
             car = details,
@@ -121,14 +127,11 @@ class CarDetailViewModel(
 
     fun onTaskDoneDismiss() = overlay.update { it.copy(doneDialogTaskId = null) }
 
-    fun onTaskDoneConfirm(serviceName: String, cost: String) {
+    fun onTaskDoneConfirm(serviceName: String, cost: String, comment: String) {
         val taskId = overlay.value.doneDialogTaskId ?: return
         overlay.update { it.copy(doneDialogTaskId = null) }
         viewModelScope.launch {
-            val car = observeCarById(carId).first() ?: return@launch
-            if (markTaskDone(carId, taskId, getToday(), serviceName, cost.toIntOrNull())) {
-                overlay.update { it.copy(doneMarks = it.doneMarks + (taskId to car.mileageKm)) }
-            }
+            mileageMutex.withLock { markTaskDone(carId, taskId, getToday(), serviceName, cost.toIntOrNull(), comment) }
         }
     }
 
@@ -136,8 +139,12 @@ class CarDetailViewModel(
 
     fun onUnmarkDismiss() = overlay.update { it.copy(unmarkTaskId = null) }
 
-    fun onUnmarkConfirm() = overlay.update {
-        it.copy(unmarkTaskId = null, doneMarks = it.doneMarks - it.unmarkTaskId.orEmpty())
+    fun onUnmarkConfirm() {
+        val taskId = overlay.value.unmarkTaskId ?: return
+        overlay.update { it.copy(unmarkTaskId = null) }
+        viewModelScope.launch {
+            mileageMutex.withLock { unmarkTaskDone(carId, taskId) }
+        }
     }
 
     fun onDeleteRequest() = overlay.update { it.copy(isConfirmingDelete = true) }
@@ -149,16 +156,16 @@ class CarDetailViewModel(
         viewModelScope.launch { deleteCar(carId) }
     }
 
-    private fun Car.toDetails(doneMarks: Map<String, Int>): CarDetails {
+    private fun Car.toDetails(doneTaskIds: Set<String>): CarDetails {
         val today = getToday()
         val alerts = carAlerts(this, today)
         return CarDetails(
             brand = brand,
             vin = vin,
             mileageKm = mileageKm,
-            alertCount = alerts.total,
+            dueCount = alerts.due,
+            soonCount = alerts.soon,
             taskCount = alerts.taskCount,
-            worstStatus = alerts.worstStatus,
             tasks = sortedTaskStats(this, today).map { (task, stat) ->
                 TaskItem(
                     id = task.id,
@@ -168,7 +175,7 @@ class CarDetailViewModel(
                     remainingMonths = stat.remainingMonths,
                     status = stat.status,
                     progress = stat.progress,
-                    isDone = doneMarks[task.id] == mileageKm,
+                    isDone = task.id in doneTaskIds,
                 )
             },
         )
@@ -176,14 +183,13 @@ class CarDetailViewModel(
 
     /**
      * Screen-only state that is not stored anywhere: what is being edited, which windows are open
-     * and, until the storage keeps done marks, the mileage each task was marked done at.
+     * and the chosen mileage step multiplier.
      */
     private data class Overlay(
         val editingField: EditableField? = null,
         val isConfirmingDelete: Boolean = false,
         val doneDialogTaskId: String? = null,
         val unmarkTaskId: String? = null,
-        val doneMarks: Map<String, Int> = emptyMap(),
         val mileageMultiplier: Int = 1,
     )
 

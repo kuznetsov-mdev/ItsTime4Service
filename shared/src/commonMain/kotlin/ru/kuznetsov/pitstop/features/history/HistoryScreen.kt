@@ -384,6 +384,13 @@ private fun HistoryRowItem(row: HistoryRow, showCar: Boolean, distanceUnit: Dist
             )
         }
         Text(meta, style = metaStyle, color = colors.inkMuted)
+        if (entry.comment != null) {
+            Text(
+                entry.comment,
+                style = typography.sans.copy(fontSize = 12.sp, lineHeight = 17.sp),
+                color = colors.inkMuted,
+            )
+        }
     }
 }
 
@@ -403,7 +410,7 @@ private val previewKia = HistoryCar("c1", "Kia Rio")
 private val previewLada = HistoryCar("s1", "Lada Granta", isSold = true)
 
 private fun previewRow(id: String, car: HistoryCar, taskName: String, date: LocalDate, mileageKm: Int, costRub: Int?) =
-    HistoryRow(ServiceHistoryEntry(id, car.id, taskName, date, mileageKm, costRub, "АвтоСервис Юг"), car)
+    HistoryRow(ServiceHistoryEntry(id, car.id, taskName, date, mileageKm, costRub, "АвтоСервис Юг", "Масло Motul 5W-30"), car)
 
 private val previewState = HistoryUiState(
     isLoading = false,

@@ -99,6 +99,7 @@ data class HistoryEntryForm(
     val mileage: String,
     val serviceName: String = "",
     val cost: String = "",
+    val comment: String = "",
     val showErrors: Boolean = false,
 ) {
     val isDateInvalid: Boolean get() = DateInputFormat.current.parse(date) == null

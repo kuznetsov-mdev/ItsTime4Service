@@ -31,10 +31,10 @@ import ru.kuznetsov.pitstop.ui.format.kmIn
  * The task name is searched as a substring, ignoring case. Mileage is filtered and edited in the unit chosen
  * in settings; a mileage left as it was keeps its stored kilometers.
  * A filter with a date that cannot be read is not applied: its window stays open and marks the date.
- * The record window saves the date, the mileage, the cost and the service name; an invalid date
+ * The record window saves the date, the mileage, the cost, the service name and the comment; an invalid date
  * or mileage keeps it open and marks the field.
  * Temporary until the storage supports it: deleted cars are not listed, because deleting a car still
- * deletes its history, and a record has no comment yet.
+ * deletes its history.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HistoryViewModel(
@@ -125,6 +125,7 @@ class HistoryViewModel(
                 mileage = row.entry.mileageKm.kmIn(state.value.distanceUnit).toString(),
                 serviceName = row.entry.serviceName.orEmpty(),
                 cost = row.entry.costRub?.toString().orEmpty(),
+                comment = row.entry.comment.orEmpty(),
             ),
         )
     }
@@ -162,6 +163,7 @@ class HistoryViewModel(
                     mileageKm = keepKm(original.mileageKm, mileage, state.value.distanceUnit),
                     costRub = form.cost.toIntOrNull(),
                     serviceName = form.serviceName,
+                    comment = form.comment,
                 ),
             )
             if (saved) onEntryDismiss()

@@ -36,15 +36,15 @@ enum class EditableField { BRAND, VIN, MILEAGE }
 
 /**
  * The car as shown in the screen header and its tasks, most urgent first.
- * [alertCount] of [taskCount] tasks are soon or due; [worstStatus] colors that counter.
+ * [dueCount] of [taskCount] tasks are due and [soonCount] are soon; together they fill the status ring.
  */
 data class CarDetails(
     val brand: String,
     val vin: String?,
     val mileageKm: Int,
-    val alertCount: Int,
+    val dueCount: Int,
+    val soonCount: Int,
     val taskCount: Int,
-    val worstStatus: TaskStatus,
     val tasks: List<TaskItem>,
 )
 

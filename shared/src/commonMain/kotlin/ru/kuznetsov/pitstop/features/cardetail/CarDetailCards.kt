@@ -49,6 +49,7 @@ import ru.kuznetsov.pitstop.ui.components.buttons.SegmentedControl
 import ru.kuznetsov.pitstop.ui.components.fields.InlineEditField
 import ru.kuznetsov.pitstop.ui.components.indicators.ProgressBar
 import ru.kuznetsov.pitstop.ui.components.indicators.StatusChip
+import ru.kuznetsov.pitstop.ui.components.indicators.StatusDonut
 import ru.kuznetsov.pitstop.ui.components.indicators.color
 import ru.kuznetsov.pitstop.ui.format.distanceText
 import ru.kuznetsov.pitstop.ui.format.grouped
@@ -87,7 +88,6 @@ internal fun MileageCard(
     val colors = PitStopTheme.colors
     val typography = PitStopTheme.typography
     val shape = RoundedCornerShape(PitStopTheme.dimens.radiusL)
-    val chipShape = RoundedCornerShape(50)
     val unit = unitGenitive(distanceUnit)
     Column(
         modifier = modifier
@@ -97,51 +97,46 @@ internal fun MileageCard(
             .border(1.dp, colors.rule, shape)
             .padding(14.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                stringResource(Res.string.stat_mileage).uppercase(),
-                style = typography.mono.copy(fontSize = 10.sp, lineHeight = 14.sp, fontWeight = FontWeight.Normal, letterSpacing = 0.06f.em),
-                color = colors.inkFaint,
-            )
-            Text(
-                stringResource(Res.string.alert_count_due, car.alertCount, car.taskCount),
-                style = typography.mono.copy(fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold),
-                color = colors.onTier,
-                modifier = Modifier
-                    .clip(chipShape)
-                    .background(car.worstStatus.toTier().color)
-                    .padding(horizontal = 9.dp, vertical = 4.dp),
-            )
-        }
-        if (isEditing) {
-            InlineEditField(
-                initialValue = car.mileageKm.kmIn(distanceUnit).toString(),
-                onSave = onSave,
-                transform = { it.filter(Char::isDigit).take(MAX_MILEAGE_LENGTH) },
-                canSave = { (it.toIntOrNull() ?: 0) > 0 },
-                modifier = editBounds.padding(top = 8.dp),
-            )
-        } else {
-            Row(modifier = Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Bottom) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    car.mileageKm.kmIn(distanceUnit).grouped(),
-                    style = typography.display.copy(fontSize = 26.sp, lineHeight = 32.sp),
-                    color = colors.ink,
-                    modifier = Modifier
-                        .clickable(onClickLabel = stringResource(Res.string.action_edit_mileage), onClick = onEdit)
-                        .dashedUnderline(colors.inkFaint),
-                )
-                Text(
-                    unit,
-                    style = typography.sans.copy(fontSize = 13.sp, lineHeight = 22.sp, fontWeight = FontWeight.SemiBold),
+                    stringResource(Res.string.stat_mileage).uppercase(),
+                    style = typography.mono.copy(fontSize = 10.sp, lineHeight = 14.sp, fontWeight = FontWeight.Normal, letterSpacing = 0.06f.em),
                     color = colors.inkFaint,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
                 )
+                if (isEditing) {
+                    InlineEditField(
+                        initialValue = car.mileageKm.kmIn(distanceUnit).toString(),
+                        onSave = onSave,
+                        transform = { it.filter(Char::isDigit).take(MAX_MILEAGE_LENGTH) },
+                        canSave = { (it.toIntOrNull() ?: 0) > 0 },
+                        modifier = editBounds.padding(top = 8.dp),
+                    )
+                } else {
+                    Row(modifier = Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            car.mileageKm.kmIn(distanceUnit).grouped(),
+                            style = typography.display.copy(fontSize = 26.sp, lineHeight = 32.sp),
+                            color = colors.ink,
+                            modifier = Modifier
+                                .clickable(onClickLabel = stringResource(Res.string.action_edit_mileage), onClick = onEdit)
+                                .dashedUnderline(colors.inkFaint),
+                        )
+                        Text(
+                            unit,
+                            style = typography.sans.copy(fontSize = 13.sp, lineHeight = 22.sp, fontWeight = FontWeight.SemiBold),
+                            color = colors.inkFaint,
+                            modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
+                        )
+                    }
+                }
             }
+            StatusDonut(
+                due = car.dueCount,
+                soon = car.soonCount,
+                total = car.taskCount,
+                contentDescription = stringResource(Res.string.alert_count_due, car.dueCount + car.soonCount, car.taskCount),
+            )
         }
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
