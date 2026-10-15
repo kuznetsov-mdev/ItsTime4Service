@@ -1,9 +1,13 @@
 package ru.kuznetsov.itstime4service
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 import ru.kuznetsov.itstime4service.domain.model.ThemeMode
@@ -24,7 +28,11 @@ fun App(viewModel: AppViewModel = koinViewModel()) {
     LaunchedEffect(needsNotificationPermission) {
         if (needsNotificationPermission) requestNotificationPermission()
     }
+    val launch by viewModel.launch.collectAsStateWithLifecycle()
     ItsTime4ServiceTheme(darkTheme = darkTheme) {
-        ItsTime4ServiceNavGraph()
+        when (val current = launch) {
+            Launch.Pending -> Box(Modifier.fillMaxSize().background(ItsTime4ServiceTheme.colors.bg))
+            is Launch.Ready -> ItsTime4ServiceNavGraph(launchCarId = current.carId)
+        }
     }
 }

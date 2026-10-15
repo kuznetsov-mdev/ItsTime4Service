@@ -13,7 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
@@ -40,10 +44,15 @@ import ru.kuznetsov.itstime4service.ui.components.buttons.TabBarItem
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 
-/** Root of the app — hosts every destination and shows the bottom tab bar on the two top-level ones. */
+/**
+ * Root of the app — hosts every destination and shows the bottom tab bar on the top-level ones.
+ * The app starts on the car list; with a [launchCarId] that car's screen opens over the list once, so back
+ * leads to the list. Turning the screen or restoring the process does not open it again.
+ */
 @Composable
-fun ItsTime4ServiceNavGraph(modifier: Modifier = Modifier) {
+fun ItsTime4ServiceNavGraph(launchCarId: String?, modifier: Modifier = Modifier) {
     val navController = rememberNavController()
+    var isLaunchHandled by rememberSaveable { mutableStateOf(false) }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val carIdArgument = listOf(navArgument(Destination.ARG_CAR_ID) { type = NavType.StringType })
@@ -111,6 +120,11 @@ fun ItsTime4ServiceNavGraph(modifier: Modifier = Modifier) {
             composable(Destination.Settings.route) {
                 SettingsScreen()
             }
+        }
+        LaunchedEffect(Unit) {
+            if (isLaunchHandled) return@LaunchedEffect
+            isLaunchHandled = true
+            if (launchCarId != null) navController.navigate(Destination.CarDetail.createRoute(launchCarId))
         }
     }
 }

@@ -21,6 +21,7 @@ import ru.kuznetsov.itstime4service.domain.usecase.MarkTaskDoneUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarByIdUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveHistoryUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.RecordCarOpenedUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SortedTaskStatsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UnmarkTaskDoneUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateCarUseCase
@@ -40,6 +41,7 @@ import ru.kuznetsov.itstime4service.ui.format.kmIn
  * Marking a task as done first opens a window for the service name, the cost and a comment, which go into
  * the service history record. A task shows as done while its mark holds (see [DoneMarksUseCase]); removing
  * the mark after a confirmation rolls the task back and deletes the record.
+ * Opening the screen remembers the car as the last opened one, which the app may start on next time.
  */
 class CarDetailViewModel(
     private val carId: String,
@@ -54,11 +56,16 @@ class CarDetailViewModel(
     private val unmarkTaskDone: UnmarkTaskDoneUseCase,
     observeHistory: ObserveHistoryUseCase,
     private val doneMarks: DoneMarksUseCase,
+    recordCarOpened: RecordCarOpenedUseCase,
     private val deleteCar: DeleteCarUseCase,
 ) : ViewModel() {
 
     private val overlay = MutableStateFlow(Overlay())
     private val mileageMutex = Mutex()
+
+    init {
+        viewModelScope.launch { recordCarOpened(carId) }
+    }
 
     val state: StateFlow<CarDetailUiState> = combine(
         observeCarById(carId),
