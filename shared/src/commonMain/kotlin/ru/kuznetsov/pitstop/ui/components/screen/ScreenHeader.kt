@@ -8,17 +8,21 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import pitstop.shared.generated.resources.Res
 import pitstop.shared.generated.resources.action_back
+import pitstop.shared.generated.resources.action_delete_car
+import ru.kuznetsov.pitstop.ui.components.ComponentPreview
 import ru.kuznetsov.pitstop.ui.components.buttons.AppIconButton
 import ru.kuznetsov.pitstop.ui.icons.PitStopIcons
 import ru.kuznetsov.pitstop.ui.theme.PitStopTheme
@@ -82,4 +86,30 @@ internal fun ScreenTitle(
             Text(subtitle, style = subtitleStyle, color = colors.inkFaint)
         }
     }
+}
+
+@Composable
+private fun ScreenHeaderPreviewContent() {
+    Column(Modifier.width(320.dp)) {
+        ScreenTopBar(onBack = {}) {
+            AppIconButton(
+                icon = PitStopIcons.Trash,
+                onClick = {},
+                contentDescription = stringResource(Res.string.action_delete_car),
+            )
+        }
+        ScreenTitle(title = "Kia Rio", subtitle = "XWEPC811BB0012345", monoSubtitle = true)
+    }
+}
+
+@Preview
+@Composable
+private fun ScreenHeaderLightPreview() = ComponentPreview(darkTheme = false) {
+    ScreenHeaderPreviewContent()
+}
+
+@Preview
+@Composable
+private fun ScreenHeaderDarkPreview() = ComponentPreview(darkTheme = true) {
+    ScreenHeaderPreviewContent()
 }

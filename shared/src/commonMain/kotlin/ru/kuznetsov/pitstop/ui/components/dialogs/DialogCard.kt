@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -18,8 +19,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
+import pitstop.shared.generated.resources.Res
+import pitstop.shared.generated.resources.dialog_task_done_title
+import ru.kuznetsov.pitstop.ui.components.ComponentPreview
+import ru.kuznetsov.pitstop.ui.icons.PitStopIcons
 import ru.kuznetsov.pitstop.ui.theme.PitStopTheme
 
 /** Shell of a modal window — rounded surface card with a tinted icon, a title, an optional line of text and free-form [content] below. */
@@ -59,4 +66,26 @@ fun DialogCard(
         }
         content()
     }
+}
+
+@Composable
+private fun DialogCardPreviewContent() {
+    DialogCard(
+        icon = PitStopIcons.Check,
+        title = stringResource(Res.string.dialog_task_done_title),
+        text = "Воздушный фильтр",
+        modifier = Modifier.width(280.dp),
+    ) {}
+}
+
+@Preview
+@Composable
+private fun DialogCardLightPreview() = ComponentPreview(darkTheme = false) {
+    DialogCardPreviewContent()
+}
+
+@Preview
+@Composable
+private fun DialogCardDarkPreview() = ComponentPreview(darkTheme = true) {
+    DialogCardPreviewContent()
 }
