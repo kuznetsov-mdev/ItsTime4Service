@@ -162,6 +162,11 @@
   .car-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .car-mileage { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); margin-top: 2px; font-variant-numeric: tabular-nums; }
 
+  .status-donut { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .status-donut-inner {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center;
+    font-family: var(--display); font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums;
+  }
   .gauge { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
   .gauge-inner {
     width: 38px; height: 38px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center;
@@ -1127,6 +1132,18 @@
       '<div class="gauge-inner" style="color:' + color + '">' + a.total + '</div></div>';
   }
 
+  /* кольцо статусов на карточке пробега: дуги просрочено / пора менять / в порядке, в центре «N/M» */
+  function statusDonutHtml(a) {
+    var dueEnd = a.count > 0 ? a.due / a.count * 100 : 0;
+    var soonEnd = a.count > 0 ? (a.due + a.soon) / a.count * 100 : 0;
+    var ring = a.count > 0
+      ? 'conic-gradient(var(--tier-due) 0 ' + dueEnd + '%, var(--tier-soon) ' + dueEnd + '% ' + soonEnd + '%, var(--tier-ok) ' + soonEnd + '% 100%)'
+      : 'var(--surface-3)';
+    var label = a.total + ' из ' + a.count + ' пора менять';
+    return '<div class="status-donut" style="background:' + ring + '" role="img" aria-label="' + label + '">' +
+      '<div class="status-donut-inner" style="color:' + tierVar(worstStatus(a)) + '">' + a.total + '/' + a.count + '</div></div>';
+  }
+
   /* ---------------- screen: cars list ---------------- */
   function carsScreenHtml(cars, opts) {
     opts = opts || {};
@@ -1260,7 +1277,7 @@
         ? '<button class="detail-vin" data-edit-vin aria-label="Изменить VIN">' + vinText + '</button>'
         : '<div class="detail-vin">' + vinText + '</div>');
     var addTaskFab = '<button class="fab no-tabbar"' + (opts.interactive ? ' data-add-task' : '') + ' aria-label="Добавить работу">' + icon('plus', 21) + '</button>';
-    /* пробег и «пора менять / просрочено» — карточка со степпером и множителем (вариант A) */
+    /* пробег и кольцо статусов работ — карточка со степпером и множителем (вариант A) */
     var mult = opts.mileageMult || 1;
     var mileageValue;
     if (opts.interactive && opts.editingMileage) {
@@ -1273,9 +1290,8 @@
         '<small>' + unitWord() + '</small></div>';
     }
     var stepAttr = function (dir) { return opts.interactive ? ' data-mileage-step="' + dir + '"' : ''; };
-    var mileageCard = '<div class="v-card"><div class="v-between"><span class="v-label">Пробег</span>' +
-      '<span class="v-alert-chip" style="background:' + tierVar(worstStatus(a)) + '">' + a.total + ' из ' + a.count + ' пора менять</span></div>' +
-      mileageValue +
+    var mileageCard = '<div class="v-card"><div class="v-between" style="align-items:flex-start"><div style="flex:1;min-width:0"><span class="v-label">Пробег</span>' +
+      mileageValue + '</div>' + statusDonutHtml(a) + '</div>' +
       '<div class="v-row" style="margin-top:12px"><button class="v-step"' + stepAttr(-1) + ' aria-label="Уменьшить пробег">' + icon('minus', 16) + '</button>' +
       '<div class="v-mult">' + MULTS.map(function (m) {
         return '<button class="' + (mult === m ? 'on' : '') + '"' + (opts.interactive ? ' data-mileage-mult="' + m + '"' : '') + '>×' + m + '</button>';
