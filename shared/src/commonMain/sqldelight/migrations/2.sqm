@@ -1,0 +1,10 @@
+ALTER TABLE service_history ADD COLUMN task_id TEXT;
+ALTER TABLE service_history ADD COLUMN comment TEXT;
+ALTER TABLE service_history ADD COLUMN prev_last_done_km INTEGER;
+ALTER TABLE service_history ADD COLUMN prev_last_done_date TEXT;
+
+ALTER TABLE settings ADD COLUMN last_opened_car_id TEXT;
+ALTER TABLE settings ADD COLUMN open_default_car INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0;
+ALTER TABLE settings ADD COLUMN default_car_id TEXT;
+
+ALTER TABLE cars ADD COLUMN is_sold INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0;

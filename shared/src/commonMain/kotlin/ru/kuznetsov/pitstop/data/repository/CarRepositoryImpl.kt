@@ -28,6 +28,7 @@ class CarRepositoryImpl(database: PitStopDatabase) : CarRepository {
 
     private val carQueries = database.carQueries
     private val taskQueries = database.maintenanceTaskQueries
+    private val historyQueries = database.serviceHistoryQueries
     private val dispatcher = Dispatchers.Default
 
     override fun observeCars(): Flow<List<Car>> = combine(
@@ -63,12 +64,44 @@ class CarRepositoryImpl(database: PitStopDatabase) : CarRepository {
         carQueries.updateMileage(mileageKm.toLong(), carId)
     }
 
-    override suspend fun markTaskDone(carId: String, taskId: String, date: LocalDate): Unit = withContext(dispatcher) {
-        carQueries.transaction {
-            val car = carQueries.selectById(carId).executeAsOneOrNull() ?: return@transaction
-            val task = taskQueries.selectById(taskId, carId).executeAsOneOrNull() ?: return@transaction
+    override suspend fun markTaskDone(
+        carId: String,
+        taskId: String,
+        date: LocalDate,
+        serviceName: String?,
+        costRub: Int?,
+        comment: String?,
+    ): Boolean = withContext(dispatcher) {
+        carQueries.transactionWithResult {
+            val car = carQueries.selectById(carId).executeAsOneOrNull() ?: return@transactionWithResult false
+            val task = taskQueries.selectById(taskId, carId).executeAsOneOrNull() ?: return@transactionWithResult false
             val lastDoneDate = if (task.interval_months != null) date.toString() else task.last_done_date
             taskQueries.markDone(car.mileage_km, lastDoneDate, taskId, carId)
+            historyQueries.insert(
+                id = Uuid.random().toString(),
+                car_id = carId,
+                task_name = task.name,
+                date = date.toString(),
+                mileage_km = car.mileage_km,
+                cost_rub = costRub?.toLong(),
+                service_name = serviceName,
+                task_id = taskId,
+                comment = comment,
+                prev_last_done_km = task.last_done_km,
+                prev_last_done_date = task.last_done_date,
+            )
+            true
+        }
+    }
+
+    override suspend fun unmarkTaskDone(carId: String, taskId: String, entryId: String): Boolean = withContext(dispatcher) {
+        carQueries.transactionWithResult {
+            val entry = historyQueries.selectById(entryId).executeAsOneOrNull() ?: return@transactionWithResult false
+            val prevLastDoneKm = entry.prev_last_done_km
+            if (entry.car_id != carId || entry.task_id != taskId || prevLastDoneKm == null) return@transactionWithResult false
+            taskQueries.markDone(prevLastDoneKm, entry.prev_last_done_date, taskId, carId)
+            historyQueries.deleteById(entryId)
+            true
         }
     }
 

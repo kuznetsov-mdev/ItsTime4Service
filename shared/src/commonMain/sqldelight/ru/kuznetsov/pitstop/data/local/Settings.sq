@@ -4,7 +4,10 @@ CREATE TABLE settings (
     distance_unit TEXT NOT NULL,
     push_enabled INTEGER AS kotlin.Boolean NOT NULL,
     default_reminder_window_km INTEGER NOT NULL,
-    reminder_time TEXT NOT NULL
+    reminder_time TEXT NOT NULL,
+    last_opened_car_id TEXT,
+    open_default_car INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
+    default_car_id TEXT
 );
 
 select:

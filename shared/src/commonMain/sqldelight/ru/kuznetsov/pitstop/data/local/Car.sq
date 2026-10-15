@@ -2,7 +2,8 @@ CREATE TABLE cars (
     id TEXT NOT NULL PRIMARY KEY,
     brand TEXT NOT NULL,
     mileage_km INTEGER NOT NULL,
-    vin TEXT
+    vin TEXT,
+    is_sold INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0
 );
 
 selectAll:

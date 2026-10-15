@@ -12,8 +12,12 @@ import ru.kuznetsov.pitstop.domain.model.NewMaintenanceTask
  * [observeCarById] emits `null` when there is no car with the given id.
  * [addCar] assigns ids to the car and its tasks and returns the car's id; a task without a reminder window
  * must already have one resolved by the caller.
- * [markTaskDone] resets the task to the car's current mileage and, for tasks with a time interval, to [date];
- * it does not write to the service history.
+ * [markTaskDone] resets the task to the car's current mileage and, for tasks with a time interval, to [date],
+ * and adds a service history record that remembers the task and its previous last-done values;
+ * it returns `false` and changes nothing when the car or the task does not exist.
+ * [unmarkTaskDone] gives the task back the previous values kept in the record [entryId] and deletes the record;
+ * it returns `false` and changes nothing when that record was not created by marking this task.
+ * Both run in a single transaction.
  */
 interface CarRepository {
     fun observeCars(): Flow<List<Car>>
@@ -26,7 +30,16 @@ interface CarRepository {
 
     suspend fun updateMileage(carId: String, mileageKm: Int)
 
-    suspend fun markTaskDone(carId: String, taskId: String, date: LocalDate)
+    suspend fun markTaskDone(
+        carId: String,
+        taskId: String,
+        date: LocalDate,
+        serviceName: String?,
+        costRub: Int?,
+        comment: String?,
+    ): Boolean
+
+    suspend fun unmarkTaskDone(carId: String, taskId: String, entryId: String): Boolean
 
     suspend fun updateCar(carId: String, brand: String, vin: String?)
 

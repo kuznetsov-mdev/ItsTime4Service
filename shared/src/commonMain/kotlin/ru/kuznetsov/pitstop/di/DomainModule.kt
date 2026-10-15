@@ -8,6 +8,7 @@ import ru.kuznetsov.pitstop.domain.usecase.CalculateTaskStatusUseCase
 import ru.kuznetsov.pitstop.domain.usecase.CarAlertsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.DeleteCarUseCase
 import ru.kuznetsov.pitstop.domain.usecase.DeleteTaskUseCase
+import ru.kuznetsov.pitstop.domain.usecase.DoneMarksUseCase
 import ru.kuznetsov.pitstop.domain.usecase.GetNowUseCase
 import ru.kuznetsov.pitstop.domain.usecase.GetTodayUseCase
 import ru.kuznetsov.pitstop.domain.usecase.MarkTaskDoneUseCase
@@ -19,6 +20,7 @@ import ru.kuznetsov.pitstop.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.PlanRemindersUseCase
 import ru.kuznetsov.pitstop.domain.usecase.SortedTaskStatsUseCase
 import ru.kuznetsov.pitstop.domain.usecase.SyncRemindersUseCase
+import ru.kuznetsov.pitstop.domain.usecase.UnmarkTaskDoneUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateCarUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateHistoryEntryUseCase
 import ru.kuznetsov.pitstop.domain.usecase.UpdateMileageUseCase
@@ -37,6 +39,8 @@ val domainModule = module {
     factoryOf(::DeleteCarUseCase)
     factoryOf(::UpdateMileageUseCase)
     factoryOf(::MarkTaskDoneUseCase)
+    factoryOf(::DoneMarksUseCase)
+    factoryOf(::UnmarkTaskDoneUseCase)
     factoryOf(::ObserveHistoryUseCase)
     factoryOf(::ObserveSettingsUseCase)
     factoryOf(::UpdateSettingsUseCase)

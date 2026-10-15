@@ -5,7 +5,11 @@ CREATE TABLE service_history (
     date TEXT NOT NULL,
     mileage_km INTEGER NOT NULL,
     cost_rub INTEGER,
-    service_name TEXT
+    service_name TEXT,
+    task_id TEXT,
+    comment TEXT,
+    prev_last_done_km INTEGER,
+    prev_last_done_date TEXT
 );
 
 CREATE INDEX service_history_car_id ON service_history (car_id);
@@ -14,13 +18,19 @@ selectByCar:
 SELECT * FROM service_history WHERE car_id = ? ORDER BY rowid;
 
 insert:
-INSERT INTO service_history (id, car_id, task_name, date, mileage_km, cost_rub, service_name)
-VALUES (?, ?, ?, ?, ?, ?, ?);
+INSERT INTO service_history (id, car_id, task_name, date, mileage_km, cost_rub, service_name, task_id, comment, prev_last_done_km, prev_last_done_date)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 update:
 UPDATE service_history
-SET task_name = ?, date = ?, mileage_km = ?, cost_rub = ?, service_name = ?
+SET task_name = ?, date = ?, mileage_km = ?, cost_rub = ?, service_name = ?, comment = ?
 WHERE id = ?;
+
+selectById:
+SELECT * FROM service_history WHERE id = ?;
+
+deleteById:
+DELETE FROM service_history WHERE id = ?;
 
 deleteByCar:
 DELETE FROM service_history WHERE car_id = ?;
