@@ -5,65 +5,66 @@
 Presentation-слой — экраны на Compose Multiplatform, общие для Android и iOS. Из библиотек использует Compose (`foundation`, `material3`, `ui`, `components-resources`), `lifecycle-viewmodel-compose`, `navigation-compose`, Koin (`koin-compose-viewmodel`), иконки Lucide (`com.composables:icons-lucide`) и `kotlinx-datetime`. Внешний вид задаёт макет `docs/index.html`.
 
 ```
-App.kt, AppViewModel.kt   # корень: тема, разрешение на уведомления, пересборка плана напоминаний
+App.kt, AppViewModel.kt   # корень: тема, запуск, разрешение на уведомления, пересборка плана напоминаний
 features/
 ├── navigation/           # Destination, ItsTime4ServiceNavGraph, таб-бар
 ├── cars/                 # список машин
-├── carform/              # одна форма: добавление и правка машины
-├── cardetail/            # экран машины с работами
-├── history/              # история ТО
+├── carform/              # форма добавления машины
+├── cardetail/            # экран машины: пробег, работы, отметки
+├── taskform/             # экран одной работы: новая и правка
+├── history/              # общая история ТО
 └── settings/             # настройки
 ui/
 ├── theme/                # цвета, типографика, размеры, ItsTime4ServiceTheme
 ├── components/           # ui-kit: buttons, fields, steppers, indicators, cards, dialogs, screen
-├── format/               # форматирование чисел, расстояний, дат; TaskStatus → StatusTier
+├── format/               # числа, расстояния и единицы, ввод дат, поля работы, пресеты, TaskStatus → StatusTier
 ├── icons/                # ItsTime4ServiceIcons
 └── notification/         # expect-функция запроса разрешения на уведомления
 ```
 
 Правила слоя:
 
-- Каждая фича — три файла: `*Screen.kt`, `*UiState.kt`, `*ViewModel.kt`.
+- Каждая фича — `*Screen.kt`, `*UiState.kt`, `*ViewModel.kt`, иногда вынесенные части экрана (`CarDetailCards.kt`, `HistoryDialogs.kt`).
 - Экран — пара Composable-функций: `XxxScreen` получает ViewModel через `koinViewModel`, собирает состояние через `collectAsStateWithLifecycle()` и передаёт его в `internal XxxContent(state, колбэки…)`. `XxxContent` о ViewModel не знает; на нём же построены `@Preview` в светлой и тёмной теме.
-- ViewModel отдаёт один `StateFlow<XxxUiState>` и набор методов `onXxx(...)`. Отдельного канала разовых событий нет: «закрой экран» передаётся флагом в состоянии (`isMissing`, `isSaved`), на который экран реагирует через `LaunchedEffect`.
+- ViewModel отдаёт один `StateFlow<XxxUiState>` и набор методов `onXxx(...)`. Отдельного канала разовых событий нет: «закрой экран» передаётся флагом в состоянии (`isMissing`, `isSaved`, `isClosed`), на который экран реагирует через `LaunchedEffect`.
 - ViewModel-ы зависят только от use case-ов domain-слоя (см. `specs/domain.md`); репозиториев и data-слоя не видят.
-- `CarsViewModel`, `CarDetailViewModel`, `HistoryViewModel`, `SettingsViewModel` строят состояние через `combine(...).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), начальное состояние)`. `CarFormViewModel` держит `MutableStateFlow` и читает машину один раз.
+- Экранное состояние, которое нигде не хранится (открытые окна, правка на месте, фильтр), лежит в приватном `MutableStateFlow` ViewModel-а и объединяется с данными через `combine(...).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), …)`. Формы (`CarFormViewModel`, `TaskFormViewModel`) держат один `MutableStateFlow`.
 - Тексты — только из ресурсов (`composeResources/values*/strings.xml`). Когда ViewModel-у нужна локализованная строка, её передаёт экран параметром.
+- Расстояния показываются и вводятся в единицах из настроек, хранятся в километрах (см. «Единицы расстояния»).
 
 ## Навигация
 
-`features/navigation/Destinations.kt`, `features/navigation/NavGraph.kt`. Маршруты строковые, `sealed class Destination(val route: String)`; у маршрутов с аргументом есть `createRoute(carId)`.
+`features/navigation/Destinations.kt`, `features/navigation/NavGraph.kt`. Маршруты строковые, `sealed class Destination(val route: String)`; у маршрутов с аргументами есть `createRoute(...)`.
 
-| Destination | Маршрут | Аргументы | Экран | Таб-бар |
-|---|---|---|---|---|
-| `Cars` | `cars` | — | `CarsScreen`; стартовый | да |
-| `AddCar` | `add-car` | — | `CarFormScreen` без `carId` | нет |
-| `CarDetail` | `cars/{carId}` | `carId: String` | `CarDetailScreen` | нет |
-| `EditCar` | `cars/{carId}/edit` | `carId: String` | `CarFormScreen` с `carId` | нет |
-| `History` | `cars/{carId}/history` | `carId: String` | `HistoryScreen` | нет |
-| `Settings` | `settings` | — | `SettingsScreen` | да |
-
-Имя аргумента — `Destination.ARG_CAR_ID = "carId"`, тип `NavType.StringType`. Из записи back stack-а он читается расширением `NavBackStackEntry.carId`; если аргумента нет, получается пустая строка.
+| Destination | Маршрут | Экран | Таб-бар |
+|---|---|---|---|
+| `Cars` | `cars` | `CarsScreen`; стартовый | да |
+| `AddCar` | `add-car` | `CarFormScreen` | нет |
+| `CarDetail` | `cars/{carId}` | `CarDetailScreen` | нет |
+| `NewTask` | `cars/{carId}/new-task` | `TaskFormScreen` без `taskId` | нет |
+| `EditTask` | `cars/{carId}/tasks/{taskId}` | `TaskFormScreen` с `taskId` | нет |
+| `History` | `history?carId={carId}`, `carId` необязателен | `HistoryScreen` | да |
+| `Settings` | `settings` | `SettingsScreen` | да |
 
 ### Переходы
 
 | Откуда | Действие | Куда |
 |---|---|---|
-| `Cars` | тап по карточке машины | `navigate(CarDetail.createRoute(carId))` |
-| `Cars` | FAB «плюс» | `navigate(AddCar.route)` |
-| `AddCar` | «назад» или успешное сохранение | `popBackStack()` — обратно к списку; на экран новой машины переход не делается |
+| запуск | `launchCarId != null` (см. «Корень приложения») | один раз `navigate(CarDetail)` поверх `Cars` |
+| `Cars` | тап по карточке машины / FAB | `CarDetail` / `AddCar` |
+| `AddCar` | «назад» или сохранение | `popBackStack()` |
 | `CarDetail` | «назад» или машина исчезла (`isMissing`) | `popBackStack(Cars.route, inclusive = false)` |
-| `CarDetail` | кнопка-часы | `navigate(History.createRoute(carId))` |
-| `CarDetail` | кнопка-карандаш в шапке | `navigate(EditCar.createRoute(carId))` |
-| `EditCar` | «назад», успешное сохранение или машины нет (`isMissing`) | `popBackStack()` |
-| `History` | «назад» | `popBackStack()` |
-| таб-бар | тап по вкладке | `navigateToTab`: `navigate(route)` с `popUpTo(Cars.route) { saveState = true }`, `launchSingleTop = true`, `restoreState = true` |
+| `CarDetail` | часы | вкладка «История» с выбранной машиной: `navigate(History.createRoute(carId)) { popUpTo(Cars.route); launchSingleTop = true }` |
+| `CarDetail` | FAB / тап по карточке работы | `NewTask` / `EditTask` |
+| `NewTask`, `EditTask` | «назад», сохранение, удаление, работы или машины нет | `popBackStack()` |
+| таб-бар | «Авто» | `navigate(Cars) { popUpTo(Cars); launchSingleTop = true }` — список, а не сохранённое состояние вкладки |
+| таб-бар | «История», «Настройки» | `navigate(route) { popUpTo(Cars) { saveState = true }; launchSingleTop = true; restoreState = true }` |
 
 ### Каркас
 
-`ItsTime4ServiceNavGraph` — `Scaffold` на весь экран: `containerColor = ItsTime4ServiceTheme.colors.bg`, `contentWindowInsets = WindowInsets.safeDrawing`, внутри `NavHost` со стартовым `Destination.Cars`.
+`ItsTime4ServiceNavGraph(launchCarId)` — `Scaffold` на весь экран: `containerColor = bg`, `contentWindowInsets = WindowInsets.safeDrawing`, внутри `NavHost` со стартовым `Cars`. Переход на машину запуска — `LaunchedEffect` после `NavHost`; флаг «уже открыли» в `rememberSaveable`, поэтому поворот экрана и восстановление процесса его не повторяют.
 
-Таб-бар (`bottomBar`) показывается, только когда текущий маршрут — `cars` или `settings`. Это приватный `TabBar` в `NavGraph.kt`: линия `rule` в 1 dp, под ней два `TabBarItem` равной ширины — «Авто» (`ItsTime4ServiceIcons.Car`) и «Настройки» (`ItsTime4ServiceIcons.Gear`); фон `surface`, снизу `navigationBarsPadding()`.
+Таб-бар (`bottomBar`) показывается на `History`, `Cars` и `Settings`: линия `rule` в 1 dp, под ней три `TabBarItem` равной ширины — «История» (`Clock`), «Авто» (`Car`), «Настройки» (`Gear`); фон `surface`, снизу `navigationBarsPadding()`.
 
 ## Корень приложения
 
@@ -74,30 +75,29 @@ ui/
 1. Берёт `AppViewModel` через `koinViewModel()`.
 2. Вычисляет тёмную тему: `ThemeMode.LIGHT` → светлая, `DARK` → тёмная, `SYSTEM` → `isSystemInDarkTheme()`.
 3. Через `LaunchedEffect(needsNotificationPermission)` запрашивает системное разрешение на уведомления каждый раз, когда флаг становится `true`.
-4. Оборачивает `ItsTime4ServiceNavGraph()` в `ItsTime4ServiceTheme(darkTheme)`.
+4. В `ItsTime4ServiceTheme(darkTheme)`: пока `launch` — `Pending`, рисует только фон `bg`; затем `ItsTime4ServiceNavGraph(launchCarId)`.
 
 ### `AppViewModel`
 
-Состояние над графом навигации. Зависимости: `ObserveSettingsUseCase`, `ObserveCarsUseCase`, `SyncRemindersUseCase`, `UpdateSettingsUseCase`.
+Состояние над графом навигации. Зависимости: `ObserveSettingsUseCase`, `ObserveCarsUseCase`, `SyncRemindersUseCase`, `UpdateSettingsUseCase`, `GetLaunchCarUseCase`.
 
 | Член | Тип | Смысл |
 |---|---|---|
-| `themeMode` | `StateFlow<ThemeMode>` | тема из настроек; начальное значение до прихода настроек — `SYSTEM` |
+| `themeMode` | `StateFlow<ThemeMode>` | тема из настроек; до прихода настроек — `SYSTEM` |
 | `needsNotificationPermission` | `StateFlow<Boolean>` | `settings.pushEnabled && cars.isNotEmpty()`; начальное значение `false` |
+| `launch` | `StateFlow<Launch>` | `Pending`, затем `Ready(carId)` — машина, экран которой открыть поверх списка, или `null` |
 | `onNotificationPermissionResult(granted)` | метод | ответ системы на запрос разрешения |
 
 | Событие | Что происходит | Use case |
 |---|---|---|
-| создание ViewModel (`init`) | запускается сбор `combine(observeCars(), observeSettings(), permissionGrants)` через `collectLatest`; на каждое значение план напоминаний строится заново | `SyncRemindersUseCase(cars, settings)` |
-| изменились машины или настройки | то же: новое значение `combine` → пересборка плана | `SyncRemindersUseCase` |
-| разрешение выдано (`granted = true`) | приватный счётчик `permissionGrants` увеличивается на 1 → `combine` излучает → план строится ещё раз | `SyncRemindersUseCase` |
-| в разрешении отказано (`granted = false`) | читаются текущие настройки (`observeSettings().first()`) и сохраняются с `pushEnabled = false` | `UpdateSettingsUseCase` |
+| создание (`init`) | один раз решается машина запуска | `GetLaunchCarUseCase` |
+| создание (`init`) | запускается сбор `combine(машины, настройки, permissionGrants)` через `collectLatest`; машины — с `distinctUntilChanged`, настройки — только при смене `pushEnabled`, `reminderTime` или `distanceUnit`; на каждое значение план строится заново | `SyncRemindersUseCase` |
+| разрешение выдано | счётчик `permissionGrants` + 1 → план строится ещё раз | `SyncRemindersUseCase` |
+| в разрешении отказано | `pushEnabled = false` | `UpdateSettingsUseCase` |
 
-Следствия:
-
-- Разрешение запрашивается не на старте «в пустоту», а когда push включён и есть хотя бы одна машина: при запуске приложения с машинами, после добавления первой машины, после включения переключателя push в настройках.
-- Отказ выключает push в настройках. Если пользователь включит его снова, флаг опять станет `true` и запрос повторится.
-- Сбор для пересборки плана запущен в `viewModelScope` из `init` и от подписчиков не зависит; `themeMode` и `needsNotificationPermission` живут, пока есть подписчик, плюс 5 секунд.
+- Разрешение запрашивается, когда push включён и есть хотя бы одна машина: при запуске с машинами, после добавления первой, после включения push.
+- Отказ выключает push в настройках; повторное включение повторяет запрос.
+- Смена темы и открытие экранов машин план уведомлений не перестраивают.
 
 ### Запрос разрешения
 
@@ -158,258 +158,67 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 
 ### `carform` — форма авто
 
-Одна форма на два режима. `CarFormScreen(onBack, carId: String? = null)`: без `carId` — добавление (`Destination.AddCar`), с `carId` — правка (`Destination.EditCar`).
+Только добавление машины. `CarFormScreen(onBack)`.
 
-Экран (`CarFormContent`):
+- Поля машины: «Марка», «Пробег» (в выбранных единицах), «VIN» (верхний регистр, до 17 символов). Марка и пробег обязательны.
+- Чипы быстрых работ (`PresetChip`) — по `TaskPreset`; чип добавляет блок с названием, интервалом и окном в выбранных единицах, «Последний раз» не заполняет.
+- Блоки работ: название, интервал (единицы / мес), «Последний раз» и дата замены, «Напоминать за». Обязательные — название, интервал, «Последний раз» (0 допустим — работа ещё не проводилась). Блок сворачивается стрелкой рядом с корзиной: свёрнутый — название и «каждые N · последний раз M»; тап разворачивает. Новые блоки — развёрнутые; после добавления форма прокручивается к новому блоку.
+- Внизу в одну строку: «+ Добавить работу» (`OutlineButton`) и «Сохранить авто» (`PrimaryButton`, всегда активна).
+- Сохранение: пустые обязательные поля — красная рамка, свёрнутые блоки с ними разворачиваются, ничего не сохраняется. Без блоков подставляется работа по умолчанию («замена масла», интервал 10 000 км, окно 1 500 км, «последний раз» = введённый пробег). Повторные нажатия, пока идёт сохранение, игнорируются. Машина сохраняется через `AddCarUseCase`; при успехе `isSaved` закрывает экран.
 
-- `ScreenTopBar` с кнопкой «назад», `ScreenTitle`: `screen_add_car` или `screen_edit_car`.
-- Пока `isLoading = true`, под заголовком ничего не рисуется — ни полей, ни кнопки сохранения.
-- Поля машины: «Марка» (`AppTextField`), в одну строку «Пробег, км» (`AppNumberField`) и «VIN» (`AppTextField`). У подписей марки и пробега — звёздочка цвета `tierDue`.
-- Раздел работ: подпись `section_tasks` и счётчик блоков (`plurals tasks_added`, считает все блоки, включая незаполненные).
-- Чипы быстрых работ (`PresetChip` во `FlowRow`) — по одному на каждый `TaskPreset`.
-- Блоки работ (`TaskBlock`) в порядке добавления: заголовок `task_block_title` с порядковым номером, корзина, название, пары полей «интервал, км» / «интервал, мес» и «последний раз, км» / «дата последней замены», поле «напомнить за, км».
-- Пунктирная кнопка `action_add_custom_task` — добавить пустой блок.
-- `PrimaryButton` под прокручиваемой частью: `action_save_car` при добавлении, `action_save` при правке; активна, когда `canSave`.
-- `LaunchedEffect(isSaved, isMissing)`: при любом из флагов экран вызывает `onBack()`.
+`CarFormUiState`: `brand`, `mileageKm`, `vin`, `tasks: List<TaskBlockState>` (`key`, `fields: TaskFields`, `isCollapsed`), `showErrors`, `isSaved`, `distanceUnit`; вычисляемые `isBrandMissing`, `isMileageMissing`, `isValid`.
 
-`CarFormUiState` — все поля хранятся текстом, как ввёл пользователь; числа и даты разбираются только при сохранении.
+### `taskform` — экран одной работы
 
-| Поле | Тип | По умолчанию | Смысл |
-|---|---|---|---|
-| `brand` | `String` | `""` | марка |
-| `mileageKm` | `String` | `""` | пробег, только цифры |
-| `vin` | `String` | `""` | VIN |
-| `tasks` | `List<TaskBlockState>` | пусто | блоки работ |
-| `isEditing` | `Boolean` | `carId != null` | режим правки |
-| `isLoading` | `Boolean` | `carId != null` | `true`, пока читается правимая машина |
-| `isMissing` | `Boolean` | `false` | правимой машины нет |
-| `isSaved` | `Boolean` | `false` | сохранение прошло |
-| `canSave` | `Boolean` | вычисляемое | марка не пустая (`isNotBlank`) и пробег разбирается в число больше 0 |
+`TaskFormScreen(carId, taskId?, onBack)`: без `taskId` — «Новая работа», с ним — «Редактирование работы»; под заголовком — марка машины.
 
-`TaskBlockState`:
-
-| Поле | Тип | Смысл |
-|---|---|---|
-| `key` | `Int` | ключ блока в форме; выдаётся счётчиком `nextKey` во ViewModel |
-| `taskId` | `String?` | `id` сохранённой работы; `null` у блока, добавленного в форме |
-| `name` | `String` | название |
-| `intervalKm` | `String` | интервал по пробегу |
-| `intervalMonths` | `String` | интервал по времени |
-| `lastDoneKm` | `String` | пробег последнего выполнения |
-| `lastDoneDate` | `String` | дата последнего выполнения, `дд.мм.гггг` |
-| `reminderWindowKm` | `String` | окно напоминания |
-
-`TaskPreset` — готовые работы за чипами; название локализуется, поэтому его подставляет экран.
-
-| Пресет | Чип | Название работы | `intervalKm` | `reminderWindowKm` |
-|---|---|---|---|---|
-| `OIL` | `preset_oil` | `task_name_oil` | 10 000 | 1 500 |
-| `PADS` | `preset_pads` | `task_name_pads` | 30 000 | 3 000 |
-| `AIR_FILTER` | `preset_air_filter` | `task_name_air_filter` | 15 000 | 2 000 |
-| `TIMING_BELT` | `preset_timing_belt` | `task_name_timing_belt` | 60 000 | 5 000 |
-
-События `CarFormViewModel`:
-
-| Событие | Что происходит | Use case |
-|---|---|---|
-| создание с `carId` | один раз читается машина (`observeCarById(carId).first()`); нет машины → `isLoading = false`, `isMissing = true`; есть → форма заполняется, запоминаются исходный пробег и `id` исходных работ | `ObserveCarByIdUseCase` |
-| `onBrandChange(value)` | текст сохраняется как есть | — |
-| `onMileageChange(value)` | остаются только цифры, не больше 7 знаков | — |
-| `onVinChange(value)` | перевод в верхний регистр, обрезка до 17 символов | — |
-| `onTaskChange(task)` | блок с тем же `key` заменяется; в `intervalKm`, `intervalMonths`, `lastDoneKm`, `reminderWindowKm` остаются только цифры (до 7 знаков); `name` и `lastDoneDate` — как есть | — |
-| `onAddTask()` | в конец добавляется пустой блок | — |
-| `onAddPreset(preset, name)` | в конец добавляется блок с названием, интервалом и окном пресета; остальные поля пустые | — |
-| `onRemoveTask(key)` | блок удаляется из формы | — |
-| `onSave(defaultTaskName)` | см. ниже | зависит от режима |
-
-Заполнение формы при правке: марка, пробег, VIN (пустая строка вместо `null`), по блоку на каждую работу в порядке, в котором их отдал `ObserveCarByIdUseCase`; `intervalMonths` и `lastDoneDate` пустые, если в работе они `null`; дата — в виде `дд.мм.гггг`.
-
-#### Сохранение
-
-`onSave` ничего не делает, если пробег не разбирается в число, `canSave = false` или форма ещё грузится. Иначе в `viewModelScope` выполняется ветка режима; при успехе `isSaved = true`.
-
-Блок работы превращается в `NewMaintenanceTask` так:
-
-| Поле блока | Правило |
-|---|---|
-| `name`, `intervalKm` | название пустое, интервал не число или `≤ 0` → блок пропускается целиком |
-| `lastDoneKm` | не число (в том числе пусто) → `0` |
-| `reminderWindowKm` | не число → `null` (окно выставит `NormalizeTaskUseCase`) |
-| `intervalMonths` | не число → `null` |
-| `lastDoneDate` | `parseDisplayDate`; не разобралась → `null` |
-
-Добавление (`carId == null`):
-
-| Шаг | Что происходит | Use case |
-|---|---|---|
-| 1 | блоки превращаются в работы; пропущенные отбрасываются | — |
-| 2 | если годных работ не осталось, подставляется работа по умолчанию: название `defaultTaskName` (экран передаёт `task_name_oil`), интервал 10 000 км, `lastDoneKm` = введённый пробег, окно 1 500 км | — |
-| 3 | машина сохраняется; `null` в ответе → форма остаётся открытой | `AddCarUseCase` |
-
-Правка (`carId != null`) — порядок вызовов описан в `specs/domain.md` («Правка авто в форме»):
-
-| Шаг | Что происходит | Use case |
-|---|---|---|
-| 1 | марка и VIN; `false` в ответе → сохранение прерывается, форма остаётся открытой | `UpdateCarUseCase` |
-| 2 | пробег — только если он отличается от исходного | `UpdateMileageUseCase` |
-| 3 | работы, чьих блоков в форме больше нет | `DeleteTaskUseCase` |
-| 4 | блоки с `taskId` | `UpdateTaskUseCase` |
-| 5 | блоки без `taskId` | `AddTaskUseCase` |
-
-Пропущенный блок существующей работы оставляет её без изменений. Работа по умолчанию при правке не подставляется. Результаты шагов 2–5 не проверяются.
+- Поля — те же, что у блока работы (`TaskFields`), с теми же обязательными. У новой работы сверху чипы пресетов.
+- Новая работа: «Сохранить» сохраняет и закрывает экран; «Добавить ещё» сохраняет и показывает пустую форму (`formKey` меняется — экран прокручивается вверх). Повторные нажатия, пока идёт сохранение, игнорируются.
+- Правка: в топ-баре корзина → `ConfirmDialog` «Удалить работу?»; записи истории остаются.
+- Нетронутое поле расстояния сохраняет прежние километры (`keepKm`).
+- Use case-ы: `ObserveCarByIdUseCase`, `ObserveSettingsUseCase`, `AddTaskUseCase`, `UpdateTaskUseCase`, `DeleteTaskUseCase`. `isClosed` закрывает экран: работа сохранена или удалена, машины или работы нет.
 
 ### `cardetail` — экран машины
 
-Работы машины по срочности, быстрая правка пробега, отметка «выполнено», удаление машины. `CarDetailScreen(carId, onBack, onOpenHistory, onEditCar)`.
+`CarDetailScreen(carId, onBack, onOpenHistory, onAddTask, onOpenTask)`.
 
-Экран (`CarDetailContent`):
+- **Топ-бар:** «назад», часы (вкладка «История» с этой машиной), корзина (удаление).
+- **Шапка:** марка и VIN с пунктирным подчёркиванием; между ними отступ 10 dp.
+- **Правка на месте** (`InlineEditField`): марка, VIN и пробег по тапу превращаются в поле с галочкой. Одно поле за раз; сохраняет только галочка; тап мимо — по другому полю, карточке, кнопке или пустому месту — отменяет правку. У марки и пробега галочка неактивна, пока поле пустое.
+- **Карточка пробега** закреплена над списком работ: подпись «Пробег», крупное число (тап — ручной ввод), справа кольцо статусов `StatusDonut` (дуги «просрочено», «пора менять», «в порядке», в центре «N/M» цветом худшего статуса); под числом «−», множитель «×1 ×2 ×5 ×10» и «+», подсказка «Шаг N · тап по числу — ввести вручную». Шаг — 100 выбранных единиц × множитель, сохраняется сразу; пробег не опускается ниже нуля. Шаги и ручной ввод применяются по очереди (`Mutex`), каждый — к пробегу, сохранённому на этот момент; пока открыт ручной ввод, кнопки шага неактивны. После любого изменения пробега список работ плавно прокручивается в начало.
+- **Карточка работы:** крупный остаток цветом статуса с подписью «осталось» / «просрочено», `StatusChip`, иконка (`taskIcon` по названию), название, строка «каждые N» и «или M мес» / «время истекло», `ProgressBar` и галочка в кружке. Тап по карточке — экран работы.
+- **Порядок работ** — `SortedTaskStatsUseCase`; пересчитывается после любого изменения.
+- **Отметка:** пустой кружок открывает `TaskDoneDialog` (сервис, стоимость, комментарий — необязательные); «Сохранить» вызывает `MarkTaskDoneUseCase`. Заполненный зелёный кружок — работа отмечена (`DoneMarksUseCase`); нажатие открывает окно снятия отметки (`ConfirmDialog` с акцентной кнопкой), «Ok» вызывает `UnmarkTaskDoneUseCase`.
+- **Удаление машины:** `ConfirmDialog` «Удалить {марка}?», текст — машина и работы удаляются, история остаётся в «Истории» с пометкой «продано», полностью удалить можно в настройках; «Удалить» вызывает `DeleteCarUseCase`, `isMissing` закрывает экран.
+- Открытие экрана запоминает машину как последнюю открытую (`RecordCarOpenedUseCase`).
 
-- `ScreenTopBar`: «назад» и три `AppIconButton` — часы (история), карандаш (правка машины), корзина (удаление). Шапка рисуется всегда, остальное — только когда `car != null`.
-- `ScreenTitle`: марка; подзаголовок моноширинным шрифтом — `vin_label` с VIN или прочерком `vin_missing`.
-- Два `StatCard` в строку:
-  - «Пробег» — иконка `Gauge`, пробег в выбранных единицах с разбивкой по разрядам (без подписи единиц) и маленький карандаш; в режиме правки — `InlineEditField`, заполненный текущим пробегом в километрах;
-  - «Скоро / просрочено» — `count_of_total` («N из M»), цвет по `worstStatus`.
-- Список работ `LazyColumn` с разделителями: плитка с иконкой, название, строка-сводка, `StatusChip`, `ProgressBar` (доля `progress`, цвет по статусу) и кнопка `action_mark_done`. Ключ элемента — `id` работы.
-- Нет работ — текст `tasks_empty` по центру.
-- `ConfirmDialog` удаления — когда `isConfirmingDelete` и `car != null`: заголовок `dialog_delete_car_title` с маркой, текст `dialog_delete_car_text`, кнопки `action_cancel` / `action_delete`.
-- `LaunchedEffect(isMissing)`: машины нет → `onBack()`.
+`CarDetailUiState`: `isLoading`, `car: CarDetails?` (`brand`, `vin`, `mileageKm`, `dueCount`, `soonCount`, `taskCount`, `tasks: List<TaskItem>`), `distanceUnit`, `editingField: EditableField?` (`BRAND`, `VIN`, `MILEAGE`), `isConfirmingDelete`, `taskDoneDialog: TaskItem?`, `isConfirmingUnmark`, `mileageMultiplier`; вычисляемое `isMissing`. `TaskItem` — `id`, `name`, `intervalKm`, `remainingKm`, `remainingMonths`, `status`, `progress`, `isDone`.
 
-Строка-сводка работы (`taskMetaText`) — части через « · »:
-
-| Часть | Условие | Ресурс |
-|---|---|---|
-| остаток по пробегу | `remainingKm > 0` | `task_remaining` с расстоянием |
-| просрочка по пробегу | `remainingKm ≤ 0` | `task_overdue_by` с `−remainingKm` |
-| остаток по времени | `remainingMonths > 0` | `task_or_months` |
-| срок по времени вышел | `remainingMonths ≤ 0` | `task_time_expired` |
-| интервал | всегда | `task_every` с `intervalKm` |
-
-Части о времени нет, если `remainingMonths == null`. Все расстояния — через `distanceText` в выбранных единицах.
-
-Иконка работы (`TaskIcon.kt`, `taskIcon(taskName)`) подбирается по подстроке в названии без учёта регистра, первое совпадение сверху вниз:
-
-| Ключевые подстроки | Иконка |
-|---|---|
-| `масл`, `oil`, `aceite` | `ItsTime4ServiceIcons.Droplet` |
-| `колод`, `тормоз`, `brake`, `pad`, `freno`, `pastilla` | `ItsTime4ServiceIcons.Disc` |
-| `фильтр`, `filter`, `filtro` | `ItsTime4ServiceIcons.Filter` |
-| остальное | `ItsTime4ServiceIcons.Wrench` |
-
-`CarDetailUiState`:
-
-| Поле | Тип | По умолчанию | Смысл |
-|---|---|---|---|
-| `isLoading` | `Boolean` | `true` | `true` до первого значения из базы |
-| `car` | `CarDetails?` | `null` | `null` при загрузке и после удаления машины |
-| `distanceUnit` | `DistanceUnit` | `KILOMETERS` | единицы показа |
-| `isEditingMileage` | `Boolean` | `false` | поле пробега в режиме правки |
-| `isConfirmingDelete` | `Boolean` | `false` | открыт диалог удаления |
-| `isMissing` | `Boolean` | вычисляемое | `!isLoading && car == null` — сигнал закрыть экран |
-
-`CarDetails`:
-
-| Поле | Тип | Смысл |
-|---|---|---|
-| `brand` | `String` | марка |
-| `vin` | `String?` | VIN |
-| `mileageKm` | `Int` | пробег в км |
-| `alertCount` | `Int` | `CarAlerts.total` |
-| `taskCount` | `Int` | `CarAlerts.taskCount` |
-| `worstStatus` | `TaskStatus` | `CarAlerts.worstStatus` |
-| `tasks` | `List<TaskItem>` | работы в порядке `SortedTaskStatsUseCase` |
-
-`TaskItem`:
-
-| Поле | Тип | Смысл |
-|---|---|---|
-| `id` | `String` | идентификатор работы |
-| `name` | `String` | название |
-| `intervalKm` | `Int` | интервал по пробегу |
-| `remainingKm` | `Int` | остаток; отрицательный при просрочке |
-| `remainingMonths` | `Int?` | остаток по времени; `null`, если срока по времени нет |
-| `status` | `TaskStatus` | статус |
-| `progress` | `Float` | доля пройденного интервала |
-
-События `CarDetailViewModel`:
-
-| Событие | Что происходит | Use case |
-|---|---|---|
-| `combine(observeCarById(carId), observeSettings(), isEditingMileage, isConfirmingDelete)` | состояние собирается заново; для машины считаются сводка и отсортированные работы на сегодняшнюю дату | `ObserveCarByIdUseCase`, `ObserveSettingsUseCase`, `GetTodayUseCase`, `CarAlertsUseCase`, `SortedTaskStatsUseCase` |
-| `onEditMileage()` | `isEditingMileage = true` | — |
-| `onSaveMileage(text)` | текст обрезается по краям и разбирается в `Int`; число → вызов use case-а; затем в любом случае `isEditingMileage = false` | `UpdateMileageUseCase` |
-| `onMarkTaskDone(taskId)` | работа отмечается выполненной сегодняшней датой, сразу, без подтверждения | `GetTodayUseCase`, `MarkTaskDoneUseCase` |
-| `onDeleteRequest()` | `isConfirmingDelete = true` | — |
-| `onDeleteDismiss()` | `isConfirmingDelete = false` | — |
-| `onDeleteConfirm()` | диалог закрывается, машина удаляется; после этого `observeCarById` отдаёт `null` → `isMissing` → экран закрывается | `DeleteCarUseCase` |
-
-Пробег в поле правки вводится в километрах при любых единицах показа. Текст, который не разбирается в число, и значение, отклонённое `UpdateMileageUseCase` (`≤ 0`), молча закрывают поле без изменений. Сам `InlineEditField` ввод не фильтрует — только включает цифровую клавиатуру.
+Источник состояния — `combine(observeCarById(carId), observeHistory(carId), observeSettings(), overlay)`; `isDone` считается `DoneMarksUseCase` по истории машины.
 
 ### `history` — история ТО
 
-Журнал одной машины, только чтение. `HistoryScreen(carId, onBack)`.
+`HistoryScreen(initialCarId?)` — вкладка верхнего уровня, без «назад». Записи всех машин, в том числе проданных (`ObserveAllHistoryUseCase`).
 
-Экран (`HistoryContent`):
+- **Выбор машины** вверху на всю ширину: «Все авто», затем действующие машины, затем проданные — серым, с пометкой «[продано]». По умолчанию — «Все авто» или `initialCarId`, если экран открыт с машины.
+- **Фильтр** — кнопка справа от выбора машины, подсвечена акцентом и точкой, пока фильтр активен. Окно: период «с — по», поиск по названию работы, пробег «с — по» в выбранных единицах; «Сбросить», «Применить»; тап по затемнению закрывает без изменений. Дата, которая не разбирается, не даёт применить фильтр и подсвечивается. Условия объединяются по «и»; поиск — подстрока без учёта регистра.
+- **Группировка:** от новых к старым, по годам и месяцам. Год — разделитель с числом по центру и линиями, закреплённый у верха списка (`stickyHeader`). Месяц — рамка фона `surface` с подписью месяца (без года) в разрыве верхней линии; записи месяца внутри рамки разделены линией. Месяцы без записей не показываются.
+- **Карточка записи:** название работы и дата; строка «авто · пробег · стоимость · сервис» (машина — только в режиме «Все авто», проданная — серым, с пометкой); под ней комментарий, если есть.
+- **Окно записи** по тапу: заголовок — название работы, под ним машина. Поля: «Дата» и «Пробег» (обязательные; несуществующая дата и пробег `≤ 0` — красная рамка), «Где обслуживались», «Сколько стоило, ₽», «Комментарий». «Сохранить» вызывает `UpdateHistoryEntryUseCase`; нетронутый пробег сохраняет прежние километры.
+- Пустые состояния: записей нет вообще — `history_empty`; под фильтр ничего не попало — «Ничего не найдено — измените фильтр».
 
-- `ScreenTopBar` с «назад»; `ScreenTitle`: `screen_history`, подзаголовок моноширинным — марка машины.
-- Список `LazyColumn` с разделителями. Строка: название работы и дата `дд.мм.гггг`; под ними моноширинная строка из частей через три пробела — пробег (`distanceText`), стоимость (`cost_rub` с разбивкой по разрядам, если `costRub != null`), название сервиса (если есть). Ключ элемента — `id` записи.
-- Пустой журнал после загрузки — текст `history_empty`. Пока `isLoading = true`, пустое состояние не показывается.
-
-`HistoryUiState`:
-
-| Поле | Тип | По умолчанию | Смысл |
-|---|---|---|---|
-| `isLoading` | `Boolean` | `true` | `true` до первого значения |
-| `brand` | `String` | `""` | марка; пустая строка, если машины нет |
-| `entries` | `List<ServiceHistoryEntry>` | пусто | записи, новые сверху (порядок задаёт `ObserveHistoryUseCase`) |
-| `distanceUnit` | `DistanceUnit` | `KILOMETERS` | единицы показа |
-
-`HistoryViewModel` входящих событий не имеет.
-
-| Источник | Что происходит | Use case |
-|---|---|---|
-| `combine(observeCarById(carId), observeHistory(carId), observeSettings())` | состояние собирается заново при изменении машины, журнала или настроек | `ObserveCarByIdUseCase`, `ObserveHistoryUseCase`, `ObserveSettingsUseCase` |
-
-Записи появляются только как побочный результат «отметить выполненной» на экране машины. Добавить, изменить или удалить запись с этого экрана нельзя.
+`HistoryUiState`: `isLoading`, `cars: List<HistoryCar>` (`id`, `brand`, `isSold`), `selectedCarId`, `isCarMenuOpen`, `filter`, `filterDraft` (открыто окно фильтра), `years: List<HistoryYear>` → `months: List<HistoryMonth>` → `rows: List<HistoryRow>` (`entry`, `car`), `hasEntries`, `entryForm: HistoryEntryForm?`, `distanceUnit`.
 
 ### `settings` — настройки
 
-Каждое изменение сохраняется сразу; кнопки «Сохранить» нет.
+Каждое изменение сохраняется сразу; кнопки «Сохранить» нет. Изменения идут через `UpdateSettingsUseCase` с функцией изменения — каждое применяется к сохранённым на этот момент настройкам.
 
-Экран (`SettingsContent`):
+- **Тема** — `SegmentedControl` `LIGHT` / `DARK` / `SYSTEM`. **Единицы** — `KILOMETERS` / `MILES`.
+- **Запуск** (между единицами и уведомлениями; без действующих машин группы нет): «Открывать по умолчанию» с `AppSwitch` и подписью — выключен: «Сейчас при запуске открывается последнее открытое авто», включён: «При запуске открывается выбранное авто». Включённый показывает список действующих машин (марка, пробег, радиокнопка). Переключение и выбор — `SetDefaultCarUseCase`.
+- **Уведомления:** push (`AppSwitch`), `NotificationPreviewCard` (статичный пример), «Напоминать заранее» — `Stepper` в тысячах выбранных единиц, 1–9; «Время напоминаний» — `TimePickerDialog`.
+- **Удаление авто** (последний раздел; без машин раздела нет): пояснение — машина удаляется полностью, с работами и всей историей. Список всех машин: действующие (марка, пробег), затем проданные (марка серым, подпись «продано»), у каждой корзина → `ConfirmDialog` «Удалить {марка} полностью?» → `PurgeCarUseCase`.
 
-- `ScreenTitle` с `screen_settings`. Пока `settings == null`, под заголовком пусто.
-- Группа «Тема»: `SegmentedControl` из трёх вариантов в порядке `LIGHT`, `DARK`, `SYSTEM`.
-- Группа «Единицы измерения»: `SegmentedControl` из `KILOMETERS`, `MILES`.
-- Группа «Уведомления»:
-  - строка с колокольчиком и `AppSwitch` — push;
-  - `NotificationPreviewCard` — статичный пример: заголовок `app_name`, время `notification_time_now`, текст `notification_sample_full`, подпись `notification_caption`;
-  - строка «Напоминать заранее» со `Stepper` в тысячах км, от 1 до 9; значение — `defaultReminderWindowKm / 1000`;
-  - строка «Время напоминаний» — кликабельная, справа время `ЧЧ:ММ`.
-- `TimePickerDialog` — когда `isPickingReminderTime` и настройки загружены: заголовок `settings_reminder_time`, текст `reminder_time_dialog_text`, начальное время — `settings.reminderTime`.
-
-`SettingsUiState`:
-
-| Поле | Тип | По умолчанию | Смысл |
-|---|---|---|---|
-| `settings` | `Settings?` | `null` | `null` только до прихода настроек из базы |
-| `isPickingReminderTime` | `Boolean` | `false` | открыт диалог выбора времени |
-
-События `SettingsViewModel`:
-
-| Событие | Что происходит | Use case |
-|---|---|---|
-| `combine(observeSettings(), isPickingReminderTime)` | состояние собирается заново | `ObserveSettingsUseCase` |
-| `onThemeSelect(themeMode)` | сохраняется копия настроек с новой темой | `UpdateSettingsUseCase` |
-| `onUnitSelect(distanceUnit)` | то же с единицами | `UpdateSettingsUseCase` |
-| `onPushToggle(enabled)` | то же с `pushEnabled` | `UpdateSettingsUseCase` |
-| `onReminderWindowChange(thousandKm)` | `defaultReminderWindowKm = thousandKm × 1 000` (`SettingsViewModel.KM_PER_STEP`) | `UpdateSettingsUseCase` |
-| `onReminderTimeClick()` | `isPickingReminderTime = true` | — |
-| `onReminderTimeDismiss()` | `isPickingReminderTime = false` | — |
-| `onReminderTimeChange(time)` | диалог закрывается, сохраняется новое `reminderTime` | `UpdateSettingsUseCase` |
-
-Все сохранения идут через приватный `update(change)`: берётся `state.value.settings`; пока оно `null`, событие игнорируется.
-
-Что происходит дальше, экран настроек не знает: смену темы подхватывает `AppViewModel.themeMode`, смену единиц — состояния остальных экранов, включение push — `needsNotificationPermission`, а любое изменение настроек — пересборка плана напоминаний.
+`SettingsUiState`: `settings`, `isPickingReminderTime`, `cars` (действующие), `openDefault`, `defaultCarId` (если выбранной машины нет — первая), `purgeCars` (все, проданные в конце), `purgeCar`; вычисляемое `reminderSteps`.
 
 ## Общий UI
 
@@ -432,7 +241,7 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 | `accent` | `#0EA5B7` | то же | акцент |
 | `onAccent` | `#FFFFFF` | то же | текст и иконки на акценте |
 | `tierOk` | `#1FAB8C` | то же | статус «в норме» |
-| `tierSoon` | `#E2922E` | то же | статус «скоро» |
+| `tierSoon` | `#E2922E` | то же | статус «пора менять» |
 | `tierDue` | `#E34B3F` | то же | статус «просрочено», опасные действия |
 | `onTier` | `#FFFFFF` | то же | текст на цвете статуса |
 
@@ -460,68 +269,68 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 
 ### Компоненты
 
-`ui/components/`. Компоненты не знают о domain-моделях (кроме `LocalTime` в `TimePickerDialog`) и о ViewModel-ах.
+`ui/components/`. Компоненты не знают о domain-моделях (кроме `LocalTime` в `TimePickerDialog`) и о ViewModel-ах. Каждый публичный компонент имеет пару `@Preview` в светлой и тёмной теме (`ComponentPreview`).
 
 | Группа | Компонент | Назначение |
 |---|---|---|
-| `buttons` | `AppIconButton` | круглая второстепенная кнопка с иконкой: назад, история, правка, удаление |
-| `buttons` | `Fab` | круглая акцентная плавающая кнопка — главное действие списка |
-| `buttons` | `PresetChip` | пунктирная «пилюля» с «+ название» — быстрая работа в форме |
-| `buttons` | `PrimaryButton` | основная акцентная кнопка; выключенная — полупрозрачная |
-| `buttons` | `SegmentedControl` | группа взаимоисключающих вариантов: тема, единицы |
-| `buttons` | `TabBarItem` | пункт нижнего таб-бара: иконка и подпись, акцентный, когда выбран |
-| `fields` | `FieldBox` | `internal`; общая «коробка» всех полей: заливка `surface2`, рамка `rule`, плейсхолдер, одна строка |
-| `fields` | `AppTextField` | текстовое поле |
-| `fields` | `AppNumberField` | числовое поле моноширинным шрифтом с цифровой клавиатурой; необязательная подпись единиц справа |
-| `fields` | `LabeledMiniField` | компактное поле с подписью сверху — поля блока работы |
-| `fields` | `InlineEditField` | числовое поле с акцентной кнопкой-галочкой — быстрая правка пробега |
-| `steppers` | `Stepper` | «−  значение  +» с шагом и границами; кнопка у границы выключается |
-| `indicators` | `StatusTier` | перечисление `Ok`, `Soon`, `Due` с цветом (`color`) и подписью (`label`) |
-| `indicators` | `StatusChip` | залитая «пилюля» с названием статуса |
-| `indicators` | `GaugeRing` | кольцо на карточке машины: заполненная доля и число в центре |
-| `indicators` | `ProgressBar` | тонкая полоса прогресса; цвет — по переданному `tier` или по доле (до 60 % — ok, до 90 % — soon, выше — due) |
-| `indicators` | `AppSwitch` | переключатель вкл/выкл |
-| `cards` | `ListRowCard` | карточка-строка: плитка с иконкой, заголовок, подзаголовок, слот справа |
-| `cards` | `StatCard` | блок показателя с подписью капсом; две перегрузки — со своим содержимым и с одним крупным значением |
-| `cards` | `NotificationPreviewCard` | статичная имитация push-уведомления |
-| `dialogs` | `ConfirmDialog` | модальное подтверждение опасного действия: иконка, заголовок, текст, две кнопки; подтверждение цвета `tierDue` |
-| `dialogs` | `TimePickerDialog` | выбор времени суток двумя `Stepper`-ами: часы с шагом 1, минуты с шагом 5, оба по кругу |
-| `screen` | `ScreenTopBar` | `internal`; верхняя строка экрана: «назад» слева, действия справа |
-| `screen` | `ScreenTitle` | `internal`; заголовок экрана с необязательным подзаголовком (обычным или моноширинным) |
-| — | `ComponentPreview`, `ScreenPreview` | `internal`; обёртки для `@Preview`: тема и фон |
+| `buttons` | `AppIconButton` | круглая второстепенная кнопка с иконкой |
+| `buttons` | `Fab` | круглая акцентная плавающая кнопка |
+| `buttons` | `PresetChip` | пунктирная «пилюля» с «+ название» — быстрая работа |
+| `buttons` | `PrimaryButton` | основная акцентная кнопка |
+| `buttons` | `OutlineButton` | вторичное действие рядом с `PrimaryButton`: текст и рамка `accent`, фон `bg` |
+| `buttons` | `SegmentedControl` | взаимоисключающие варианты: тема, единицы, множитель шага |
+| `buttons` | `TabBarItem` | пункт таб-бара: иконка и подпись |
+| `fields` | `FieldBox` | `internal`; общая «коробка» полей: заливка `surface2`, рамка `rule`, с `isError` — `tierDue` |
+| `fields` | `FieldLabel` | подпись поля капсом; у обязательного — красная звёздочка |
+| `fields` | `AppTextField`, `AppNumberField`, `LabeledMiniField` | текстовое, числовое и компактное поле с подписью; все с `isError` |
+| `fields` | `InlineEditField` | поле правки на месте с галочкой; галочка неактивна, пока `canSave` ложно |
+| `steppers` | `Stepper` | «−  значение  +» с шагом и границами |
+| `indicators` | `StatusTier` | `Ok`, `Soon`, `Due` с цветом и подписью |
+| `indicators` | `StatusChip` | «пилюля» с названием статуса |
+| `indicators` | `GaugeRing` | кольцо на карточке в списке машин: доля и число в центре |
+| `indicators` | `StatusDonut` | кольцо статусов на карточке пробега: дуги по статусам, «N/M» в центре |
+| `indicators` | `ProgressBar` | тонкая полоса прогресса цвета статуса |
+| `indicators` | `AppSwitch` | переключатель |
+| `cards` | `ListRowCard`, `StatCard`, `NotificationPreviewCard` | карточка-строка, блок показателя, имитация уведомления |
+| `dialogs` | `DialogCard` | оболочка модального окна: иконка, заголовок, текст, содержимое |
+| `dialogs` | `ConfirmDialog` | подтверждение действия; кнопка `tierDue` или акцентная |
+| `dialogs` | `TaskDoneDialog` | окно «Работа выполнена»: сервис, стоимость, комментарий |
+| `dialogs` | `TimePickerDialog` | время суток двумя `Stepper`-ами: часы шаг 1, минуты шаг 5 |
+| `screen` | `ScreenTopBar`, `ScreenTitle` | `internal`; верхняя строка экрана и заголовок с подзаголовком |
+| — | `ComponentPreview`, `ScreenPreview` | `internal`; обёртки для `@Preview` |
 
-### Форматирование
+### Форматирование и ввод
 
-`ui/format/Formatting.kt`:
+`ui/format/`:
 
-| Функция | Что делает |
-|---|---|
-| `Int.grouped(): String` | разбивает число на тройки разрядов неразрывным пробелом; знак «−» сохраняется |
-| `Int.kmIn(unit): Int` | километры → единицы показа: для `MILES` делит на 1.609344 и округляет до целого |
-| `@Composable distanceText(km, unit): String` | расстояние с единицей: ресурс `mileage_km` или `distance_mi` с `km.kmIn(unit).grouped()` |
-| `LocalDate.toDisplayText(): String` | дата `дд.мм.гггг` |
-| `LocalTime.toDisplayText(): String` | время `ЧЧ:ММ` |
-| `parseDisplayDate(text): LocalDate?` | обратный разбор `дд.мм.гггг`; три числа через точку, иначе `null`; несуществующая дата → `null` |
+| Что | Где | Что делает |
+|---|---|---|
+| `Int.grouped()` | `Formatting.kt` | тройки разрядов через неразрывный пробел |
+| `Int.kmIn(unit)` / `Int.kmFrom(unit)` | `Formatting.kt` | км → единицы показа (`round(км / 1.609344)` для миль) и обратно (`round(мили × 1.609344)`) |
+| `keepKm(originalKm, typed, unit)` | `Formatting.kt` | если введённое число равно показанному, возвращает прежние километры — нетронутое поле не пересчитывается |
+| `distanceText(km, unit)`, `unitLabel`, `unitGenitive` | `Formatting.kt` | расстояние с единицей и подписи единиц из ресурсов |
+| `LocalDate.toDisplayText()`, `LocalTime.toDisplayText()` | `Formatting.kt` | `дд.мм.гггг`, `ЧЧ:ММ` |
+| `DateInputFormat` | `DateInput.kt` | ввод даты только цифрами (до 8), разделители рисует `VisualTransformation`; формат по языку: русский `дд.мм.гггг`, испанский `dd/mm/aaaa`, английский `mm/dd/yyyy`; `parse` — несуществующая дата → `null` |
+| `TaskFields` | `TaskFields.kt` | поля работы текстом для формы авто и экрана работы; обязательные — название, интервал, «Последний раз»; `toNewTask(unit, original)` с `keepKm` |
+| `TaskPreset` | `TaskPreset.kt` | `OIL` 10 000 / 1 500, `PADS` 30 000 / 3 000, `AIR_FILTER` 15 000 / 2 000, `TIMING_BELT` 60 000 / 5 000 км (интервал / окно); название и подпись чипа — из ресурсов |
+| `TaskStatus.toTier()` | `StatusTierMapper.kt` | `OK` → `Ok`, `SOON` → `Soon` («Пора менять»), `DUE` → `Due` |
 
-Данные всегда хранятся в километрах; перевод в мили — только при показе. Формат даты и разделитель разрядов от языка не зависят.
+### Единицы расстояния
 
-`ui/format/StatusTierMapper.kt` — единственное место, где domain-статус превращается в статус ui-kit:
-
-| `TaskStatus` | `StatusTier` | Цвет | Подпись |
-|---|---|---|---|
-| `OK` | `Ok` | `tierOk` | `status_ok` |
-| `SOON` | `Soon` | `tierSoon` | `status_soon` |
-| `DUE` | `Due` | `tierDue` | `status_due` |
+Все расстояния в моделях и базе — в километрах. При выбранных милях в милях показывается и вводится всё: списки, карточка машины, работы, история, окна, списки в настройках, пример уведомления и сами уведомления. Подписи полей следуют за единицами («Пробег, км» / «Пробег, мили»). Поле открывается со значением в выбранных единицах; нетронутое поле при сохранении не пересчитывается (`keepKm`), иначе сдвиг на километр снимал бы отметку о выполнении. Шаг «напоминать заранее» — тысячи выбранных единиц.
 
 ### Иконки
 
-`ui/icons/ItsTime4ServiceIcons.kt` — объект-обёртка над набором Lucide. Экраны и компоненты обращаются только к `ItsTime4ServiceIcons.*`, чтобы источник иконок можно было сменить в одном месте. 17 иконок: `Car`, `Gauge`, `Droplet`, `Disc`, `Filter`, `Wrench`, `Gear` (`Lucide.Settings`), `Clock`, `Check`, `ChevronLeft`, `Pencil`, `Trash` (`Lucide.Trash2`), `Bell`, `Plus`, `Minus`, `Sun`, `MoonToggle` (`Lucide.Moon`).
+`ui/icons/ItsTime4ServiceIcons.kt` — объект-обёртка над набором Lucide; экраны и компоненты обращаются только к нему. 18 иконок: `Car`, `Gauge`, `Droplet`, `Disc`, `Filter`, `Wrench`, `Gear` (`Lucide.Settings`), `Clock`, `Check`, `ChevronLeft`, `ChevronDown`, `Pencil`, `Trash` (`Lucide.Trash2`), `Bell`, `Plus`, `Minus`, `Sun`, `MoonToggle` (`Lucide.Moon`).
+
+Иконка работы (`features/cardetail/TaskIcon.kt`, `taskIcon(name)`) подбирается по подстроке названия без учёта регистра: `масл`/`oil`/`aceite` → `Droplet`; `колод`/`тормоз`/`brake`/`pad`/`freno`/`pastilla` → `Disc`; `фильтр`/`filter`/`filtro` → `Filter`; остальное → `Wrench`.
 
 ### Локализация
 
 Строки — в ресурсах Compose Multiplatform: `shared/src/commonMain/composeResources/values/strings.xml` (английский, по умолчанию), `values-ru/`, `values-es/`. Набор ключей во всех трёх файлах одинаковый. Язык выбирает система; переключателя языка в приложении нет.
 
 - Множественные формы — `plurals`: `cars_count`, `tasks_added`.
+- Названия месяцев для истории — отдельные строки на трёх языках.
 - Строки с подстановкой — `%1$s` / `%1$d`: расстояния (`mileage_km`, `distance_mi`), `count_of_total`, `vin_label`, `task_*`, `dialog_delete_car_title`, `cost_rub`, `task_block_title`, `notification_reminder_text`.
 - Названия быстрых работ (`task_name_*`) берутся из ресурсов в момент добавления и сохраняются в базу уже текстом на языке устройства.
 - Часть строк читает и data-слой — для текста уведомлений (см. `specs/data.md`).
@@ -531,222 +340,37 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 
 `di/FeatureModule.kt`, модуль `featureModule`:
 
-| ViewModel | Регистрация | Параметр |
+| ViewModel | Регистрация | Параметры |
 |---|---|---|
-| `AppViewModel` | `viewModelOf(::AppViewModel)` | — |
-| `CarsViewModel` | `viewModelOf(::CarsViewModel)` | — |
-| `CarFormViewModel` | `viewModel { params -> CarFormViewModel(params.getOrNull(), get(), …) }` | `carId: String?` |
+| `AppViewModel`, `CarsViewModel`, `CarFormViewModel`, `SettingsViewModel` | `viewModelOf(::…)` | — |
 | `CarDetailViewModel` | `viewModelOf(::CarDetailViewModel)` | `carId: String` |
-| `HistoryViewModel` | `viewModelOf(::HistoryViewModel)` | `carId: String` |
-| `SettingsViewModel` | `viewModelOf(::SettingsViewModel)` | — |
+| `HistoryViewModel` | `viewModel { params -> HistoryViewModel(params.values.firstOrNull() as String?, …) }` | `initialCarId: String?` |
+| `TaskFormViewModel` | `viewModel { params -> TaskFormViewModel(params.get(0), params.values.getOrNull(1) as String?, …) }` | `carId: String`, `taskId: String?` |
 
-- Экран получает ViewModel значением параметра по умолчанию: `viewModel: XxxViewModel = koinViewModel()`.
-- `carId` передаётся как параметр Koin: `koinViewModel { parametersOf(carId) }`. Для `CarDetailViewModel` и `HistoryViewModel` Koin сам подставляет строку в конструктор; у `CarFormViewModel` параметр может быть `null`, поэтому фабрика написана явно через `params.getOrNull()`.
-- Use case-ы приходят из `domainModule` (все — `factoryOf`).
-- Модуль подключается в `initKoin` вместе с `domainModule`, `dataModule`, `platformModule` (см. `specs/data.md`).
-
-## Согласованные изменения (этап 8а)
-
-Всё в этом разделе согласовано и нарисовано в макете `docs/index.html`. **Шаг 2 этапа 8а (вёрстка) сделан**: экраны работают так, как описано ниже, кроме мест, помеченных как заглушки или перенесённые на шаг 3. Остальная часть документа ещё описывает код до этапа 8а; раздел будет перенесён в основное описание на шаге 3, когда уйдут заглушки.
-
-Заглушки и переносы после шага 2:
-
-| Где | Как сейчас |
-|---|---|
-| История | проданных авто нет — удаление авто пока удаляет историю |
-| Окно удаления на карточке авто | прежний текст: история удаляется вместе с авто |
-| Настройки, «Удаление авто» | проданных авто в списке нет; удаление то же, что с карточки |
-
-Отличия от описанного ниже: маршрут новой работы — `cars/{carId}/new-task`, маршрут истории — `history?carId={carId}`. Остальной документ описывает код как есть. Порядок работ и отметки о готовности — в блоке «Этап 8а» в `dev_plan.md`. Имена новых классов и маршрутов предварительные.
-
-### Экраны макета
-
-| Экран макета | Что показывает |
-|---|---|
-| 03 · Регламентные работы | новый экран авто: без карандаша, FAB «+», название, VIN и пробег с пунктирным подчёркиванием |
-| 07 · Редактирование работы | экран одной работы, заполненный; корзина в топ-баре |
-| 09 · Незаполненные поля | форма авто с красными рамками у пустых обязательных полей |
-| 10 · Работа выполнена | окно с сервисом, стоимостью и комментарием |
-| 11 · Снятие отметки | окно подтверждения снятия отметки |
-| 12 · Новая работа | экран одной работы, пустой, с чипами пресетов |
-| 13 · Название и VIN | название авто в режиме правки на месте |
-| 04 · История ТО | записи, сгруппированные по годам и месяцам |
-| 14 · Запись истории | окно одной записи с правкой даты, пробега, сервиса, стоимости и комментария |
-| 04 · История ТО, 16–18 | общая история: все авто, выбор авто, фильтр, проданное авто |
-| 05 · Настройки, 15 · Открывать по умолчанию | группа «Запуск»: пункт выключен и включён со списком авто |
-
-### Навигация
-
-- Маршрут `EditCar` (`cars/{carId}/edit`) убирается вместе с режимом правки в форме авто.
-- Добавляются два маршрута экрана работы: новая работа машины и правка существующей (`cars/{carId}/tasks/new`, `cars/{carId}/tasks/{taskId}`).
-- Экран авто открывает их по FAB и по тапу на строку работы; после сохранения или удаления экран работы закрывается.
-- История становится маршрутом верхнего уровня без `carId` (сейчас `cars/{carId}/history`) и получает вкладку в нижнем меню. Вкладок три, в порядке «История», «Авто», «Настройки», у каждой иконка; таб-бар показывается на всех трёх. Стартовый маршрут остаётся `Cars`.
-- Кнопка-часы на карточке авто переключает на вкладку «История» с уже выбранным этим авто, а не открывает отдельный экран поверх карточки.
-
-### Авто при запуске
-
-- При запуске приложение открывает карточку авто поверх списка: «назад» с неё ведёт в список авто.
-- Какое авто: если в настройках включён пункт «Открывать по умолчанию» — выбранное там; иначе — последнее открытое. Последним открытым считается авто, карточку которого пользователь открывал последней.
-- Если такого авто нет (ничего не открывали, авто удалено) — открывается список авто, как сейчас.
-
-### `settings`: группа «Запуск»
-
-- Стоит между «Единицами измерения» и «Уведомлениями». Если нет ни одного авто, группы нет.
-- Пункт «Открывать по умолчанию» с переключателем (тот же `AppSwitch`, что у push). Подпись под названием: выключен — «Сейчас при запуске открывается последнее открытое авто», включён — «При запуске открывается выбранное авто».
-- При включении под пунктом появляется список всех авто (марка, пробег, радиокнопка); выбрано одно. Сразу после включения выбрано последнее открытое авто, а если его нет — первое в списке.
-- При удалении выбранного авто вместо него выбирается другое: последнее открытое, а если его нет — первое в списке. Пункт остаётся включённым. Если авто не осталось, настройка выключается (и группа «Запуск» пропадает).
-
-### `settings`: раздел «Удаление авто»
-
-- Последний раздел настроек, под «Уведомлениями». Если нет ни одного авто — ни существующего, ни проданного, — раздела нет.
-- Под заголовком пояснение: авто удаляется полностью, вместе с работами и всей историей ТО, восстановить данные нельзя.
-- Список всех авто: сначала существующие (марка, пробег), затем проданные (марка серым, подпись «продано»). У каждой строки кнопка-корзина.
-- Корзина открывает окно «Удалить {марка} полностью?» с «Отмена» и «Удалить». После удаления авто пропадает из списка авто, из истории и из этого раздела.
-- Это единственное место, где удаляется история; у проданного авто — единственный способ убрать его записи.
-
-### Удаление авто с карточки
-
-Окно подтверждения на карточке авто остаётся («Удалить {марка}?», «Отмена» / «Удалить»). Текст сообщает три вещи: авто и его работы будут удалены; история ТО сохранится в разделе «История» с пометкой «продано»; полностью удалить авто вместе с историей можно в настройках.
-
-### Единицы расстояния
-
-- Данные хранятся в километрах. Если в настройках выбраны мили, в милях показываются все расстояния в приложении без исключений: списки, карточка авто, сводка работ, история, окна, списки авто в настройках, пример уведомления и сами уведомления. Вводятся они тоже в милях; пересчёт в километры — при сохранении.
-- Поля, которых это касается: пробег в форме авто и при правке на месте; интервал, «Последний раз» и окно напоминания у работы (в блоке формы авто и на экране работы); пробег в окне записи истории; диапазон пробега в фильтре истории; шаг «напоминать заранее» в настройках (тысячи выбранных единиц).
-- Подписи полей следуют за единицами: «Пробег, км» / «Пробег, мили», «Интервал, км» / «Интервал, мили», «Напоминать за N км / миль до срока». Пресеты работ подставляют значения уже в выбранных единицах.
-- Поле открывается со значением, пересчитанным в выбранные единицы и округлённым до целого. Расхождение в ±1 км из-за округления допустимо. Если пользователь значение не менял, при сохранении километры остаются прежними — чтобы открытие и сохранение работы не сдвигало «последний раз» на километр и не снимало этим отметку о выполнении.
-- Сейчас всё это не так: показ в милях, ввод всегда в километрах (см. «Открытые вопросы»).
-
-### Поля дат
-
-- Ввод только цифрами (цифровая клавиатура), разделители подставляются сами: после двух цифр дня или месяца и после второй пары. Больше восьми цифр не принимается.
-- Формат по языку приложения: русский — `дд.мм.гггг`, испанский — `dd/mm/aaaa`, английский — `mm/dd/yyyy`. Подсказка в пустом поле показывает этот же шаблон.
-- Поля: «Дата последней замены» в блоке работы формы авто, «Дата замены» на экране работы, «Дата» в окне записи истории, период «с — по» в фильтре истории.
-- Неразобранная дата по-прежнему считается ошибкой там, где она обязательна (окно записи), и не даёт применить фильтр.
-
-### Форма авто: кнопки и свёрнутые работы
-
-- Внизу формы в одну строку две кнопки равной ширины: «+ Добавить работу» (контурная) и «Сохранить авто». Отдельной кнопки «Добавить произвольную работу» под блоками больше нет.
-- Блок работы сворачивается кнопкой-стрелкой рядом с корзиной. Свёрнутый блок — две строки: название работы; «каждые N км · последний раз M км» (в выбранных единицах; при пустом поле — «интервал не указан» / «последний раз не указан»). Тап по свёрнутому блоку или по стрелке разворачивает его.
-- Новые блоки добавляются развёрнутыми. Если при сохранении в свёрнутом блоке пусто обязательное поле, блок разворачивается и подсвечивается.
-
-### Обязательные поля
-
-| Где | Обязательные поля |
-|---|---|
-| форма авто | марка, пробег |
-| блок работы в форме авто | название, интервал замены, «Последний раз, км» |
-| экран работы | название, интервал, «Последний раз, км» |
-| экран авто, правка на месте | название, пробег |
-
-- Правка на месте — исключение из правила ниже: там нет красной рамки, вместо неё неактивная галочка при пустом поле.
-- Кнопка сохранения в формах всегда активна. По нажатию пустые обязательные поля получают красную рамку (цвет `tierDue`, без текста ошибки), форма не сохраняется. Рамка пропадает, когда поле заполнили.
-- У «Последний раз, км» нет значения по умолчанию: пустое поле больше не превращается в 0, пользователь вводит значение сам. 0 допустим — так отмечают, что работа ещё не проводилась. Чип пресета это поле не заполняет.
-- Блок работы без обязательных полей не даёт сохранить форму авто; молчаливого пропуска блоков больше нет, ненужный блок удаляется корзиной.
-- Работа по умолчанию («замена масла») при добавлении авто без блоков остаётся и считается от текущего пробега.
-
-### `carform`
-
-Форма только добавляет авто: параметр `carId`, загрузка машины, флаги `isEditing`/`isLoading`/`isMissing` и ветка сохранения правки уходят.
-
-Когда добавляется блок работы — чипом пресета или кнопкой «Добавить произвольную работу», — форма прокручивается к новому блоку так, чтобы он был виден целиком. Удаление блока и неудачное сохранение прокрутку не сбрасывают.
-
-### `taskform` — экран одной работы (новая фича)
-
-- Два режима: «Новая работа» и «Редактирование работы»; под заголовком — марка авто.
-- Поля: название, интервал (км), интервал (мес), «Последний раз, км», дата замены, «Напоминать за N км до срока». Обязательные — см. таблицу выше.
-- У новой работы сверху чипы пресетов: чип заполняет название, интервал и окно напоминания.
-- У новой работы над «Сохранить» есть кнопка «Добавить ещё»: сохраняет текущую работу и показывает пустую форму для следующей, экран не закрывается. При пустых обязательных полях подсвечивает их и ничего не сохраняет. «Сохранить» по-прежнему сохраняет и возвращает на экран авто. В режиме правки кнопки нет.
-- В режиме правки в топ-баре корзина: открывает окно «Удалить работу?» с «Отмена» и «Удалить». Записи истории ТО по работе остаются.
-- Вызывает уже существующие `AddTaskUseCase`, `UpdateTaskUseCase`, `DeleteTaskUseCase`.
-
-### `cardetail`
-
-- **Топ-бар:** карандаша нет; остаются «назад», часы (переход на вкладку «История» с выбранным этим авто) и удаление авто.
-- **Шапка.** Между названием авто и VIN — вертикальный отступ (в макете 10 px); он сохраняется, когда любое из них превращается в поле ввода.
-- **Правка на месте.** Название, VIN и пробег по тапу превращаются в поле ввода с текущим значением и галочкой справа. В блоке пробега иконка слева крупнее, значение прижато вправо, отдельной кнопки-карандаша нет.
-- **Одно поле за раз, сохраняет только галочка.** Тап мимо открытого поля — по другому полю, строке работы, кнопке или пустому месту экрана — завершает правку и возвращает полю исходное значение. Правило одно для названия, VIN и пробега. То, по чему тапнули, срабатывает как обычно: другое поле открывается на правку, строка работы открывает работу.
-- **Галочка.** Сохраняет значение. У обязательных полей — названия и пробега — галочка неактивна (полупрозрачная), пока поле пустое; красной рамки при правке на месте нет. У VIN галочка активна всегда.
-- **Сводка работы.** Под названием работы каждая часть сводки начинается с новой строки: «осталось N км» или «просрочено на N км»; «или N мес» или «время истекло» — только у работ с интервалом по времени; «каждые N км». Сейчас это одна строка через « · ».
-- **Список работ.** Каждая строка открывает экран этой работы. Кнопка отметки внутри строки срабатывает отдельно и экран работы не открывает.
-- **FAB «+»** открывает экран новой работы.
-- **Отметить выполненной.** Нажатие открывает окно «Работа выполнена» с тремя необязательными полями: «Где обслуживались», «Сколько стоило, ₽», «Комментарий». «Отмена» — работа не отмечается; «Сохранить» — отмечается, в том числе с пустыми полями.
-- **Выполнено.** Пока пробег авто равен тому, на котором работу отметили, кнопка показывает «Выполнено». Нажатие открывает окно «Снять отметку?» с «Отмена» и «Ok»; «Ok» возвращает работу к прежним значениям и удаляет запись из истории ТО.
-
-### `cardetail`: пробег и карточки работ (переработка после прогона)
-
-Заменяет описанные выше блок пробега и строки работ; выбрано из вариантов в макете (пробег — A, работы — B).
-
-- **Карточка пробега закреплена:** она стоит над списком работ и не прокручивается вместе с ним; прокручивается только список.
-- **Подпись статуса `SOON`** — «Пора менять» вместо «Скоро» (английский — «Time to replace», испанский — «Hay que cambiar»); цвет прежний, оранжевый `tierSoon`. Правило, когда работа в этом состоянии, не меняется (см. `specs/domain.md`).
-- **Карточка пробега.** Одна карточка вместо пары «Пробег / Скоро-просрочено»: подпись «Пробег»; справа от подписи и числа — кольцо статусов работ (`StatusDonut`): дуги «просрочено», «пора менять», «в порядке» по часовой стрелке от верха, каждая — своя доля работ, без работ кольцо пустое; в центре «N/M» (просроченные входят в N) цветом худшего статуса, для экранного диктора — «N из M пора менять»; крупное число пробега; под ним «−», переключатель множителя «×1 ×2 ×5 ×10» и «+»; подсказка «Шаг N км · тап по числу — ввести вручную».
-- **Шаг** — 100 единиц × множитель: 100 км в километрах, 100 миль в милях. Нажатие сразу сохраняет новый пробег; ниже нуля пробег не опускается. Множитель живёт, пока открыт экран, по умолчанию ×1.
-- **Ручной ввод** остаётся: тап по числу открывает поле с галочкой — правила те же (одно поле за раз, сохраняет только галочка, тап мимо отменяет).
-- **Карточка работы:** крупный остаток до срока цветом статуса с подписью «осталось» или «просрочено», плашка статуса справа; название; строка «каждые N км» и, у работ с интервалом по времени, «или M мес» / «время истекло»; полоска пройденного интервала и в её конце — галочка в кружке: пустой кружок открывает окно «Работа выполнена», заполненный зелёный означает «выполнено» и открывает окно снятия отметки. Текстовой кнопки больше нет; для доступности у галочки подпись «Отметить выполненной» / «Выполнено — снять отметку». Тап по карточке вне галочки открывает экран работы.
-- **Порядок работ** — всегда автоматический, от самых срочных к менее срочным, по `SortedTaskStatsUseCase` (см. `specs/domain.md`): просроченные, затем «скоро», затем «в порядке»; внутри статуса — по остатку до срока, меньший выше. Ручной сортировки нет; после изменения пробега, отметки или правки работы порядок пересчитывается сам.
-- **Прокрутка в начало.** При любом изменении пробега — кнопками «+»/«−» или ручным вводом — список работ плавно прокручивается в начало, чтобы были видны самые срочные работы с новыми остатками.
-
-### `history`
-
-**Общий раздел.** История — вкладка нижнего меню. Порядок вкладок: «История», «Авто», «Настройки»; у каждой иконка над подписью — часы, автомобиль в профиль (вид сбоку, `Lucide.Car`), шестерёнка. Стартовый экран остаётся «Авто». История — экран верхнего уровня с таб-баром и без кнопки «назад». Маршрут больше не привязан к `carId`.
-
-- **Поле выбора авто** всегда вверху, на всю ширину; справа от него кнопка фильтра. По тапу раскрывается список: «Все авто», затем все авто, затем удалённые — серым, с пометкой «[продано]». По умолчанию выбрано «Все авто».
-- **Кнопка фильтра** открывает окно: период «с — по» (даты текстом), поиск по названию работы, пробег «с — по»; «Сбросить» очищает фильтр, «Применить» применяет, тап по затемнению закрывает без изменений. При активном фильтре кнопка подсвечена акцентом и точкой.
-- Выбор авто и фильтр действуют вместе. Поиск по названию работы — по вхождению: запрос ищется как подстрока названия, без учёта регистра («масл» находит «Замена масла», «масло» — нет).
-- **Карточка записи.** Сверху название работы и дата, под ними строка «авто · пробег · стоимость · сервис», ниже комментарий. Название авто в этой строке есть только в режиме «Все авто» (у проданного — серым, с пометкой).
-- Пустые состояния: записей нет вообще — прежний текст; под фильтр ничего не попало — «Ничего не найдено — измените фильтр».
-- Часы в топ-баре карточки авто остаются и открывают эту вкладку с уже выбранным авто.
-- Окно удаления авто сообщает, что история сохранится в разделе «История» с пометкой «продано».
-
-- У записи появляется строка комментария под строкой «пробег · стоимость · сервис»; без комментария строки нет.
-- **Группировка.** Записи идут от новых к старым и разбиты по годам и месяцам. Год — разделитель: число по центру, слева и справа линии до краёв экрана. Месяц — рамка с подписью месяца в разрыве верхней линии слева; внутри рамки — записи этого месяца. Фон внутри рамки — `surface`, светлее фона экрана, как у карточек на других экранах. Подпись месяца — плашка со скруглёнными краями: фон `surface` и тонкая рамка `rule`, как у карточки; стоит на верхней линии карточки слева. Месяцы без записей не показываются.
-- **Закреплённый год.** При прокрутке разделитель года, записи которого сейчас на экране, остаётся у верхнего края списка под заголовком экрана, с непрозрачным фоном; когда доходит очередь следующего года, его разделитель занимает это место. Заголовок «История ТО» и марка авто не прокручиваются. В макете следующий разделитель накрывает предыдущий; в приложении это `stickyHeader` в `LazyColumn`, где следующий заголовок выталкивает предыдущий, — оба варианта допустимы.
-- **Запись по тапу** открывает окно записи: заголовок — название работы, под ним авто (у проданного — с пометкой). Ниже пять полей, заполненных значениями записи: «Дата» и «Пробег, км» в одной строке — обязательные; «Где обслуживались», «Сколько стоило, ₽», «Комментарий» — необязательные. «Сохранить» записывает их в запись; дата, которой не существует, и пробег `≤ 0` не сохраняются и получают красную рамку. «Отмена» и тап по затемнению закрывают окно без изменений. После смены даты запись переезжает в свой год и месяц. Отдельного поля «Что менялось» нет: дополнительные сведения пишутся в комментарии.
-- Группировка — дело экрана: `ObserveHistoryUseCase` уже отдаёт записи от новых к старым, новых правил в domain не нужно.
-- Несколько записей одного месяца лежат в одной рамке и разделены линией, как строки списка сейчас.
-- Подпись месяца — название без года (год виден в разделителе выше); названия месяцев нужны в строках трёх языков.
-- В макете группировку можно посмотреть на демо-данных Kia Rio: история за 2023–2026 годы, 23 записи.
-
-### Общий UI
-
-- `isError` у `FieldBox`, `AppTextField`, `AppNumberField`, `LabeledMiniField`, `InlineEditField` — красная рамка.
-- `TaskDoneDialog` — окно с тремя полями; окно снятия отметки — вариант `ConfirmDialog` с акцентной, а не красной кнопкой.
-- Кнопка отметки работы в двух состояниях: «Отметить выполненной» и «Выполнено».
-- Контурная кнопка (вторичное действие рядом с `PrimaryButton`): текст и рамка цвета `accent`, фон — фон экрана (`bg`), те же размеры и скругление.
-
-### Что не решено
-
-- FAB на экране авто перекрывает правый край последней видимой строки работы — плашку статуса и кнопку отметки, — пока список не прокрутили.
-- Стартовый экран остался «Авто», хотя эта вкладка теперь вторая в нижнем меню.
-- В окне удаления на карточке авто про полное удаление в настройках сказано только текстом, перехода туда нет.
-- Нетронутое поле расстояния при сохранении не пересчитывается — оставить так или убрать правило и сравнивать пробеги с допуском ±1 км (см. «Единицы расстояния»).
+- Экран получает ViewModel значением параметра по умолчанию: `viewModel: XxxViewModel = koinViewModel { parametersOf(...) }`.
+- Параметры, которые могут быть `null`, разбираются в фабрике явно.
+- Use case-ы приходят из `domainModule` (все — `factoryOf`). Модуль подключается в `initKoin` вместе с `domainModule`, `dataModule`, `platformModule` (см. `specs/data.md`).
 
 ## Открытые вопросы
 
-- **Работа из чипа сразу просрочена.** Пустое «последний раз, км» сохраняется как `0` (`CarFormViewModel.kt:163`), хотя плейсхолдер поля — «не проводилась» (`last_done_km_placeholder`). Для машины с пробегом работа из пресета, добавленная без этого поля, сразу получает статус `DUE`. Работа по умолчанию при этом считается от текущего пробега (`CarFormViewModel.kt:137`).
-- **Дата вводится свободным текстом.** Поле даты не фильтруется и не проверяется; дата, которая не разобралась, молча превращается в `null` (`CarFormViewModel.kt:166`). При правке это стирает сохранённую дату последнего выполнения.
-- **Незаполненный блок пропускается молча** — без подсказки, почему работа не сохранилась. Неудачное сохранение (`AddCarUseCase` вернул `null`, `UpdateCarUseCase` — `false`) тоже ничем не показывается.
-- **VIN не проверяется**: только верхний регистр и обрезка до 17 символов; короткий VIN и недопустимые символы сохраняются.
-- **Пробег вводится в километрах при любых единицах показа.** На экране машины значение показано в милях, а поле правки открывается с километрами (`CarDetailScreen.kt:210` и `:224`); подпись в форме — всегда «Пробег, км». Шаг «напоминать заранее» в настройках — тоже всегда тысячи километров. Решено в этапе 8а: ввод переводится в выбранные единицы — см. «Согласованные изменения (этап 8а)», «Единицы расстояния».
-- **Некорректный пробег в быстрой правке закрывает поле без сообщения** (`CarDetailViewModel.kt:60`).
-- **«Просрочено на 0 км».** При `remainingKm == 0` строка-сводка работы показывает просрочку с нулём (`CarDetailScreen.kt:313`).
-- **`defaultReminderWindowKm` ни на что не влияет.** Значение редактируется в настройках и сохраняется, но форма авто его не читает: работе без окна `NormalizeTaskUseCase` ставит 15 % интервала. KDoc `Settings` при этом говорит, что оно предзаполняет окно новых работ.
-- **Повторный запрос разрешения.** Запрос уходит при каждом переходе `needsNotificationPermission` в `true`, в том числе при каждом запуске приложения с машинами и включённым push. Если система отвечает отказом без показа диалога, переключатель push, который пользователь только что включил, сам выключится обратно — без объяснения.
-- **Android ниже 13 всегда отвечает «разрешено»** (`NotificationPermission.android.kt:23`), даже если уведомления приложения выключены в системных настройках.
-- **Тема до прихода настроек.** Начальное значение `themeMode` — `SYSTEM`; если сохранена другая тема, первый кадр может быть нарисован в системной. `MainActivity` вызывает `enableEdgeToEdge()` без параметров, а тема в манифесте — `Theme.Material.Light.NoActionBar`: выбранная в приложении тема в оформление системных панелей не передаётся.
-- **«Сегодня» берётся в момент пересчёта состояния.** `GetTodayUseCase` вызывается внутри `combine`; если приложение открыто через полночь и данные не меняются, статусы на экране не обновятся.
-- **Кнопки шапки экрана машины активны до загрузки машины**: история и правка откроются сразу, а нажатие на корзину выставит `isConfirmingDelete` — диалог появится, как только машина загрузится.
-- **Форма правки читает машину один раз** (`first()`) и за изменениями не следит.
-- **Экран истории не закрывается, если машины нет**: показывает пустую марку и пустой журнал. На практике попасть туда без машины нельзя.
+- **FAB перекрывает правый край последней видимой карточки работы** — плашку статуса и галочку, — пока список не прокрутили.
+- **Стартовый экран — «Авто»**, хотя вкладка вторая в меню.
+- **В окне удаления на карточке машины** про полное удаление в настройках сказано только текстом, перехода туда нет.
+- **Нетронутое поле расстояния не пересчитывается** (`keepKm`) — оставить так или сравнивать пробеги с допуском ±1 км.
+- **VIN не проверяется**: только верхний регистр и обрезка до 17 символов.
+- **Повторный запрос разрешения.** Запрос уходит при каждом переходе `needsNotificationPermission` в `true`, в том числе при каждом запуске с машинами и включённым push. Если система отвечает отказом без диалога, только что включённый push сам выключится — без объяснения.
+- **Android ниже 13 всегда отвечает «разрешено»** (`NotificationPermission.android.kt`), даже если уведомления выключены в системе.
+- **Тема до прихода настроек.** Начальное значение `themeMode` — `SYSTEM`; первый кадр может быть в системной теме. Выбранная тема в оформление системных панелей не передаётся (`enableEdgeToEdge()` без параметров).
+- **«Сегодня» берётся в момент пересчёта состояния.** Если приложение открыто через полночь и данные не меняются, статусы не обновятся.
 - **Стоимость всегда в рублях** (`cost_rub`, «₽») на всех трёх языках.
-- **Пример уведомления в настройках не совпадает с настоящим текстом.** `notification_sample_full` — «…пора заменить воздушный фильтр — осталось 700 км», а настоящее уведомление строится как «{марка}: {работа} — {состояние}».
-- **Подбор иконки работы по подстроке**: `pad` и `oil` встречаются внутри других слов; для работ с названием на другом языке всегда будет гаечный ключ.
-- **Устаревший KDoc** у `ItsTime4ServiceTheme` (`ui/theme/Theme.kt:27`): написано, что `darkTheme` «будет подключён к настройкам на шаге 6», хотя это уже сделано в `App.kt`.
-- **Неиспользуемое**: иконки `ItsTime4ServiceIcons.Sun` и `ItsTime4ServiceIcons.MoonToggle`; строки `screen_car_detail` и `field_last_replacement_date`; строки `unit_km`, `field_interval_km`, `notification_sample_text` и параметр `unit` у `AppNumberField` используются только в `@Preview`; ветка `ProgressBar` с цветом по доле — экран всегда передаёт `tier`.
+- **Пример уведомления в настройках не совпадает с настоящим текстом**: `notification_sample_full` — «…пора заменить воздушный фильтр — осталось N», а настоящее — «{марка}: {работа} — {состояние}».
+- **Подбор иконки работы по подстроке**: `pad` и `oil` встречаются внутри других слов; для названий на другом языке — гаечный ключ. Выбор иконки пользователем — этап 8б.
+- **`defaultReminderWindowKm` не предзаполняет окно новых работ**: работе без окна `NormalizeTaskUseCase` ставит 15 % интервала.
+- **Устаревший KDoc** у `ItsTime4ServiceTheme` (`ui/theme/Theme.kt`): «будет подключён к настройкам на шаге 6», хотя это давно сделано.
 
 ## Что ещё не реализовано
 
-- Правки дизайна из блока «Этап 8а — Правки дизайна после прогона» в `dev_plan.md`: подсветка пустых обязательных полей вместо выключенной кнопки, окно «Работа выполнена» с сервисом, стоимостью и комментарием, снятие отметки о выполнении, новый блок пробега на экране машины, строка комментария в истории. Сейчас ничего из этого в коде нет.
-- Правка записи истории ТО: экрана нет, `UpdateHistoryEntryUseCase` — заготовка (см. `specs/domain.md`). Стоимость и сервис, которые умеет показывать экран истории, ввести негде — у записей, созданных приложением, они всегда пустые.
-- Анимации индикаторов и остальная «полировка» из этапа 9 в `dev_plan.md`; сейчас анимирован только ползунок `AppSwitch`.
+- Доработки этапа 8б (`dev_plan.md`): добавление записей истории вручную, развёрнутый вид списка машин, госномер, выбор иконки работы.
+- Анимации индикаторов и остальная полировка этапа 9; сейчас анимированы ползунок `AppSwitch` и прокрутка списка работ.
 - Переключатель языка в приложении.
-- Юнит-тесты на ViewModel-и и тесты на общие Composable-компоненты.
+- Юнит-тесты на ViewModel-и и тесты Composable-компонентов.

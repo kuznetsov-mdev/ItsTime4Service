@@ -13,7 +13,8 @@ data/
 
 sqldelight/
 ├── ru/kuznetsov/itstime4service/data/local/*.sq   # таблицы и именованные запросы
-└── migrations/1.sqm                       # миграция 1 → 2
+├── migrations/1.sqm                       # миграция 1 → 2
+└── migrations/2.sqm                       # миграция 2 → 3
 ```
 
 Правила слоя:
@@ -41,13 +42,13 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 | перечисления (`ThemeMode`, `DistanceUnit`) | `TEXT`, имя константы (`name`) |
 | расстояния | всегда в километрах |
 
-Внешних ключей в схеме нет: `car_id` и `task_id` — обычные текстовые колонки. Целостность поддерживает код репозиториев и use case-ов (удаление машины само удаляет её работы; историю удаляет отдельный вызов).
+Внешних ключей в схеме нет: `car_id` и `task_id` — обычные текстовые колонки. Целостность поддерживает код репозиториев: продажа и полное удаление машины сами удаляют её работы и (при полном удалении) историю в одной транзакции; ссылки на машину в настройках сбрасывает domain.
 
 Порядок строк: во всех списочных запросах, кроме плана уведомлений, — `ORDER BY rowid`, то есть порядок добавления.
 
 ### `cars`
 
-`Car.sq`. Машины.
+`Car.sq`. Машины — действующие и проданные.
 
 | Колонка | Тип | NULL | Смысл |
 |---|---|---|---|
@@ -55,15 +56,20 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 | `brand` | `TEXT` | нет | марка и модель |
 | `mileage_km` | `INTEGER` | нет | текущий пробег |
 | `vin` | `TEXT` | да | VIN |
+| `is_sold` | `INTEGER AS kotlin.Boolean` | нет, по умолчанию 0 | машина удалена с её экрана, история сохранена |
 
 | Запрос | SQL |
 |---|---|
-| `selectAll` | `SELECT * FROM cars ORDER BY rowid` |
-| `selectById` | `SELECT * FROM cars WHERE id = ?` |
+| `selectAll` | `SELECT * FROM cars WHERE is_sold = 0 ORDER BY rowid` |
+| `selectById` | `SELECT * FROM cars WHERE id = ? AND is_sold = 0` |
+| `selectAllWithSold` | `SELECT * FROM cars ORDER BY is_sold, rowid` — действующие, затем проданные |
 | `insert` | `INSERT INTO cars (id, brand, mileage_km, vin) VALUES (?, ?, ?, ?)` |
 | `updateMileage` | `UPDATE cars SET mileage_km = ? WHERE id = ?` |
 | `updateDetails` | `UPDATE cars SET brand = ?, vin = ? WHERE id = ?` |
+| `markSold` | `UPDATE cars SET is_sold = 1 WHERE id = ?` |
 | `deleteById` | `DELETE FROM cars WHERE id = ?` |
+
+Проданная машина невидима для `selectAll` и `selectById`: её нет в списке машин, экран машины для неё закрывается, отметка работ по ней невозможна.
 
 ### `maintenance_tasks`
 
@@ -87,7 +93,8 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 | `selectById` | `SELECT * FROM maintenance_tasks WHERE id = ? AND car_id = ?` |
 | `insert` | `INSERT` всех восьми колонок |
 | `update` | `UPDATE … SET name, interval_km, last_done_km, reminder_window_km, interval_months, last_done_date WHERE id = ? AND car_id = ?` |
-| `markDone` | `UPDATE … SET last_done_km = ?, last_done_date = ? WHERE id = ? AND car_id = ?` |
+| `markDone` | `UPDATE … SET last_done_km = ?, last_done_date = ? WHERE id = ? AND car_id = ?` — и для отметки, и для отката |
+| `updateLastDoneKm` | `UPDATE … SET last_done_km = ? WHERE id = ? AND car_id = ?` — при правке пробега записи истории |
 | `deleteById` | `DELETE … WHERE id = ? AND car_id = ?` |
 | `deleteByCar` | `DELETE … WHERE car_id = ?` |
 
@@ -101,17 +108,25 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 |---|---|---|---|
 | `id` | `TEXT` | нет | первичный ключ |
 | `car_id` | `TEXT` | нет | машина |
-| `task_name` | `TEXT` | нет | название работы текстом, без ссылки на работу |
+| `task_name` | `TEXT` | нет | название работы текстом |
 | `date` | `TEXT` | нет | дата выполнения |
 | `mileage_km` | `INTEGER` | нет | пробег на момент выполнения |
 | `cost_rub` | `INTEGER` | да | стоимость |
 | `service_name` | `TEXT` | да | где делали |
+| `task_id` | `TEXT` | да | работа, отметка которой создала запись; пусто у записей до миграции на версию 3 |
+| `comment` | `TEXT` | да | комментарий |
+| `prev_last_done_km` | `INTEGER` | да | `last_done_km` работы до отметки — для отката |
+| `prev_last_done_date` | `TEXT` | да | `last_done_date` работы до отметки — для отката |
 
 | Запрос | SQL |
 |---|---|
 | `selectByCar` | `SELECT * FROM service_history WHERE car_id = ? ORDER BY rowid` |
-| `insert` | `INSERT` всех семи колонок |
-| `update` | `UPDATE … SET task_name, date, mileage_km, cost_rub, service_name WHERE id = ?` |
+| `selectAll` | `SELECT * FROM service_history ORDER BY rowid` |
+| `countByCar` | `SELECT COUNT(*) FROM service_history WHERE car_id = ?` |
+| `selectById` | `SELECT * FROM service_history WHERE id = ?` |
+| `insert` | `INSERT` всех одиннадцати колонок |
+| `update` | `UPDATE … SET task_name, date, mileage_km, cost_rub, service_name, comment WHERE id = ?` — колонки отката не меняются |
+| `deleteById` | `DELETE … WHERE id = ?` |
 | `deleteByCar` | `DELETE … WHERE car_id = ?` |
 
 ### `settings`
@@ -125,12 +140,15 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 | `distance_unit` | `TEXT` | нет | имя `DistanceUnit` |
 | `push_enabled` | `INTEGER AS kotlin.Boolean` | нет | включены ли push-уведомления |
 | `default_reminder_window_km` | `INTEGER` | нет | окно напоминания по умолчанию |
-| `reminder_time` | `TEXT` | нет | время ежедневной проверки |
+| `reminder_time` | `TEXT` | нет | время ежедневных уведомлений |
+| `last_opened_car_id` | `TEXT` | да | машина, экран которой открывали последним |
+| `open_default_car` | `INTEGER AS kotlin.Boolean` | нет, по умолчанию 0 | включён ли пункт «Открывать по умолчанию» |
+| `default_car_id` | `TEXT` | да | машина, выбранная для открытия при запуске |
 
 | Запрос | SQL |
 |---|---|
 | `select` | `SELECT * FROM settings WHERE id = 1` |
-| `upsert` | `INSERT OR REPLACE INTO settings (id, …) VALUES (1, ?, ?, ?, ?, ?)` |
+| `upsert` | `INSERT OR REPLACE INTO settings (id, …) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)` — переписывает строку целиком |
 
 Пока пользователь ничего не менял, таблица пуста.
 
@@ -153,12 +171,12 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 
 ### Версия схемы и миграция
 
-Версия схемы — 2 (`ItsTime4ServiceDatabase.Schema.version`). Единственная миграция — `migrations/1.sqm` — переводит базу с версии 1 на 2: создаёт таблицу `planned_reminders`.
+Версия схемы — 3 (`ItsTime4ServiceDatabase.Schema.version`). Миграции:
 
-- Новая установка: драйвер создаёт все пять таблиц из `.sq`-файлов сразу в версии 2.
-- Обновление с версии 1: драйвер выполняет `1.sqm`.
+- `migrations/1.sqm` — с версии 1 на 2: создаёт таблицу `planned_reminders`.
+- `migrations/2.sqm` — с версии 2 на 3: добавляет колонки `task_id`, `comment`, `prev_last_done_km`, `prev_last_done_date` в `service_history`; `last_opened_car_id`, `open_default_car`, `default_car_id` в `settings`; `is_sold` в `cars`. У старых записей истории новые колонки пустые — снять отметку по ним нельзя.
 
-Создание и миграцию запускают сами драйверы при открытии базы по переданной `ItsTime4ServiceDatabase.Schema`; своего кода миграции в проекте нет.
+Новая установка: драйвер создаёт все пять таблиц из `.sq`-файлов сразу в версии 3. Обновление: драйвер выполняет нужные миграции по порядку. Создание и миграцию запускают сами драйверы при открытии базы по переданной `ItsTime4ServiceDatabase.Schema`; своего кода миграции в проекте нет.
 
 ## Мапперы
 
@@ -166,10 +184,11 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 
 | Функция | Из | В | Преобразования |
 |---|---|---|---|
-| `Cars.toDomain(tasks)` | `Cars` + список `Maintenance_tasks` | `Car` | `mileage_km` → `Int`; работы — через `Maintenance_tasks.toDomain()` |
+| `Cars.toDomain(tasks)` | `Cars` + список `Maintenance_tasks` | `Car` | `mileage_km` → `Int`; работы — через `Maintenance_tasks.toDomain()`; `is_sold` в модель не попадает |
+| `Cars.toSummary()` | `Cars` | `CarSummary` | `mileage_km` → `Int`, `is_sold` → `isSold` |
 | `Maintenance_tasks.toDomain()` | `Maintenance_tasks` | `MaintenanceTask` | числа → `Int`; `last_done_date` → `LocalDate.parse`, `null` остаётся `null`; `car_id` в модель не попадает |
-| `Service_history.toDomain()` | `Service_history` | `ServiceHistoryEntry` | `date` → `LocalDate.parse`; `mileage_km`, `cost_rub` → `Int` |
-| `SettingsRow.toDomain()` | `Settings` (строка таблицы, импортирована под именем `SettingsRow`) | `Settings` | `ThemeMode.valueOf`, `DistanceUnit.valueOf`, `LocalTime.parse`; `default_reminder_window_km` → `Int` |
+| `Service_history.toDomain()` | `Service_history` | `ServiceHistoryEntry` | `date`, `prev_last_done_date` → `LocalDate.parse`; `mileage_km`, `cost_rub`, `prev_last_done_km` → `Int` |
+| `SettingsRow.toDomain()` | `Settings` (строка таблицы, импортирована под именем `SettingsRow`) | `Settings` | `ThemeMode.valueOf`, `DistanceUnit.valueOf`, `LocalTime.parse`; `default_reminder_window_km` → `Int`; три колонки запуска — как есть |
 
 `ReminderRecord` собирается без маппера, прямо в `ReminderRepositoryImpl`: `ReminderRecord(task_id, LocalDateTime.parse(fire_at))`.
 
@@ -179,16 +198,19 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 
 ### `CarRepositoryImpl`
 
-Реализует `CarRepository`. Работает с `carQueries` и `maintenanceTaskQueries`. Каждая запись, которая трогает больше одной строки, идёт одной транзакцией.
+Реализует `CarRepository`. Работает с `carQueries`, `maintenanceTaskQueries` и `serviceHistoryQueries`. Каждая запись, которая трогает больше одной строки или таблицы, идёт одной транзакцией.
 
 | Метод | Что выполняет |
 |---|---|
-| `observeCars()` | `combine` двух потоков: `cars.selectAll` и `maintenance_tasks.selectAll`. Работы группируются по `car_id` и раскладываются по машинам; машина без работ получает пустой список |
-| `observeCarById(carId)` | `combine` потоков `cars.selectById(carId)` (`mapToOneOrNull`) и `maintenance_tasks.selectByCar(carId)`. Нет строки машины → `null` |
+| `observeCars()` | `combine` двух потоков: `cars.selectAll` (без проданных) и `maintenance_tasks.selectAll`. Работы группируются по `car_id` и раскладываются по машинам; машина без работ получает пустой список |
+| `observeCarById(carId)` | `combine` потоков `cars.selectById(carId)` (`mapToOneOrNull`) и `maintenance_tasks.selectByCar(carId)`. Нет строки или машина продана → `null` |
+| `observeCarSummaries()` | поток `cars.selectAllWithSold`, строки → `toSummary()` |
 | `addCar(car)` | создаёт `id` машины; в одной транзакции — `cars.insert` и `maintenance_tasks.insert` на каждую работу; возвращает `id` машины |
-| `deleteCar(carId)` | в одной транзакции — `maintenance_tasks.deleteByCar`, затем `cars.deleteById` |
+| `sellCar(carId)` | в одной транзакции: `maintenance_tasks.deleteByCar`; если `service_history.countByCar > 0` — `cars.markSold`, иначе `cars.deleteById` |
+| `purgeCar(carId)` | в одной транзакции: `service_history.deleteByCar`, `maintenance_tasks.deleteByCar`, `cars.deleteById` |
 | `updateMileage(carId, mileageKm)` | `cars.updateMileage` |
-| `markTaskDone(carId, taskId, date)` | в одной транзакции: читает машину (`cars.selectById`) и работу (`maintenance_tasks.selectById`); если чего-то нет — выходит без изменений; иначе `markDone` с `last_done_km` = текущий пробег машины и `last_done_date` = `date`, если у работы есть `interval_months`, иначе прежнее значение |
+| `markTaskDone(…)` | в одной транзакции: читает машину и работу (нет — `false`); `markDone` с `last_done_km` = текущий пробег машины и `last_done_date` = `date`, если у работы есть `interval_months`, иначе прежнее значение; `service_history.insert` с новым `id`, `task_id`, переданными сервисом, стоимостью и комментарием и прежними `last_done_km`/`last_done_date` работы в `prev_*`; `true` |
+| `unmarkTaskDone(carId, taskId, entryId)` | в одной транзакции: читает запись; если её нет, она другой машины или работы или `prev_last_done_km` пуст — `false`; иначе `markDone` с `prev_*` и `service_history.deleteById`; `true` |
 | `updateCar(carId, brand, vin)` | `cars.updateDetails` |
 | `addTask(carId, task)` | `maintenance_tasks.insert` с новым `id` |
 | `updateTask(carId, task)` | `maintenance_tasks.update` всех полей работы по `id` + `car_id` |
@@ -201,16 +223,13 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 
 ### `ServiceHistoryRepositoryImpl`
 
-Реализует `ServiceHistoryRepository`. Работает с `serviceHistoryQueries`.
+Реализует `ServiceHistoryRepository`. Работает с `serviceHistoryQueries` и `maintenanceTaskQueries`.
 
 | Метод | Что выполняет |
 |---|---|
-| `observeHistory(carId)` | поток `selectByCar(carId)`, строки — через `toDomain()`; порядок добавления (от новых к старым сортирует `ObserveHistoryUseCase`) |
-| `addEntry(entry)` | `insert` с новым `id` |
-| `updateEntry(entry)` | `update` всех полей, кроме `car_id`, по `id` |
-| `deleteHistory(carId)` | `deleteByCar` |
-
-Транзакций нет: каждый метод — один запрос.
+| `observeHistory(carId)` | поток `selectByCar(carId)`, строки — через `toDomain()`; порядок добавления |
+| `observeAllHistory()` | поток `selectAll`; порядок добавления (от новых к старым сортирует `ObserveAllHistoryUseCase`) |
+| `updateEntry(entry, taskLastDoneKm)` | в одной транзакции: `update` по `id`; если передан `taskLastDoneKm` и у записи есть `task_id` — `maintenance_tasks.updateLastDoneKm` этой работы |
 
 ### `SettingsRepositoryImpl`
 
@@ -219,7 +238,7 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 | Метод | Что выполняет |
 |---|---|
 | `observeSettings()` | поток `select` (`mapToOneOrNull`); строки нет → настройки по умолчанию |
-| `updateSettings(settings)` | `upsert` всей строки с `id = 1` |
+| `updateSettings(change)` | в одной транзакции: `select` (или настройки по умолчанию), `change`, `upsert` всей строки с `id = 1` |
 
 Настройки по умолчанию (`defaultSettings`) в базу не записываются — они подставляются при чтении, пока таблица пуста:
 
@@ -230,6 +249,8 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 | `pushEnabled` | `true` |
 | `defaultReminderWindowKm` | `2 000` |
 | `reminderTime` | `09:00` |
+| `lastOpenedCarId`, `defaultCarId` | `null` |
+| `openDefaultCar` | `false` |
 
 ### `ReminderRepositoryImpl`
 
@@ -380,60 +401,10 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
 | Android | `ItsTime4ServiceApplication.onCreate()` (`androidApp/`) | `initKoin { androidContext(this@ItsTime4ServiceApplication) }` — контекст нужен `platformModule` |
 | iOS | `iOSApp.init()` (`iosApp/iosApp/iOSApp.swift`) | `KoinKt.doInitKoin()` — вариант без параметров |
 
-## Согласованные изменения (этап 8а)
-
-Всё в этом разделе **согласовано, но в коде ещё не сделано**; остальной документ описывает код как есть. Правила — в `specs/domain.md`, порядок работ — в `dev_plan.md`. Имена колонок предварительные.
-
-### `service_history`: новые колонки
-
-| Колонка | Тип | NULL | Смысл |
-|---|---|---|---|
-| `task_id` | `TEXT` | да | работа, отметка которой создала запись; пусто у записей, созданных до миграции |
-| `comment` | `TEXT` | да | комментарий из окна «Работа выполнена» |
-| `prev_last_done_km` | `INTEGER` | да | `last_done_km` работы до отметки — для отката |
-| `prev_last_done_date` | `TEXT` | да | `last_done_date` работы до отметки — для отката |
-
-- Миграция `2.sqm` добавляет колонки к существующей таблице; схема становится версии 3.
-- У старых записей все четыре колонки пустые: отметку по ним снять нельзя.
-- Мапперы `ServiceHistoryMapper` и запросы `insert`/`update` расширяются на новые поля; нужен запрос удаления одной записи по `id`.
-
-### `settings`: новые колонки
-
-| Колонка | Тип | NULL | Смысл |
-|---|---|---|---|
-| `last_opened_car_id` | `TEXT` | да | авто, карточку которого открывали последней |
-| `open_default_car` | `INTEGER AS kotlin.Boolean` | нет, по умолчанию 0 | включён ли пункт «Открывать по умолчанию» |
-| `default_car_id` | `TEXT` | да | авто, выбранное в настройках |
-
-Добавляются той же миграцией `2.sqm`. Внешних ключей по-прежнему нет: ссылки на удалённое авто сбрасывает domain.
-
-### Проданные авто
-
-Проданное авто хранится в той же таблице `cars`, что и обычное: добавляется признак `is_sold INTEGER AS kotlin.Boolean` (по умолчанию 0), той же миграцией `2.sqm`. Имя колонки предварительное.
-
-- Удаление авто удаляет его строки в `maintenance_tasks` и выставляет признак; строка `cars` и записи `service_history` остаются.
-- `selectAll`/`selectById` для списка авто и карточки отдают только неудалённые; для истории нужен запрос всех записей с маркой авто и признаком (соединение `service_history` с `cars`).
-
-### Полное удаление авто
-
-Одной транзакцией удаляются строка `cars` (в том числе помеченная проданной), строки `maintenance_tasks` и `service_history` этого авто. Запрос `service_history.deleteByCar` для этого уже есть.
-
-### Отметка и снятие одной транзакцией
-
-- Отметка: обновление `maintenance_tasks` (`markDone`) и вставка в `service_history` — в одной транзакции.
-- Снятие: возврат `last_done_km` и `last_done_date` работы из `prev_*` и удаление записи истории — в одной транзакции.
-- Сейчас эти таблицы пишут два разных репозитория; операция переезжает в одно место data-слоя.
-
-### Что не меняется
-
-Группировка истории по годам и месяцам новых запросов не требует: экран читает тот же `selectByCar`. Правка записи из окна истории идёт через уже существующие `ServiceHistoryRepository.updateEntry` и запрос `update`, расширенные на `comment`.
-
-Правка названия, VIN и пробега на экране авто и экран одной работы используют уже существующие запросы и методы `CarRepositoryImpl` (`updateDetails`, `updateMileage`, вставка, обновление и удаление работы) — новых таблиц и запросов под них не нужно.
-
 ## Открытые вопросы
 
 - **Data зависит от UI.** `ReminderSchedulerImpl` импортирует `ru.kuznetsov.itstime4service.ui.format.grouped` и `kmIn` (`ReminderSchedulerImpl.kt:15-16`) и повторяет у себя логику `distanceText` из `ui/format/Formatting.kt` — тот вариант `@Composable` и из data недоступен. Форматирование расстояний живёт в двух местах.
-- **Нет внешних ключей.** Работы удаляются вместе с машиной вручную в `deleteCar`, а история — отдельным вызовом другого репозитория из `DeleteCarUseCase`, вне этой транзакции. Сбой между вызовами оставит «осиротевшие» записи истории. В `planned_reminders` записи удалённых работ остаются до следующей пересборки плана.
+- **Нет внешних ключей.** Связанные строки удаляются вручную в транзакциях `sellCar` и `purgeCar`. В `planned_reminders` записи удалённых работ остаются до следующей пересборки плана.
 - **`planned_reminders` без первичного ключа**: ничто не мешает одинаковым строкам.
 - **Ввод-вывод на `Dispatchers.Default`**, а не на `Dispatchers.IO` — во всех четырёх репозиториях.
 - **Окно напоминания `null` записывается как `0`** (`CarRepositoryImpl.kt:107`). Репозиторий полагается на то, что `NormalizeTaskUseCase` уже подставил значение; работа, дошедшая сюда без окна, по пробегу никогда не станет `SOON`.
@@ -451,7 +422,5 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
 
 ## Что ещё не реализовано
 
-- `ServiceHistoryRepository.updateEntry` и запрос `service_history.update` готовы, но не вызываются: `UpdateHistoryEntryUseCase` — заготовка (см. `specs/domain.md`).
-- Изменения из шага 3 блока «Этап 8а — Правки дизайна после прогона» в `dev_plan.md` — см. раздел «Согласованные изменения (этап 8а)» выше. Сейчас ничего из этого в коде нет.
-- Юнит-тесты на репозитории, мапперы и `ReminderSchedulerImpl`; тесты миграции.
+- Юнит-тесты на репозитории, мапперы и `ReminderSchedulerImpl`; тесты миграций.
 - Синхронизация, резервная копия средствами приложения, экспорт и импорт данных — данные живут только в локальном файле `itstime4service.db`.
