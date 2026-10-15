@@ -4,6 +4,7 @@ import kotlinx.datetime.LocalDate
 import ru.kuznetsov.itstime4service.data.local.Cars
 import ru.kuznetsov.itstime4service.data.local.Maintenance_tasks
 import ru.kuznetsov.itstime4service.domain.model.Car
+import ru.kuznetsov.itstime4service.domain.model.CarSummary
 import ru.kuznetsov.itstime4service.domain.model.MaintenanceTask
 
 internal fun Cars.toDomain(tasks: List<Maintenance_tasks>) = Car(
@@ -12,6 +13,13 @@ internal fun Cars.toDomain(tasks: List<Maintenance_tasks>) = Car(
     mileageKm = mileage_km.toInt(),
     vin = vin,
     tasks = tasks.map { it.toDomain() },
+)
+
+internal fun Cars.toSummary() = CarSummary(
+    id = id,
+    brand = brand,
+    mileageKm = mileage_km.toInt(),
+    isSold = is_sold,
 )
 
 internal fun Maintenance_tasks.toDomain() = MaintenanceTask(

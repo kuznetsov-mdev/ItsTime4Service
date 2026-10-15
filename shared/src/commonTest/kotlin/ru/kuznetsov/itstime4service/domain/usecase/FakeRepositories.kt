@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import ru.kuznetsov.itstime4service.domain.model.Car
+import ru.kuznetsov.itstime4service.domain.model.CarSummary
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.domain.model.MaintenanceTask
 import ru.kuznetsov.itstime4service.domain.model.NewCar
@@ -17,13 +18,18 @@ import ru.kuznetsov.itstime4service.domain.repository.ServiceHistoryRepository
 import ru.kuznetsov.itstime4service.domain.repository.SettingsRepository
 
 /**
- * [CarRepository] for use case tests: serves fixed cars and records the done marks it was asked to remove.
- * Methods the tests do not need fail.
+ * [CarRepository] for use case tests: serves fixed active cars and [sold] cars, and records the done marks it was
+ * asked to remove and the cars it was asked to sell or purge. Methods the tests do not need fail.
  */
-internal class FakeCarRepository(private val cars: List<Car>) : CarRepository {
+internal class FakeCarRepository(
+    private val cars: List<Car>,
+    private val sold: List<CarSummary> = emptyList(),
+) : CarRepository {
     constructor(car: Car?) : this(listOfNotNull(car))
 
     val unmarked = mutableListOf<Triple<String, String, String>>()
+    val soldIds = mutableListOf<String>()
+    val purgedIds = mutableListOf<String>()
 
     override fun observeCars(): Flow<List<Car>> = flowOf(cars)
 
@@ -36,7 +42,16 @@ internal class FakeCarRepository(private val cars: List<Car>) : CarRepository {
 
     override suspend fun addCar(car: NewCar): String = error("not used")
 
-    override suspend fun deleteCar(carId: String) = error("not used")
+    override fun observeCarSummaries(): Flow<List<CarSummary>> =
+        flowOf(cars.map { CarSummary(it.id, it.brand, it.mileageKm, isSold = false) } + sold)
+
+    override suspend fun sellCar(carId: String) {
+        soldIds += carId
+    }
+
+    override suspend fun purgeCar(carId: String) {
+        purgedIds += carId
+    }
 
     override suspend fun updateMileage(carId: String, mileageKm: Int) = error("not used")
 
@@ -72,7 +87,7 @@ internal class FakeHistoryRepository(private val entries: List<ServiceHistoryEnt
         updated += entry to taskLastDoneKm
     }
 
-    override suspend fun deleteHistory(carId: String) = error("not used")
+    override fun observeAllHistory(): Flow<List<ServiceHistoryEntry>> = flowOf(entries)
 }
 
 /**

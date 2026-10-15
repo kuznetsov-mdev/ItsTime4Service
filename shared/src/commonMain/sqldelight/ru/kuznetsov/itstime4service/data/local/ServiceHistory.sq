@@ -17,6 +17,12 @@ CREATE INDEX service_history_car_id ON service_history (car_id);
 selectByCar:
 SELECT * FROM service_history WHERE car_id = ? ORDER BY rowid;
 
+selectAll:
+SELECT * FROM service_history ORDER BY rowid;
+
+countByCar:
+SELECT COUNT(*) FROM service_history WHERE car_id = ?;
+
 insert:
 INSERT INTO service_history (id, car_id, task_name, date, mileage_km, cost_rub, service_name, task_id, comment, prev_last_done_km, prev_last_done_date)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

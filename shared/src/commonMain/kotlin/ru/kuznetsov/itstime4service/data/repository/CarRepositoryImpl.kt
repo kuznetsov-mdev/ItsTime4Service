@@ -8,11 +8,14 @@ import kotlin.uuid.Uuid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import ru.kuznetsov.itstime4service.data.local.ItsTime4ServiceDatabase
 import ru.kuznetsov.itstime4service.data.mapper.toDomain
+import ru.kuznetsov.itstime4service.data.mapper.toSummary
 import ru.kuznetsov.itstime4service.domain.model.Car
+import ru.kuznetsov.itstime4service.domain.model.CarSummary
 import ru.kuznetsov.itstime4service.domain.model.MaintenanceTask
 import ru.kuznetsov.itstime4service.domain.model.NewCar
 import ru.kuznetsov.itstime4service.domain.model.NewMaintenanceTask
@@ -21,7 +24,8 @@ import ru.kuznetsov.itstime4service.domain.repository.CarRepository
 /**
  * [CarRepository] backed by the SQLDelight database.
  * Cars and tasks keep the order they were added in; every write that touches more than one row
- * runs in a single transaction.
+ * runs in a single transaction. A sold car stays in `cars` with `is_sold` set and is skipped by the queries
+ * for active cars.
  */
 @OptIn(ExperimentalUuidApi::class)
 class CarRepositoryImpl(database: ItsTime4ServiceDatabase) : CarRepository {
@@ -53,8 +57,23 @@ class CarRepositoryImpl(database: ItsTime4ServiceDatabase) : CarRepository {
         carId
     }
 
-    override suspend fun deleteCar(carId: String): Unit = withContext(dispatcher) {
+    override fun observeCarSummaries(): Flow<List<CarSummary>> =
+        carQueries.selectAllWithSold().asFlow().mapToList(dispatcher).map { rows -> rows.map { it.toSummary() } }
+
+    override suspend fun sellCar(carId: String): Unit = withContext(dispatcher) {
         carQueries.transaction {
+            taskQueries.deleteByCar(carId)
+            if (historyQueries.countByCar(carId).executeAsOne() > 0) {
+                carQueries.markSold(carId)
+            } else {
+                carQueries.deleteById(carId)
+            }
+        }
+    }
+
+    override suspend fun purgeCar(carId: String): Unit = withContext(dispatcher) {
+        carQueries.transaction {
+            historyQueries.deleteByCar(carId)
             taskQueries.deleteByCar(carId)
             carQueries.deleteById(carId)
         }

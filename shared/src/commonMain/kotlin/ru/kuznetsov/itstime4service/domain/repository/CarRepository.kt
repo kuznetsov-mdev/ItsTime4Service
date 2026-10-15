@@ -3,13 +3,18 @@ package ru.kuznetsov.itstime4service.domain.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import ru.kuznetsov.itstime4service.domain.model.Car
+import ru.kuznetsov.itstime4service.domain.model.CarSummary
 import ru.kuznetsov.itstime4service.domain.model.MaintenanceTask
 import ru.kuznetsov.itstime4service.domain.model.NewCar
 import ru.kuznetsov.itstime4service.domain.model.NewMaintenanceTask
 
 /**
  * Source of truth for cars and their maintenance tasks.
- * [observeCarById] emits `null` when there is no car with the given id.
+ * [observeCars] and [observeCarById] see only cars that are not sold; [observeCarById] emits `null` when there
+ * is no such car. [observeCarSummaries] lists every car, sold ones last.
+ * [sellCar] deletes the car's tasks and keeps the car as sold, so its service history stays; a car without
+ * history records is deleted completely instead. [purgeCar] deletes the car, sold or not, its tasks and its
+ * whole history. Both run in a single transaction.
  * [addCar] assigns ids to the car and its tasks and returns the car's id; a task without a reminder window
  * must already have one resolved by the caller.
  * [markTaskDone] resets the task to the car's current mileage and, for tasks with a time interval, to [date],
@@ -24,9 +29,13 @@ interface CarRepository {
 
     fun observeCarById(carId: String): Flow<Car?>
 
+    fun observeCarSummaries(): Flow<List<CarSummary>>
+
     suspend fun addCar(car: NewCar): String
 
-    suspend fun deleteCar(carId: String)
+    suspend fun sellCar(carId: String)
+
+    suspend fun purgeCar(carId: String)
 
     suspend fun updateMileage(carId: String, mileageKm: Int)
 

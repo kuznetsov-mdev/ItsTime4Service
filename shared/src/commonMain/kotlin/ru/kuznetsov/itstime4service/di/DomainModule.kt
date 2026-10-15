@@ -15,11 +15,14 @@ import ru.kuznetsov.itstime4service.domain.usecase.GetNowUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.GetTodayUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.MarkTaskDoneUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.NormalizeTaskUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.ObserveAllHistoryUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarByIdUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarSummariesUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveHistoryUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.PlanRemindersUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.PurgeCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.RecordCarOpenedUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SetDefaultCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SortedTaskStatsUseCase
@@ -49,6 +52,9 @@ val domainModule = module {
     factoryOf(::GetLaunchCarUseCase)
     factoryOf(::SetDefaultCarUseCase)
     factoryOf(::ForgetCarInSettingsUseCase)
+    factoryOf(::PurgeCarUseCase)
+    factoryOf(::ObserveCarSummariesUseCase)
+    factoryOf(::ObserveAllHistoryUseCase)
     factoryOf(::ObserveHistoryUseCase)
     factoryOf(::ObserveSettingsUseCase)
     factoryOf(::UpdateSettingsUseCase)

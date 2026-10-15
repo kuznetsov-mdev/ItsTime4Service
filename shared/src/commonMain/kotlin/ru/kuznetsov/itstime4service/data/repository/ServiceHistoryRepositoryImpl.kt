@@ -25,6 +25,9 @@ class ServiceHistoryRepositoryImpl(database: ItsTime4ServiceDatabase) : ServiceH
     override fun observeHistory(carId: String): Flow<List<ServiceHistoryEntry>> =
         queries.selectByCar(carId).asFlow().mapToList(dispatcher).map { rows -> rows.map { it.toDomain() } }
 
+    override fun observeAllHistory(): Flow<List<ServiceHistoryEntry>> =
+        queries.selectAll().asFlow().mapToList(dispatcher).map { rows -> rows.map { it.toDomain() } }
+
     override suspend fun updateEntry(entry: ServiceHistoryEntry, taskLastDoneKm: Int?): Unit = withContext(dispatcher) {
         queries.transaction {
             queries.update(
@@ -41,9 +44,5 @@ class ServiceHistoryRepositoryImpl(database: ItsTime4ServiceDatabase) : ServiceH
                 taskQueries.updateLastDoneKm(taskLastDoneKm.toLong(), taskId, entry.carId)
             }
         }
-    }
-
-    override suspend fun deleteHistory(carId: String): Unit = withContext(dispatcher) {
-        queries.deleteByCar(carId)
     }
 }

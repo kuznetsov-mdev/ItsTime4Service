@@ -7,10 +7,13 @@ CREATE TABLE cars (
 );
 
 selectAll:
-SELECT * FROM cars ORDER BY rowid;
+SELECT * FROM cars WHERE is_sold = 0 ORDER BY rowid;
 
 selectById:
-SELECT * FROM cars WHERE id = ?;
+SELECT * FROM cars WHERE id = ? AND is_sold = 0;
+
+selectAllWithSold:
+SELECT * FROM cars ORDER BY is_sold, rowid;
 
 insert:
 INSERT INTO cars (id, brand, mileage_km, vin) VALUES (?, ?, ?, ?);
@@ -20,6 +23,9 @@ UPDATE cars SET mileage_km = ? WHERE id = ?;
 
 updateDetails:
 UPDATE cars SET brand = ?, vin = ? WHERE id = ?;
+
+markSold:
+UPDATE cars SET is_sold = 1 WHERE id = ?;
 
 deleteById:
 DELETE FROM cars WHERE id = ?;

@@ -1,20 +1,18 @@
 package ru.kuznetsov.itstime4service.domain.usecase
 
 import ru.kuznetsov.itstime4service.domain.repository.CarRepository
-import ru.kuznetsov.itstime4service.domain.repository.ServiceHistoryRepository
 
 /**
- * Deletes a car together with its tasks and its service history, then clears it from the settings
+ * Deletes a car from its screen: its tasks go, the car stays as sold so that its service history is kept;
+ * a car without history records is deleted completely. Then the car is cleared from the settings
  * (see [ForgetCarInSettingsUseCase]).
  */
 class DeleteCarUseCase(
     private val carRepository: CarRepository,
-    private val serviceHistoryRepository: ServiceHistoryRepository,
     private val forgetCarInSettings: ForgetCarInSettingsUseCase,
 ) {
     suspend operator fun invoke(carId: String) {
-        carRepository.deleteCar(carId)
-        serviceHistoryRepository.deleteHistory(carId)
+        carRepository.sellCar(carId)
         forgetCarInSettings(carId)
     }
 }
