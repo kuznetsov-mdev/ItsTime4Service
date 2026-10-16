@@ -401,6 +401,18 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
 | Android | `ItsTime4ServiceApplication.onCreate()` (`androidApp/`) | `initKoin { androidContext(this@ItsTime4ServiceApplication) }` — контекст нужен `platformModule` |
 | iOS | `iOSApp.init()` (`iosApp/iosApp/iOSApp.swift`) | `KoinKt.doInitKoin()` — вариант без параметров |
 
+## Согласованные изменения (этап 8б)
+
+Миграция `3.sqm` (схема версии 4) сразу на весь этап:
+
+| Таблица | Колонка | Тип | Смысл |
+|---|---|---|---|
+| `cars` | `plate` | `TEXT`, может быть `NULL` | госномер как ввели |
+| `maintenance_tasks` | `icon` | `TEXT`, может быть `NULL` | имя `TaskIcon`; `NULL` у работ до этапа 8б — подбор по названию |
+| `settings` | `cars_view` | `TEXT NOT NULL DEFAULT 'LIST'` | имя `CarsView` |
+
+Ручная запись истории — обычный `service_history.insert` с пустыми `task_id` и `prev_*`; новых запросов, кроме записи номера (`cars.updateDetails` расширяется на `plate`), не нужно.
+
 ## Открытые вопросы
 
 - **Data зависит от UI.** `ReminderSchedulerImpl` импортирует `ru.kuznetsov.itstime4service.ui.format.grouped` и `kmIn` (`ReminderSchedulerImpl.kt:15-16`) и повторяет у себя логику `distanceText` из `ui/format/Formatting.kt` — тот вариант `@Composable` и из data недоступен. Форматирование расстояний живёт в двух местах.
