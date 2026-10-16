@@ -39,9 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.jetbrains.compose.resources.pluralStringResource
-import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_add_task_button
 import itstime4service.shared.generated.resources.action_collapse_task
@@ -55,9 +52,11 @@ import itstime4service.shared.generated.resources.field_interval_months
 import itstime4service.shared.generated.resources.field_last_done
 import itstime4service.shared.generated.resources.field_last_done_date
 import itstime4service.shared.generated.resources.field_mileage
+import itstime4service.shared.generated.resources.field_plate
 import itstime4service.shared.generated.resources.field_reminder_window
 import itstime4service.shared.generated.resources.field_task_interval
 import itstime4service.shared.generated.resources.field_vin
+import itstime4service.shared.generated.resources.plate_placeholder
 import itstime4service.shared.generated.resources.screen_add_car
 import itstime4service.shared.generated.resources.section_tasks
 import itstime4service.shared.generated.resources.task_block_title
@@ -69,6 +68,9 @@ import itstime4service.shared.generated.resources.task_name_oil
 import itstime4service.shared.generated.resources.task_name_placeholder
 import itstime4service.shared.generated.resources.tasks_added
 import itstime4service.shared.generated.resources.vin_placeholder
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.ui.components.ScreenPreview
 import ru.kuznetsov.itstime4service.ui.components.buttons.AppIconButton
@@ -109,6 +111,7 @@ fun CarFormScreen(
         onBrandChange = viewModel::onBrandChange,
         onMileageChange = viewModel::onMileageChange,
         onVinChange = viewModel::onVinChange,
+        onPlateChange = viewModel::onPlateChange,
         onTaskChange = viewModel::onTaskChange,
         onAddTask = viewModel::onAddTask,
         onAddPreset = viewModel::onAddPreset,
@@ -127,6 +130,7 @@ internal fun CarFormContent(
     onBrandChange: (String) -> Unit,
     onMileageChange: (String) -> Unit,
     onVinChange: (String) -> Unit,
+    onPlateChange: (String) -> Unit,
     onTaskChange: (key: Int, fields: TaskFields) -> Unit,
     onAddTask: () -> Unit,
     onAddPreset: (TaskPreset, String) -> Unit,
@@ -180,6 +184,13 @@ internal fun CarFormContent(
                     )
                 }
             }
+            FieldLabel(stringResource(Res.string.field_plate))
+            AppTextField(
+                value = state.plate,
+                onValueChange = onPlateChange,
+                placeholder = stringResource(Res.string.plate_placeholder),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
+            )
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -414,6 +425,7 @@ private fun CarFormPreviewContent() {
         onBrandChange = {},
         onMileageChange = {},
         onVinChange = {},
+        onPlateChange = {},
         onTaskChange = { _, _ -> },
         onAddTask = {},
         onAddPreset = { _, _ -> },

@@ -15,6 +15,7 @@ import kotlinx.coroutines.sync.withLock
 import ru.kuznetsov.itstime4service.domain.model.Car
 import ru.kuznetsov.itstime4service.domain.usecase.CarAlertsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.DeleteCarUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.DetectPlateStyleUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.DoneMarksUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.GetTodayUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.MarkTaskDoneUseCase
@@ -26,12 +27,14 @@ import ru.kuznetsov.itstime4service.domain.usecase.SortedTaskStatsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UnmarkTaskDoneUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateMileageUseCase
+import ru.kuznetsov.itstime4service.ui.format.deviceRegion
 import ru.kuznetsov.itstime4service.ui.format.keepKm
 import ru.kuznetsov.itstime4service.ui.format.kmIn
+import ru.kuznetsov.itstime4service.ui.format.toLook
 
 /**
- * Drives the car screen: the task list sorted by urgency, in-place editing of the name, the VIN and
- * the mileage, marking a task as done and deleting the car after a confirmation.
+ * Drives the car screen: the task list sorted by urgency, in-place editing of the name, the licence plate, the VIN
+ * and the mileage, marking a task as done and deleting the car after a confirmation.
  * Only one header value is edited at a time and only its check button saves it; [onCancelEdit] drops
  * the edit and the value stays as it was. The mileage is typed in the unit chosen in settings and stored in
  * kilometers; saved unchanged, it keeps its stored value.
@@ -42,6 +45,7 @@ import ru.kuznetsov.itstime4service.ui.format.kmIn
  * the service history record. A task shows as done while its mark holds (see [DoneMarksUseCase]); removing
  * the mark after a confirmation rolls the task back and deletes the record.
  * Opening the screen remembers the car as the last opened one, which the app may start on next time.
+ * The licence plate is drawn after its format, with the device region as a tie-breaker (see [DetectPlateStyleUseCase]).
  */
 class CarDetailViewModel(
     private val carId: String,
@@ -57,6 +61,7 @@ class CarDetailViewModel(
     observeHistory: ObserveHistoryUseCase,
     private val doneMarks: DoneMarksUseCase,
     recordCarOpened: RecordCarOpenedUseCase,
+    private val detectPlateStyle: DetectPlateStyleUseCase,
     private val deleteCar: DeleteCarUseCase,
 ) : ViewModel() {
 
@@ -93,14 +98,21 @@ class CarDetailViewModel(
     fun onSaveBrand(text: String) {
         viewModelScope.launch {
             val car = observeCarById(carId).first() ?: return@launch
-            if (updateCar(carId, text, car.vin)) onCancelEdit()
+            if (updateCar(carId, text, car.vin, car.plate)) onCancelEdit()
         }
     }
 
     fun onSaveVin(text: String) {
         viewModelScope.launch {
             val car = observeCarById(carId).first() ?: return@launch
-            if (updateCar(carId, car.brand, text)) onCancelEdit()
+            if (updateCar(carId, car.brand, text, car.plate)) onCancelEdit()
+        }
+    }
+
+    fun onSavePlate(text: String) {
+        viewModelScope.launch {
+            val car = observeCarById(carId).first() ?: return@launch
+            if (updateCar(carId, car.brand, car.vin, text)) onCancelEdit()
         }
     }
 
@@ -169,6 +181,8 @@ class CarDetailViewModel(
         return CarDetails(
             brand = brand,
             vin = vin,
+            plate = plate,
+            plateLook = plate?.let { detectPlateStyle(it, deviceRegion()).toLook(it) },
             mileageKm = mileageKm,
             dueCount = alerts.due,
             soonCount = alerts.soon,

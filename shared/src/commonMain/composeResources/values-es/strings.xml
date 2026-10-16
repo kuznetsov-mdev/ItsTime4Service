@@ -173,4 +173,8 @@
         <item quantity="many">%1$d añadidas</item>
         <item quantity="other">%1$d añadidas</item>
     </plurals>
+    <string name="plate_prefix">Matrícula</string>
+    <string name="action_edit_plate">Editar matrícula</string>
+    <string name="field_plate">Matrícula</string>
+    <string name="plate_placeholder">Ej. 1234 BCD</string>
 </resources>

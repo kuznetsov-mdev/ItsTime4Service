@@ -171,4 +171,8 @@
         <item quantity="one">%1$d added</item>
         <item quantity="other">%1$d added</item>
     </plurals>
+    <string name="plate_prefix">Licence plate</string>
+    <string name="action_edit_plate">Edit licence plate</string>
+    <string name="field_plate">Licence plate</string>
+    <string name="plate_placeholder">E.g. 7ABC123</string>
 </resources>

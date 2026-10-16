@@ -23,6 +23,7 @@ import ru.kuznetsov.itstime4service.ui.format.kmFrom
  * the form to showing errors and expands every collapsed block with such a field; an unwanted block has to be removed, it is not skipped silently.
  * When the form has no blocks at all, the car gets a default oil-change task counted from its current
  * mileage, as in the design mockup. Repeated taps on save while the car is being stored are ignored. Distances are typed in the unit chosen in settings and stored in kilometers.
+ * The licence plate is optional and typed in upper case, up to 12 characters.
  */
 class CarFormViewModel(
     private val addCar: AddCarUseCase,
@@ -46,6 +47,8 @@ class CarFormViewModel(
     fun onMileageChange(value: String) = _state.update { it.copy(mileageKm = value.digits()) }
 
     fun onVinChange(value: String) = _state.update { it.copy(vin = value.uppercase().take(VIN_LENGTH)) }
+
+    fun onPlateChange(value: String) = _state.update { it.copy(plate = value.uppercase().take(PLATE_LENGTH)) }
 
     fun onTaskChange(key: Int, fields: TaskFields) = _state.update { state ->
         state.copy(tasks = state.tasks.map { if (it.key == key) it.copy(fields = fields.sanitized()) else it })
@@ -90,7 +93,7 @@ class CarFormViewModel(
                     ),
                 )
             }
-            val carId = addCar(NewCar(brand = form.brand, mileageKm = mileageKm, vin = form.vin, tasks = tasks))
+            val carId = addCar(NewCar(brand = form.brand, mileageKm = mileageKm, vin = form.vin, tasks = tasks, plate = form.plate))
             if (carId != null) _state.update { it.copy(isSaved = true) } else isSaving = false
         }
     }
@@ -99,6 +102,7 @@ class CarFormViewModel(
 
     private companion object {
         const val VIN_LENGTH = 17
+        const val PLATE_LENGTH = 12
         const val MAX_NUMBER_LENGTH = 7
         const val DEFAULT_TASK_INTERVAL_KM = 10_000
         const val DEFAULT_TASK_REMINDER_WINDOW_KM = 1_500

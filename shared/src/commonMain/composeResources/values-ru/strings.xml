@@ -175,4 +175,8 @@
         <item quantity="many">%1$d добавлено</item>
         <item quantity="other">%1$d добавлено</item>
     </plurals>
+    <string name="plate_prefix">Госномер</string>
+    <string name="action_edit_plate">Изменить госномер</string>
+    <string name="field_plate">Госномер</string>
+    <string name="plate_placeholder">Например, А 123 ВС 77</string>
 </resources>

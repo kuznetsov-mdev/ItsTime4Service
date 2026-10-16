@@ -2,6 +2,7 @@ package ru.kuznetsov.itstime4service.features.cardetail
 
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.domain.model.TaskStatus
+import ru.kuznetsov.itstime4service.ui.components.indicators.PlateLook
 
 /**
  * State of the car screen.
@@ -32,15 +33,18 @@ data class CarDetailUiState(
 /**
  * The header values of the car screen that are edited in place, one at a time.
  */
-enum class EditableField { BRAND, VIN, MILEAGE }
+enum class EditableField { BRAND, PLATE, VIN, MILEAGE }
 
 /**
  * The car as shown in the screen header and its tasks, most urgent first.
  * [dueCount] of [taskCount] tasks are due and [soonCount] are soon; together they fill the status ring.
+ * [plate] is the licence plate as typed and [plateLook] how it is drawn; both are `null` without a plate.
  */
 data class CarDetails(
     val brand: String,
     val vin: String?,
+    val plate: String?,
+    val plateLook: PlateLook?,
     val mileageKm: Int,
     val dueCount: Int,
     val soonCount: Int,

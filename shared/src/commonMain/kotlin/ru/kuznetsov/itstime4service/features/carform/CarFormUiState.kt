@@ -16,6 +16,7 @@ data class CarFormUiState(
     val brand: String = "",
     val mileageKm: String = "",
     val vin: String = "",
+    val plate: String = "",
     val tasks: List<TaskBlockState> = emptyList(),
     val showErrors: Boolean = false,
     val isSaved: Boolean = false,
