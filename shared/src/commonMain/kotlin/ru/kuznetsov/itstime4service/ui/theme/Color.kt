@@ -22,6 +22,17 @@ internal val InkMutedDark = Color(0xFF8D99A8)
 internal val InkFaintDark = Color(0xFF566072)
 internal val RuleDark = Color(0xFF1E2733)
 
+internal val PlateBgLight = Color(0xFFFFFFFF)
+internal val PlateInkLight = Color(0xFF111111)
+internal val PlateEdgeLight = Color(0xFF1B1B1B)
+internal val PlateUsInkLight = Color(0xFF24407A)
+internal val PlateEuBandLight = Color(0xFF1F4AA8)
+internal val PlateBgDark = Color(0xFF1B212B)
+internal val PlateInkDark = Color(0xFFE9EDF3)
+internal val PlateEdgeDark = Color(0xFF6B7686)
+internal val PlateUsInkDark = Color(0xFF9DB6EA)
+internal val PlateEuBandDark = Color(0xFF1A3A86)
+
 // Brand accent and status-tier colors — constants, identical in both themes
 internal val Accent = Color(0xFF0EA5B7)
 internal val OnAccent = Color(0xFFFFFFFF)
@@ -33,7 +44,8 @@ internal val OnTier = Color(0xFFFFFFFF)
 /**
  * Semantic color tokens for ItsTime4Service — mirrors the CSS custom properties from the design mockup.
  * Neutral tones (bg/surface/ink/rule) switch between [LightItsTime4ServiceColors]/[DarkItsTime4ServiceColors];
- * accent and tier-status colors are the same instance in both.
+ * accent and tier-status colors are the same instance in both. The plate colors draw licence plates: light plates
+ * in the light theme, dark plates in the dark theme.
  */
 data class ItsTime4ServiceColorScheme(
     val bg: Color,
@@ -50,6 +62,11 @@ data class ItsTime4ServiceColorScheme(
     val tierSoon: Color,
     val tierDue: Color,
     val onTier: Color,
+    val plateBg: Color,
+    val plateInk: Color,
+    val plateEdge: Color,
+    val plateUsInk: Color,
+    val plateEuBand: Color,
 )
 
 internal val LightItsTime4ServiceColors = ItsTime4ServiceColorScheme(
@@ -67,6 +84,11 @@ internal val LightItsTime4ServiceColors = ItsTime4ServiceColorScheme(
     tierSoon = TierSoon,
     tierDue = TierDue,
     onTier = OnTier,
+    plateBg = PlateBgLight,
+    plateInk = PlateInkLight,
+    plateEdge = PlateEdgeLight,
+    plateUsInk = PlateUsInkLight,
+    plateEuBand = PlateEuBandLight,
 )
 
 internal val DarkItsTime4ServiceColors = ItsTime4ServiceColorScheme(
@@ -84,4 +106,9 @@ internal val DarkItsTime4ServiceColors = ItsTime4ServiceColorScheme(
     tierSoon = TierSoon,
     tierDue = TierDue,
     onTier = OnTier,
+    plateBg = PlateBgDark,
+    plateInk = PlateInkDark,
+    plateEdge = PlateEdgeDark,
+    plateUsInk = PlateUsInkDark,
+    plateEuBand = PlateEuBandDark,
 )
