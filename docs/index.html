@@ -33,6 +33,7 @@
     --tier-soon: #e2922e;     /* пора готовиться */
     --tier-due: #e34b3f;      /* просрочено */
     --on-tier: #ffffff;       /* текст поверх заливки тира — константа в обеих темах */
+    --plate-bg: #ffffff; --plate-ink: #111111; --plate-edge: #1b1b1b; --plate-us-ink: #24407a; --plate-us-bg: #eef2f8; --plate-eu-band: #1f4aa8;
 
     --display: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     --sans: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -43,24 +44,28 @@
       --bg: #0a0e15; --surface: #121823; --surface-2: #1a222f; --surface-3: #242e3d;
       --ink: #e9edf3; --ink-muted: #8d99a8; --ink-faint: #566072; --rule: #1e2733;
       --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 30px 60px -24px rgba(0,0,0,0.7);
+      --plate-bg: #1b212b; --plate-ink: #e9edf3; --plate-edge: #6b7686; --plate-us-ink: #9db6ea; --plate-us-bg: #161c26; --plate-eu-band: #1a3a86;
     }
   }
   :root[data-theme="dark"] {
     --bg: #0a0e15; --surface: #121823; --surface-2: #1a222f; --surface-3: #242e3d;
     --ink: #e9edf3; --ink-muted: #8d99a8; --ink-faint: #566072; --rule: #1e2733;
     --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 30px 60px -24px rgba(0,0,0,0.7);
+    --plate-bg: #1b212b; --plate-ink: #e9edf3; --plate-edge: #6b7686; --plate-us-ink: #9db6ea; --plate-us-bg: #161c26; --plate-eu-band: #1a3a86;
   }
 
   .locked-light {
     --bg: #eef1f5; --surface: #ffffff; --surface-2: #e3e8ee; --surface-3: #ccd5de;
     --ink: #10151d; --ink-muted: #5c6774; --ink-faint: #97a2ae; --rule: #dbe1e8;
     --shadow: 0 1px 2px rgba(16,21,29,0.05), 0 20px 40px -20px rgba(16,21,29,0.16);
+    --plate-bg: #ffffff; --plate-ink: #111111; --plate-edge: #1b1b1b; --plate-us-ink: #24407a; --plate-us-bg: #eef2f8; --plate-eu-band: #1f4aa8;
     color: var(--ink);
   }
   .locked-dark {
     --bg: #0a0e15; --surface: #121823; --surface-2: #1a222f; --surface-3: #242e3d;
     --ink: #e9edf3; --ink-muted: #8d99a8; --ink-faint: #566072; --rule: #1e2733;
     --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 30px 60px -24px rgba(0,0,0,0.7);
+    --plate-bg: #1b212b; --plate-ink: #e9edf3; --plate-edge: #6b7686; --plate-us-ink: #9db6ea; --plate-us-bg: #161c26; --plate-eu-band: #1a3a86;
     color: var(--ink);
   }
 
@@ -269,7 +274,9 @@
     position: absolute; inset: 0; background: rgba(5,8,13,0.55); z-index: 30;
     display: flex; align-items: center; justify-content: center; padding: 22px;
   }
-  .dialog { width: 100%; background: var(--surface); border: 1px solid var(--rule); border-radius: 24px; padding: 20px 18px 18px; box-shadow: var(--shadow); }
+  .dialog { width: 100%; max-height: 100%; display: flex; flex-direction: column; overflow: hidden; background: var(--surface); border: 1px solid var(--rule); border-radius: 24px; padding: 20px 18px 18px; box-shadow: var(--shadow); }
+  .dialog > * { flex-shrink: 0; }
+  .dialog > .dialog-fields { flex-shrink: 1; min-height: 0; overflow-y: auto; padding-bottom: 2px; }
   .dialog-icon { width: 40px; height: 40px; border-radius: 11px; background: color-mix(in srgb, var(--tier-due) 14%, transparent); color: var(--tier-due); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
   .dialog-title { font-family: var(--display); font-weight: 800; font-size: 17px; line-height: 1.25; }
   .dialog-text { font-size: 12.5px; color: var(--ink-muted); line-height: 1.5; margin-top: 6px; }
@@ -291,6 +298,7 @@
     padding: 12px 13px; font-size: 13px; color: var(--ink); font-family: inherit;
   }
   .text-input.static { color: var(--ink-faint); }
+  .text-input.static:not(.multiline), .num-input.static { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .text-input.error, .num-input.error, .text-input.error:focus, .num-input.error:focus { border-color: var(--tier-due); }
   .dialog-fields { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
   .dialog-fields .text-input, .dialog-fields .num-input { width: 100%; margin: 0; }
@@ -299,6 +307,7 @@
   .history-comment { font-size: 11.5px; color: var(--ink-muted); margin-top: 5px; line-height: 1.45; }
   .text-input::placeholder, .num-input::placeholder { color: var(--ink-faint); }
   .row-2 { display: flex; gap: 10px; padding: 0 18px; margin-bottom: 0; }
+  .row-2 > div { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; }
   .row-2 > div { flex: 1; min-width: 0; }
   .row-2 .text-input, .row-2 .num-input { margin: 0 0 18px; width: 100%; }
 
@@ -320,7 +329,7 @@
   .collapsed-meta { font-size: 11.5px; color: var(--ink-muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
   .task-block.collapsed.error { border-color: var(--tier-due); }
   .form-actions { display: flex; gap: 10px; margin: 12px 18px 20px; flex-shrink: 0; }
-  .form-actions .outline-btn, .form-actions .save-btn { flex: 1; width: auto; margin: 0; padding-left: 8px; padding-right: 8px; white-space: nowrap; }
+  .form-actions .outline-btn, .form-actions .save-btn { flex: 1 1 auto; min-width: 0; width: auto; margin: 0; padding-left: 6px; padding-right: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
   .form-actions .outline-btn + .save-btn { margin: 0; }
   .form-actions .save-btn { border: 1.5px solid var(--accent); padding-top: 13.5px; padding-bottom: 13.5px; }
   .task-block-title { font-size: 12px; font-weight: 700; color: var(--ink-muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.04em; }
@@ -451,6 +460,75 @@
   .notif-text { font-size: 11.5px; color: var(--ink-muted); margin-top: 2px; line-height: 1.4; }
   .notif-caption { font-size: 10.5px; color: var(--ink-faint); margin-top: 8px; line-height: 1.4; }
 
+  /* ---------- Stage 8b: licence plates ---------- */
+  .plate { display: inline-flex; align-items: stretch; font-family: var(--mono); font-weight: 700; color: var(--plate-ink); line-height: 1; white-space: nowrap; background: var(--plate-bg); border: 1.5px solid var(--plate-edge); border-radius: 5px; overflow: hidden; vertical-align: middle; }
+  .plate-main { display: flex; align-items: center; padding: 5px 8px; font-size: 15px; letter-spacing: 0.02em; }
+  .plate-ru .plate-region { display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1.5px solid var(--plate-edge); padding: 2px 6px; gap: 2px; }
+  .plate-ru .plate-region b { font-size: 12.5px; }
+  .plate-ru .plate-region i { font-style: normal; font-size: 6.5px; display: flex; align-items: center; gap: 2px; letter-spacing: 0.04em; }
+  .plate-flag { width: 9px; height: 6px; background: linear-gradient(#fff 0 33%, #1c57a5 33% 66%, #d52b1e 66%); border: 0.5px solid #999; }
+  .plate-us { flex-direction: column; align-items: center; border-radius: 7px; border-color: var(--plate-us-ink); background: linear-gradient(var(--plate-bg), var(--plate-us-bg)); padding: 2px 10px 4px; }
+  .plate-us .plate-top { font-size: 6.5px; letter-spacing: 0.16em; color: #b8202f; font-family: var(--sans); font-weight: 800; padding-top: 2px; }
+  .plate-us .plate-main { color: var(--plate-us-ink); padding: 2px 0 0; font-size: 15px; }
+  .plate-eu .plate-band { background: var(--plate-eu-band); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 3px 4px 3px; font-size: 8px; gap: 2px; width: 15px; }
+  .plate-stars { width: 9px; height: 9px; border-radius: 50%; border: 1.5px dotted #f7d117; }
+  .plate-any { border-radius: 7px; border-color: var(--ink-faint); background: var(--surface-2); color: var(--ink); }
+  .plate-any .plate-main { font-size: 14px; }
+  .detail-plate { padding: 9px 18px 0; flex-shrink: 0; }
+  .plate-samples { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 18px; margin: 4px 0 22px; }
+  .plate-sample { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; }
+  .plate-sample .cap { font-size: 12px; color: var(--ink-muted); }
+  .decisions { margin: 0 0 26px; padding-left: 18px; font-size: 13.5px; line-height: 1.55; color: var(--ink); }
+  .decisions li { margin-bottom: 6px; }
+  /* ---------- Stage 8b: add-car row instead of the FAB ---------- */
+  .add-car-row { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 66px; flex-shrink: 0; border: 1.5px dashed color-mix(in srgb, var(--accent) 50%, var(--rule)); border-radius: 14px; background: color-mix(in srgb, var(--accent) 6%, var(--surface)); color: var(--accent); padding: 0; }
+  .car-list .add-car-row { margin-bottom: 10px; }
+  .car-t-list .add-car-row { min-height: 54px; }
+  /* ---------- Stage 8b: view toggle and expanded car cards ---------- */
+  .view-toggle { display: flex; gap: 6px; }
+  .view-toggle .icon-btn.on { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+  .car-t-list { display: flex; flex-direction: column; gap: 12px; padding: 12px 18px 16px; overflow-y: auto; flex: 1; min-height: 0; }
+  .car-t { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; flex-shrink: 0; }
+  .car-t-top { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--rule); }
+  .car-t-top .car-main { flex: 1; min-width: 0; }
+  .car-t-top .car-main { flex: 1; min-width: 0; }
+  .car-t-top .car-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* линия под номер, как вырез в бампере: плавно поднимается от нижнего края и огибает номер; фон не вырезается */
+  .car-t { position: relative; }
+  .car-t-plate { position: relative; display: flex; justify-content: center; padding: 17px 12px 8px; }
+  .car-t-plate .plate { position: relative; z-index: 1; }
+  /* разделитель колонок продолжается вниз до верхней точки дуги (верх дуги — 2/40 высоты SVG) */
+  .car-t-plate::before { content: ""; position: absolute; left: 50%; top: 0; width: 1px; height: calc(5px + (100% - 4px) * 0.05); background: var(--rule); }
+  .car-t-cut { position: absolute; left: -1px; right: -1px; bottom: -1px; height: calc(100% - 4px); width: calc(100% + 2px); }
+  .car-t-cut .edge { fill: none; stroke: var(--rule); stroke-width: 1; }
+  .car-t-plate .plate-main { font-size: 13px; padding: 4px 7px; }
+  .car-t-mileage { font-family: var(--display); font-weight: 800; font-size: 20px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .car-t-mileage small { font-size: 11px; color: var(--ink-faint); font-weight: 600; margin-left: 3px; }
+  .car-t-bottom { display: grid; grid-template-columns: 1fr 1fr; }
+  .car-t-bottom.single { grid-template-columns: 1fr; }
+  .car-t-bottom.single + .car-t-plate::before { display: none; }
+  .car-t-col { padding: 9px 12px 11px; min-width: 0; }
+  .car-t.has-plate .car-t-col { padding-bottom: 2px; }
+  .car-t-col + .car-t-col { border-left: 1px solid var(--rule); }
+  .car-t-head { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 5px; }
+  .car-t-item { display: flex; justify-content: space-between; gap: 6px; font-size: 11px; line-height: 1.35; padding: 2px 0; }
+  .car-t-item span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .car-t-item span:last-child { font-family: var(--mono); font-size: 10px; flex-shrink: 0; }
+  .car-t-empty { font-size: 11px; color: var(--ink-faint); }
+  /* ---------- Stage 8b: task icon picker ---------- */
+  .name-row { display: flex; gap: 8px; align-items: flex-start; padding: 0 18px; }
+  .name-row > div { flex: 1; min-width: 0; }
+  .name-row .text-input { width: 100%; margin: 0 0 18px; }
+  .icon-pick-btn { width: 34px; height: 34px; margin-top: 4px; flex-shrink: 0; border-radius: 9px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); display: flex; align-items: center; justify-content: center; padding: 0; }
+  .icon-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 14px; }
+  .icon-grid span { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 9px; background: var(--surface-2); color: var(--ink-muted); border: 1.5px solid transparent; }
+  .icon-grid span.on { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .more-btn { display: block; width: 100%; margin-top: 2px; padding: 9px 12px; border-radius: 10px; border: 1px dashed var(--rule); background: none; color: var(--accent); font-size: 12px; font-weight: 700; font-family: inherit; text-align: left; }
+  .more-group { display: flex; flex-direction: column; gap: 10px; padding-top: 2px; }
+  .suggest-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .suggest-chips span { font-size: 10.5px; padding: 3px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-muted); }
+  .select-input { display: flex; justify-content: space-between; align-items: center; }
+
   /* ---------- Interactive stage ---------- */
   .stage { display: flex; flex-direction: column; align-items: center; margin-top: 8px; }
   .route-pill { font-family: var(--mono); font-size: 12px; color: var(--ink-muted); background: var(--surface); border: 1px solid var(--rule); border-radius: 999px; padding: 6px 14px; margin-bottom: 16px; }
@@ -571,6 +649,28 @@
     <div class="section-head"><h2>Варианты: пробег и работы на экране авто</h2></div>
     <p class="section-sub">Альтернативы правке пробега через поле с галочкой и другие виды карточек работ. Пробег в вариантах меняется кнопками: шаг 100 км, множитель выбирается между кнопками. Блоки пробега кликабельные — можно попробовать; карточки работ статичные. Каждый экран — сочетание одного варианта пробега и одного варианта работ, их можно комбинировать иначе. <strong>Выбрано:</strong> пробег и «скоро / просрочено» — вариант A, работы — карточки из варианта B; перенесено на экран авто (03, 06, 10, 11, 13 и интерактивный макет).</p>
     <div class="gallery" id="variantsGallery"></div>
+  </div>
+
+  <!-- ================= STAGE 8B ================= -->
+  <div class="section-block panel" id="stage8bBlock">
+    <div class="section-head"><h2>Этап 8б: новые функции</h2></div>
+    <p class="section-sub">Предложение к согласованию: госномер, развёрнутый вид списка авто, добавление записей в историю вручную, выбор иконки работы. Экраны ниже — светлая и тёмная тема. После согласования эти экраны войдут в основной набор и в интерактивный макет.</p>
+    <h3 style="margin:0 0 10px;font-size:15px">Госномер: вид по региону устройства</h3>
+    <div class="locked-light" style="padding:16px 16px 2px;border-radius:16px;background:var(--bg);margin-bottom:12px"><div class="plate-samples" id="plateSamples"></div></div>
+    <div class="locked-dark" style="padding:16px 16px 2px;border-radius:16px;background:var(--bg);margin-bottom:22px"><div class="plate-samples" id="plateSamplesDark"></div></div>
+    <h3 style="margin:0 0 10px;font-size:15px">Решения, которые предлагаю</h3>
+    <ol class="decisions">
+      <li><b>Вид номера</b> выбирается по региону устройства: Россия — российский номер с регионом и флагом, США — американский, страны ЕС — европейский с синей полосой и кодом страны (E — Испания, D — Германия, F — Франция и т. д.), остальные — универсальная рамка. Номер вводится свободным текстом (буквы в верхнем регистре, до 12 символов); российский раскладывается на серию и регион, если совпадает с форматом «А 123 ВС 77», иначе показывается целиком.</li>
+      <li><b>Где показывается номер:</b> под названием авто на экране авто (тап — правка на месте, как у названия и VIN) и в развёрнутой карточке в списке. Номер всегда стоит под названием авто. Нет номера — пластины нет, а под названием, перед VIN и в том же стиле, — «Госномер добавить»; тап открывает правку на месте (экран 30). При добавлении авто номер вводится в форме (экран 25).</li>
+      <li><b>Вид списка авто — три варианта:</b> строки (22), карточки с ближайшими работами (32) и карточки с работами и историей (23); переключатель — три иконки в левом верхнем углу «Мои авто»; выбранный вид запоминается в настройках и сохраняется между запусками. В карточке сверху марка и пробег, справа кольцо статусов; в самом низу — госномер по центру, его огибает пологая серая линия от нижнего края карточки, как вырез в бампере; фон карточки не вырезается; без номера линии нет; слева снизу — 3–4 самые срочные работы с остатком цветом статуса; справа — 3–4 последние записи истории с датой. Тап по верхней части и по работам открывает экран авто, по истории — вкладку «История» с этим авто. Пусто — «Работ нет» / «Записей пока нет».</li>
+      <li><b>Добавление авто:</b> вместо FAB на «Мои авто» — кнопка в форме элемента списка с «+» по центру, всегда последней в списке, в обоих видах (экраны 22 и 23). Прокручивается вместе со списком и не перекрывает карточки.</li>
+      <li><b>Добавление записи в историю:</b> кнопка «+» на вкладке «История». Окно: сразу видны обязательные поля — авто (по умолчанию выбранное в фильтре или первое, только действующие), название работы текстом с подсказками из работ этого авто, дата и пробег. Необязательные — сервис, стоимость, комментарий — раскрываются кнопкой «+ Ещё» (экраны 27 и 31). Запись не связана с работой: «последний раз» у работы не меняется и на экране не упоминается, отметкой запись не считается.</li>
+      <li><b>Иконка работы:</b> кнопка с текущей иконкой слева от поля «Название» на экране работы и в блоке работы формы авто. Нажатие открывает окно с сеткой из 12 иконок без подписей (подписи — для экранного диктора); тап по иконке выбирает её и закрывает окно. У новой работы сразу стоит гаечный рожковый ключ — в том числе у работы из чипа пресета. Выбранная иконка хранится у работы. Работам, сохранённым до этого, при обновлении один раз ставится иконка, подобранная по названию, как сейчас.</li>
+      <li><b>Номер в тёмной теме</b> — тёмная пластина со светлыми символами и рамкой; синяя полоса европейского номера и флаг российского остаются цветными.</li>
+    </ol>
+    <div class="locked-light" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery" id="gallery8bLight"></div></div>
+    <div style="height:28px"></div>
+    <div class="locked-dark" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery" id="gallery8bDark"></div></div>
   </div>
 
   <!-- ================= STYLE GUIDE: TOKENS ================= -->
@@ -959,6 +1059,15 @@
     droplet: '<path d="M12 3s6 6.5 6 11a6 6 0 1 1-12 0c0-4.5 6-11 6-11Z"/>',
     disc: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.6"/>',
     filter: '<path d="M4 4h16l-6.2 8.4V19l-3.6 2v-8.6L4 4Z"/>',
+    chevronDown: '<path d="m6 9 6 6 6-6"/>',
+    wind: '<path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/>',
+    panelTop: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/>',
+    list: '<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
+    panels: '<rect width="18" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/>',
+    zap: '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
+    battery: '<rect width="16" height="10" x="2" y="7" rx="2" ry="2"/><line x1="22" x2="22" y1="11" y2="13"/>',
+    thermometer: '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
+    tire: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>',
     wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.4-3.4a6 6 0 0 1-7.8 7.8L6.5 20.4a2.1 2.1 0 0 1-3-3l6.7-6.7a6 6 0 0 1 7.8-7.8l-3.3 3.4Z"/>',
     gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a8 8 0 0 0 0-6l1.9-1.5-2-3.4-2.3.9a8 8 0 0 0-2.6-1.5L14 1h-4l-.4 2.5a8 8 0 0 0-2.6 1.5l-2.3-.9-2 3.4L4.6 9a8 8 0 0 0 0 6l-1.9 1.5 2 3.4 2.3-.9a8 8 0 0 0 2.6 1.5L10 23h4l.4-2.5a8 8 0 0 0 2.6-1.5l2.3.9 2-3.4L19.4 15Z"/>',
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.3 2"/>',
@@ -1155,10 +1264,11 @@
         gaugeHtml(car) +
         '</div>';
     }).join('');
-    var fab = '<button class="fab"' + (opts.interactive ? ' data-open-new' : '') + '>' + icon('plus', 21) + '</button>';
+    var fab = opts.addRow ? '' : '<button class="fab"' + (opts.interactive ? ' data-open-new' : '') + '>' + icon('plus', 21) + '</button>';
+    if (opts.addRow) rows += '<button class="add-car-row" aria-label="Добавить авто">' + icon('plus', 22) + '</button>';
     var tabbar = tabbarHtml('cars', opts);
     return '<div class="view" data-view="cars">' +
-      '<div class="s-topbar"><span></span><span></span></div>' +
+      '<div class="s-topbar">' + (opts.viewToggle ? viewToggleHtml('list') : '<span></span>') + '<span></span></div>' +
       '<div class="s-title">Мои авто</div>' +
       '<div class="s-sub">' + cars.length + ' автомобиля · в кружке — число скорых работ</div>' +
       '<div class="car-list">' + rows + '</div>' + fab + tabbar +
@@ -1301,7 +1411,8 @@
     return '<div class="view" data-view="detail">' +
       '<div class="s-topbar"><button class="icon-btn"' + backAttr + '>' + icon('chevronLeft', 16) + '</button>' +
       '<div class="icon-row"><button class="icon-btn"' + histAttr + '>' + icon('clock', 16) + '</button><button class="icon-btn"' + deleteAttr + '>' + icon('trash', 16) + '</button></div></div>' +
-      titleBlock + vinBlock +
+      titleBlock + (opts.plate ? '<div class="detail-plate">' + plateHtml(opts.plate.text, opts.plate.style, opts.plate.country) + '</div>' : '') +
+      (opts.plateAdd ? '<div class="detail-vin" style="padding-top:6px">Госномер <span class="tap">добавить</span></div>' : '') + vinBlock +
       mileageCard.replace('class="v-card"', 'class="v-card" style="margin:14px 18px 6px;flex-shrink:0"') +
       '<div class="task-list with-fab" style="padding-top:0">' + rows + '</div>' + addTaskFab +
       (opts.confirmDelete ? deleteDialogHtml(car, opts) : '') +
@@ -1587,6 +1698,7 @@
       '<div><span class="field-label" style="padding:0 0 8px">Пробег, ' + unitLabel() + '<span class="req"> *</span></span>' + mileageField + '</div>' +
       '<div><span class="field-label" style="padding:0 0 8px">VIN-номер</span>' + vinField + '</div>' +
       '</div>' +
+      (opts.plateField ? '<span class="field-label">Госномер</span><div class="text-input static">' + opts.plateField + '</div>' : '') +
       '<div class="section-divider"><span class="st">Регламентные работы</span><span class="sc">' + countLabel + '</span></div>' +
       '<div style="height:10px"></div>' +
       presetChipsHtml(opts) +
@@ -1636,7 +1748,9 @@
       '<div class="form-body">' +
       (editing ? '' : presetChipsHtml(opts, 'data-task-preset')) +
       '<span class="field-label">Название<span class="req"> *</span></span>' +
-      field('text', 'taskName', 'Например, Замена масла и фильтра', form.name, nameError) +
+      (opts.iconPicker
+        ? '<div class="name-row"><button class="icon-pick-btn" aria-label="Иконка работы — выбрать">' + icon(opts.iconPicker, 16) + '</button><div>' + field('text', 'taskName', 'Например, Замена масла и фильтра', form.name, nameError) + '</div></div>'
+        : field('text', 'taskName', 'Например, Замена масла и фильтра', form.name, nameError)) +
       '<div class="row-2">' +
       '<div><span class="field-label" style="padding:0 0 8px">Интервал, ' + unitLabel() + '<span class="req"> *</span></span>' + field('num', 'taskInterval', '10000', form.intervalKm, intervalError) + '</div>' +
       '<div><span class="field-label" style="padding:0 0 8px">Интервал, мес</span>' + field('num', 'taskMonths', '12', form.intervalMonths) + '</div>' +
@@ -1649,6 +1763,7 @@
       field('num', 'taskReminder', '1500', form.reminderKm) +
       '</div>' + addMoreBtn + saveBtn +
       (opts.confirmDeleteTask ? taskDeleteDialogHtml(form, opts) : '') +
+      (opts.iconDialog ? iconPickerDialogHtml(opts.iconPicker) : '') +
       '</div>';
   }
 
@@ -1778,6 +1893,128 @@
   }
   renderStaticGallery('galleryLight');
   renderStaticGallery('galleryDark');
+
+  /* ================= stage 8b proposal ================= */
+  /* номерной знак: вид по региону устройства — ru, us, eu, any */
+  function plateHtml(text, style, country) {
+    text = String(text || '').toUpperCase();
+    if (style === 'ru') {
+      var m = /^([А-ЯA-Z])\s?(\d{3})\s?([А-ЯA-Z]{2})\s?(\d{2,3})$/.exec(text);
+      var main = m ? m[1] + ' ' + m[2] + ' ' + m[3] : text;
+      var region = m ? '<span class="plate-region"><b>' + m[4] + '</b><i>RUS<span class="plate-flag"></span></i></span>' : '';
+      return '<span class="plate plate-ru" aria-label="Госномер ' + text + '"><span class="plate-main">' + main + '</span>' + region + '</span>';
+    }
+    if (style === 'us') return '<span class="plate plate-us" aria-label="Plate ' + text + '"><span class="plate-top">USA</span><span class="plate-main">' + text + '</span></span>';
+    if (style === 'eu') return '<span class="plate plate-eu" aria-label="Matrícula ' + text + '"><span class="plate-band"><span class="plate-stars"></span>' + (country || 'E') + '</span><span class="plate-main">' + text + '</span></span>';
+    return '<span class="plate plate-any" aria-label="Plate ' + text + '"><span class="plate-main">' + text + '</span></span>';
+  }
+  /* три вида списка: строки, карточки с ближайшими работами, карточки с работами и историей */
+  function viewToggleHtml(active) {
+    return '<div class="view-toggle">' +
+      '<button class="icon-btn' + (active === 'list' ? ' on' : '') + '" aria-label="Список">' + icon('list', 16) + '</button>' +
+      '<button class="icon-btn' + (active === 'tasks' ? ' on' : '') + '" aria-label="Карточки с работами">' + icon('panelTop', 16) + '</button>' +
+      '<button class="icon-btn' + (active === 'cards' ? ' on' : '') + '" aria-label="Карточки с работами и историей">' + icon('panels', 16) + '</button></div>';
+  }
+  /* подписи — только для экранного диктора, на экране сетки их нет */
+  var TASK_ICONS = [['wrench', 'Гаечный ключ'], ['droplet', 'Масло'], ['disc', 'Тормоза'], ['filter', 'Фильтры'],
+    ['zap', 'Свечи, электрика'], ['battery', 'Аккумулятор'], ['thermometer', 'Охлаждение'], ['tire', 'Шины'],
+    ['wind', 'Кондиционер'], ['gear', 'Трансмиссия'], ['gauge', 'Диагностика'], ['car', 'Кузов']];
+  /* окно выбора иконки: тап по иконке выбирает её и закрывает окно */
+  function iconPickerDialogHtml(selected) {
+    return '<div class="dialog-scrim"><div class="dialog" role="dialog" aria-modal="true">' +
+      '<div class="dialog-title">Иконка работы</div>' +
+      '<div class="dialog-text">По умолчанию у работы — гаечный ключ.</div>' +
+      '<div class="icon-grid">' + TASK_ICONS.map(function (x) {
+        return '<span class="' + (x[0] === selected ? 'on' : '') + '" role="button" aria-label="' + x[1] + '">' + icon(x[0], 16) + '</span>';
+      }).join('') + '</div>' +
+      '<div class="dialog-actions"><button class="dialog-btn">Отмена</button></div>' +
+      '</div></div>';
+  }
+  var CAR_CUT_SVG = '<svg class="car-t-cut" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">' +
+    '<path class="edge" vector-effect="non-scaling-stroke" d="M5 40 C15 40 17 3 28 2 L72 2 C83 3 85 40 95 40"/></svg>';
+  /* развёрнутый вид: сверху пробег, снизу слева ближайшие работы, справа последние записи истории */
+  function carsExpandedHtml(cars, plates, withHistory) {
+    if (withHistory === undefined) withHistory = true;
+    var cards = cars.map(function (car) {
+      var tasks = sortedTaskStats(car).slice(0, 4).map(function (x) {
+        var left = Math.round(toUnit(Math.abs(x.st.remaining))).toLocaleString('ru-RU');
+        return '<div class="car-t-item"><span>' + x.t.name + '</span><span style="color:' + tierVar(x.st.status) + '">' + (x.st.remaining <= 0 ? '−' : '') + left + '</span></div>';
+      }).join('') || '<div class="car-t-empty">Работ нет</div>';
+      var hist = (car.history || []).slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; }).slice(0, 4).map(function (h) {
+        return '<div class="car-t-item"><span>' + h.taskName + '</span><span style="color:var(--ink-faint)">' + formatDateRu(h.date).slice(0, 5) + '.' + h.date.slice(2, 4) + '</span></div>';
+      }).join('') || '<div class="car-t-empty">Записей пока нет</div>';
+      var plate = plates[car.id] ? plateHtml(plates[car.id], 'ru') : '';
+      return '<div class="car-t' + (plate ? ' has-plate' : '') + '"><div class="car-t-top"><div class="car-main"><div class="car-name">' + car.brand + '</div>' +
+        '<div class="car-t-mileage">' + Math.round(toUnit(car.mileageKm)).toLocaleString('ru-RU') + '<small>' + unitWord() + '</small></div></div>' +
+        statusDonutHtml(carAlerts(car)) + '</div>' +
+        '<div class="car-t-bottom' + (withHistory ? '' : ' single') + '"><div class="car-t-col"><div class="car-t-head">Ближайшие работы</div>' + tasks + '</div>' +
+        (withHistory ? '<div class="car-t-col"><div class="car-t-head">Последние работы</div>' + hist + '</div>' : '') + '</div>' +
+        (plate ? '<div class="car-t-plate">' + CAR_CUT_SVG + plate + '</div>' : '') + '</div>';
+    }).join('');
+    return '<div class="view" data-view="cars">' +
+      '<div class="s-topbar">' + viewToggleHtml(withHistory ? 'cards' : 'tasks') + '<span></span></div>' +
+      '<div class="s-title">Мои авто</div>' +
+      '<div class="car-t-list">' + cards + '<button class="add-car-row" aria-label="Добавить авто">' + icon('plus', 22) + '</button></div>' +
+      tabbarHtml('cars', {}) + '</div>';
+  }
+  /* окно новой записи истории: авто, работа текстом с подсказками, дата и пробег обязательны */
+  function newHistoryEntryDialogHtml(car, expanded) {
+    var chips = car.tasks.slice(0, 3).map(function (t) { return '<span>' + t.name + '</span>'; }).join('');
+    var optional = expanded
+      ? '<div class="more-group">' +
+        '<div><span class="mini-label">Где обслуживались</span><div class="text-input static">Например, АвтоСервис Юг</div></div>' +
+        '<div><span class="mini-label">Сколько стоило, ₽</span><div class="num-input static">2400</div></div>' +
+        '<div><span class="mini-label">Комментарий</span><div class="text-input static multiline">Что меняли, какие запчасти</div></div>' +
+        '</div>'
+      : '<button class="more-btn">+ Ещё: сервис, стоимость, комментарий</button>';
+    return '<div class="dialog-scrim"><div class="dialog" role="dialog" aria-modal="true">' +
+      '<div class="dialog-icon accent">' + icon('plus', 19) + '</div>' +
+      '<div class="dialog-title">Новая запись</div>' +
+      '<div class="dialog-text">Работа, сделанная раньше, — например, до установки приложения.</div>' +
+      '<div class="dialog-fields">' +
+      '<div><span class="mini-label">Авто<span class="req"> *</span></span><div class="text-input static select-input">' + car.brand + icon('chevronDown', 14) + '</div></div>' +
+      '<div><span class="mini-label">Работа<span class="req"> *</span></span><div class="text-input static">Например, Замена масла и фильтра</div><div class="suggest-chips">' + chips + '</div></div>' +
+      '<div class="filter-pair"><div><span class="mini-label">Дата<span class="req"> *</span></span><div class="text-input static">12.04.2024</div></div>' +
+      '<div><span class="mini-label">Пробег, ' + unitLabel() + '<span class="req"> *</span></span><div class="num-input static">61500</div></div></div>' +
+      optional +
+      '</div>' +
+      '<div class="dialog-actions"><button class="dialog-btn">Отмена</button><button class="dialog-btn primary">Добавить</button></div>' +
+      '</div></div>';
+  }
+  function withHistoryFab(screenHtml) {
+    var i = screenHtml.lastIndexOf('<nav class="tabbar">');
+    return screenHtml.slice(0, i) + '<button class="fab" aria-label="Добавить запись">' + icon('plus', 21) + '</button>' + screenHtml.slice(i);
+  }
+  function withDialog(screenHtml, dialogHtml) {
+    var i = screenHtml.lastIndexOf('</div>');
+    return screenHtml.slice(0, i) + dialogHtml + screenHtml.slice(i);
+  }
+  function renderStage8b(containerId) {
+    var cars = cloneCars();
+    var sold = cloneSold();
+    var plates = { c1: 'А123ВС77', c2: 'М456ОР199' };
+    var form = taskToBlock(cars[0].tasks[0], 1, true);
+    document.getElementById(containerId).innerHTML =
+      phoneWrap('22', 'Мои авто: переключатель вида', carsScreenHtml(cars, { interactive: false, viewToggle: true, addRow: true })) +
+      phoneWrap('32', 'Мои авто: карточки с работами', carsExpandedHtml(cars, plates, false)) +
+      phoneWrap('23', 'Мои авто: работы и история', carsExpandedHtml(cars, plates, true)) +
+      phoneWrap('24', 'Экран авто с госномером', detailScreenHtml(cars[0], { interactive: false, plate: { text: plates.c1, style: 'ru' } })) +
+      phoneWrap('30', 'Экран авто без госномера', detailScreenHtml(cars[2], { interactive: false, plateAdd: true })) +
+      phoneWrap('25', 'Добавление авто: госномер', newScreenHtml({ interactive: false, plateField: 'А 123 ВС 77' }, [])) +
+      phoneWrap('26', 'История: кнопка добавления', withHistoryFab(historyScreenHtml(cars, sold, { carId: null }, { interactive: false }))) +
+      phoneWrap('27', 'История: новая запись', withDialog(withHistoryFab(historyScreenHtml(cars, sold, { carId: 'c1' }, { interactive: false })), newHistoryEntryDialogHtml(cars[0], false))) +
+      phoneWrap('31', 'Новая запись: необязательные поля', withDialog(withHistoryFab(historyScreenHtml(cars, sold, { carId: 'c1' }, { interactive: false })), newHistoryEntryDialogHtml(cars[0], true))) +
+      phoneWrap('28', 'Работа: кнопка иконки', taskScreenHtml(cars[0], form, { interactive: false, iconPicker: 'wrench' })) +
+      phoneWrap('29', 'Работа: выбор иконки', taskScreenHtml(cars[0], form, { interactive: false, iconPicker: 'droplet', iconDialog: true }));
+  }
+  var plateSamplesHtml = [
+    ['ru', 'А123ВС77', 'Россия'], ['us', '7ABC123', 'США'], ['eu', '1234 BCD', 'Испания', 'E'], ['eu', 'B AB 1234', 'Германия', 'D'],
+    ['any', '01 A 123 BC', 'Другие регионы']
+  ].map(function (x) { return '<div class="plate-sample">' + plateHtml(x[1], x[0], x[3]) + '<span class="cap">' + x[2] + '</span></div>'; }).join('');
+  document.getElementById('plateSamples').innerHTML = plateSamplesHtml;
+  document.getElementById('plateSamplesDark').innerHTML = plateSamplesHtml;
+  renderStage8b('gallery8bLight');
+  renderStage8b('gallery8bDark');
   /* ================= variants: mileage panel and task cards ================= */
   var vstate = { a: { km: 84300, mult: 1 }, b: { km: 84300, mult: 1 }, c: { km: 84300, history: [] }, d: { km: 84300 } };
   function vHeader(car) {
