@@ -13,6 +13,7 @@ internal fun Cars.toDomain(tasks: List<Maintenance_tasks>) = Car(
     mileageKm = mileage_km.toInt(),
     vin = vin,
     tasks = tasks.map { it.toDomain() },
+    plate = plate,
 )
 
 internal fun Cars.toSummary() = CarSummary(

@@ -1,0 +1,5 @@
+ALTER TABLE cars ADD COLUMN plate TEXT;
+
+ALTER TABLE maintenance_tasks ADD COLUMN icon TEXT;
+
+ALTER TABLE settings ADD COLUMN cars_view TEXT NOT NULL DEFAULT 'LIST';

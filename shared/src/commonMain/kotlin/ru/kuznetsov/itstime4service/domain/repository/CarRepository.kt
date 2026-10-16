@@ -50,7 +50,7 @@ interface CarRepository {
 
     suspend fun unmarkTaskDone(carId: String, taskId: String, entryId: String): Boolean
 
-    suspend fun updateCar(carId: String, brand: String, vin: String?)
+    suspend fun updateCar(carId: String, brand: String, vin: String?, plate: String?)
 
     suspend fun addTask(carId: String, task: NewMaintenanceTask)
 

@@ -64,7 +64,7 @@ internal class FakeCarRepository(
         comment: String?,
     ): Boolean = error("not used")
 
-    override suspend fun updateCar(carId: String, brand: String, vin: String?) = error("not used")
+    override suspend fun updateCar(carId: String, brand: String, vin: String?, plate: String?) = error("not used")
 
     override suspend fun addTask(carId: String, task: NewMaintenanceTask) = error("not used")
 

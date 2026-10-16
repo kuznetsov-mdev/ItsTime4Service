@@ -51,7 +51,7 @@ class CarRepositoryImpl(database: ItsTime4ServiceDatabase) : CarRepository {
     override suspend fun addCar(car: NewCar): String = withContext(dispatcher) {
         val carId = Uuid.random().toString()
         carQueries.transaction {
-            carQueries.insert(carId, car.brand, car.mileageKm.toLong(), car.vin)
+            carQueries.insert(carId, car.brand, car.mileageKm.toLong(), car.vin, car.plate)
             car.tasks.forEach { insertTask(carId, it) }
         }
         carId
@@ -124,8 +124,8 @@ class CarRepositoryImpl(database: ItsTime4ServiceDatabase) : CarRepository {
         }
     }
 
-    override suspend fun updateCar(carId: String, brand: String, vin: String?): Unit = withContext(dispatcher) {
-        carQueries.updateDetails(brand, vin, carId)
+    override suspend fun updateCar(carId: String, brand: String, vin: String?, plate: String?): Unit = withContext(dispatcher) {
+        carQueries.updateDetails(brand, vin, plate, carId)
     }
 
     override suspend fun addTask(carId: String, task: NewMaintenanceTask): Unit = withContext(dispatcher) {

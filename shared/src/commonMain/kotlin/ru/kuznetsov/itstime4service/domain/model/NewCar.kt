@@ -8,4 +8,5 @@ data class NewCar(
     val mileageKm: Int,
     val vin: String?,
     val tasks: List<NewMaintenanceTask>,
+    val plate: String? = null,
 )

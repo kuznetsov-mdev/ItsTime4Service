@@ -8,6 +8,7 @@ import ru.kuznetsov.itstime4service.domain.usecase.CalculateTaskStatusUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.CarAlertsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.DeleteCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.DeleteTaskUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.DetectPlateStyleUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.DoneMarksUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ForgetCarInSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.GetLaunchCarUseCase
@@ -55,6 +56,7 @@ val domainModule = module {
     factoryOf(::PurgeCarUseCase)
     factoryOf(::ObserveCarSummariesUseCase)
     factoryOf(::ObserveAllHistoryUseCase)
+    factoryOf(::DetectPlateStyleUseCase)
     factoryOf(::ObserveHistoryUseCase)
     factoryOf(::ObserveSettingsUseCase)
     factoryOf(::UpdateSettingsUseCase)

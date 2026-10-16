@@ -6,7 +6,8 @@ CREATE TABLE maintenance_tasks (
     last_done_km INTEGER NOT NULL,
     reminder_window_km INTEGER NOT NULL,
     interval_months INTEGER,
-    last_done_date TEXT
+    last_done_date TEXT,
+    icon TEXT
 );
 
 CREATE INDEX maintenance_tasks_car_id ON maintenance_tasks (car_id);
