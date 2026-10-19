@@ -15,6 +15,7 @@ import ru.kuznetsov.itstime4service.domain.usecase.ForgetCarInSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.GetLaunchCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.GetNowUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.GetTodayUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.KeepRemindersInSyncUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.MarkTaskDoneUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.NormalizeTaskUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveAllHistoryUseCase
@@ -70,4 +71,5 @@ val domainModule = module {
     factoryOf(::GetNowUseCase)
     factoryOf(::PlanRemindersUseCase)
     factoryOf(::SyncRemindersUseCase)
+    factoryOf(::KeepRemindersInSyncUseCase)
 }

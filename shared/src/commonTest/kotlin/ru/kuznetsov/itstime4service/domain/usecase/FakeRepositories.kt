@@ -1,7 +1,9 @@
 package ru.kuznetsov.itstime4service.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import ru.kuznetsov.itstime4service.domain.model.Car
@@ -10,34 +12,45 @@ import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.domain.model.MaintenanceTask
 import ru.kuznetsov.itstime4service.domain.model.NewCar
 import ru.kuznetsov.itstime4service.domain.model.NewMaintenanceTask
+import ru.kuznetsov.itstime4service.domain.model.PlannedReminder
+import ru.kuznetsov.itstime4service.domain.model.ReminderRecord
 import ru.kuznetsov.itstime4service.domain.model.ServiceHistoryEntry
 import ru.kuznetsov.itstime4service.domain.model.Settings
 import ru.kuznetsov.itstime4service.domain.model.ThemeMode
 import ru.kuznetsov.itstime4service.domain.repository.CarRepository
+import ru.kuznetsov.itstime4service.domain.repository.ReminderRepository
+import ru.kuznetsov.itstime4service.domain.repository.ReminderScheduler
 import ru.kuznetsov.itstime4service.domain.repository.ServiceHistoryRepository
 import ru.kuznetsov.itstime4service.domain.repository.SettingsRepository
 import ru.kuznetsov.itstime4service.domain.repository.TaskHistoryRepository
 
 /**
- * [CarRepository] for use case tests: serves fixed active cars and [sold] cars, and records the edits of a car,
- * the mileage it was given and the tasks it was asked to delete.
+ * [CarRepository] for use case tests: serves active [cars], which a test may replace to emit a change, and [sold]
+ * cars, and records the edits of a car, the mileage it was given and the tasks it was asked to delete.
  */
 internal class FakeCarRepository(
-    private val cars: List<Car>,
+    cars: List<Car>,
     private val sold: List<CarSummary> = emptyList(),
 ) : CarRepository {
     constructor(car: Car?) : this(listOfNotNull(car))
+
+    private val state = MutableStateFlow(cars)
+    var cars: List<Car>
+        get() = state.value
+        set(value) {
+            state.value = value
+        }
 
     val updatedCars = mutableListOf<List<String?>>()
     val mileageUpdates = mutableListOf<Pair<String, Int>>()
     val deletedTasks = mutableListOf<Pair<String, String>>()
 
-    override fun observeCars(): Flow<List<Car>> = flowOf(cars)
+    override fun observeCars(): Flow<List<Car>> = state
 
-    override fun observeCarById(carId: String): Flow<Car?> = flowOf(cars.firstOrNull { it.id == carId })
+    override fun observeCarById(carId: String): Flow<Car?> = state.map { cars -> cars.firstOrNull { it.id == carId } }
 
     override fun observeCarSummaries(): Flow<List<CarSummary>> =
-        flowOf(cars.map { CarSummary(it.id, it.brand, it.mileageKm, isSold = false) } + sold)
+        state.map { cars -> cars.map { CarSummary(it.id, it.brand, it.mileageKm, isSold = false) } + sold }
 
     override suspend fun updateMileage(carId: String, mileageKm: Int) {
         mileageUpdates += carId to mileageKm
@@ -135,16 +148,41 @@ internal class FakeTaskHistoryRepository(private val result: Boolean = true) : T
 }
 
 /**
- * [SettingsRepository] for use case tests: keeps the settings in memory and counts the writes.
+ * [SettingsRepository] for use case tests: keeps the settings in memory, emits every change and counts the writes.
  */
-internal class FakeSettingsRepository(var settings: Settings = defaultTestSettings) : SettingsRepository {
+internal class FakeSettingsRepository(settings: Settings = defaultTestSettings) : SettingsRepository {
+    private val state = MutableStateFlow(settings)
+    var settings: Settings
+        get() = state.value
+        set(value) {
+            state.value = value
+        }
     var writes = 0
 
-    override fun observeSettings(): Flow<Settings> = flowOf(settings)
+    override fun observeSettings(): Flow<Settings> = state
 
     override suspend fun updateSettings(change: (Settings) -> Settings) {
         settings = change(settings)
         writes++
+    }
+}
+
+/**
+ * [ReminderRepository] and [ReminderScheduler] for use case tests: keep the stored plan in memory and count how many
+ * times a plan was handed to the system.
+ */
+internal class FakeReminders : ReminderRepository, ReminderScheduler {
+    private var records = emptyList<ReminderRecord>()
+    var schedules = 0
+
+    override suspend fun getRecords(): List<ReminderRecord> = records
+
+    override suspend fun replaceRecords(records: List<ReminderRecord>) {
+        this.records = records
+    }
+
+    override suspend fun schedule(reminders: List<PlannedReminder>, distanceUnit: DistanceUnit) {
+        schedules++
     }
 }
 

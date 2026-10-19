@@ -433,14 +433,21 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 | Use case | Вход | Выход | Правила |
 |---|---|---|---|
 | `SyncRemindersUseCase` | `cars`, `settings` | — | см. ниже |
+| `KeepRemindersInSyncUseCase` | `permissionGrants: Flow<Unit>` | — (не возвращается сам) | см. ниже |
 
 #### `SyncRemindersUseCase`
 
 - Читает сохранённый план; записи с временем показа в прошлом по ещё существующим работам считает показанными и берёт последнюю на каждую работу.
 - Строит новый план через `PlanRemindersUseCase`.
 - Сохраняет «последние показанные + новый план» (`ReminderRepository.replaceRecords`) и передаёт новый план в `ReminderScheduler.schedule`.
-- Вызывается из `AppViewModel` при запуске приложения и после каждого изменения машин или настроек.
+- Вызывается из `KeepRemindersInSyncUseCase`.
 - Показанным считается всё, что было запланировано и чьё время прошло; доставило ли уведомление система (например, при отозванном разрешении), domain не знает.
+
+#### `KeepRemindersInSyncUseCase`
+
+- Долгоживущий: собирает изменения, пока его не отменят вместе со scope, в котором он запущен (у приложения — scope `AppViewModel`).
+- План строится заново через `SyncRemindersUseCase` при старте, после каждого изменения машин (`distinctUntilChanged`), после смены настроек, от которых зависит план, — `pushEnabled`, `reminderTime`, `distanceUnit` — и на каждое событие `permissionGrants`, которое приходит, когда система выдала разрешение на уведомления. Остальные настройки (тема, последняя открытая машина и т. п.) план не трогают.
+- `combine(машины, настройки, permissionGrants с начальным событием)` с `collectLatest`: незаконченная пересборка отменяется следующим изменением.
 
 ## Единицы расстояния
 
@@ -457,4 +464,4 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 
 ## Что ещё не реализовано
 
-- Юнит-тесты на `SyncRemindersUseCase` и use case-ы наблюдения; для них нужно управляемое время в `GetNowUseCase`/`GetTodayUseCase`. Покрыты: `AddCarUseCase`, `UpdateCarUseCase`, `UpdateMileageUseCase`, `DeleteTaskUseCase` (`CarUseCasesTest`), `UpdateSettingsUseCase`, `CarAlertsUseCase` и `SortedTaskStatsUseCase` (`TaskStatsUseCasesTest`), отказы `AddTaskUseCase` и `UpdateTaskUseCase`, `CalculateTaskStatusUseCase`, `NormalizeTaskUseCase`, `PlanRemindersUseCase`, `DoneMarksUseCase`, `UnmarkTaskDoneUseCase`, `UpdateHistoryEntryUseCase`, правила `TaskHistoryRules` (`TaskHistoryRulesTest`), use case-ы запуска (`LaunchCarUseCasesTest`), `ForgetCarInSettingsUseCase`, удаление машины и общая история (`CarRemovalAndHistoryTest`), `DetectPlateStyleUseCase`, `AddHistoryEntryUseCase`, иконка работы в `AddTaskUseCase` и `UpdateTaskUseCase` (`TaskIconStorageTest`), запись при новой работе и передача введённой даты (`TaskEditUseCasesTest`); синхронизация связанной записи, в том числе при совпадении пробега и даты, — в `TaskHistoryRulesTest`. Транзакции `TaskHistoryRepositoryImpl` тестами не покрыты: нужен тестовый драйвер SQLDelight.
+- Юнит-тесты на содержимое плана в `SyncRemindersUseCase` и use case-ы наблюдения (когда план пересобирается — покрыто в `KeepRemindersInSyncUseCaseTest`); для них нужно управляемое время в `GetNowUseCase`/`GetTodayUseCase`. Покрыты: `AddCarUseCase`, `UpdateCarUseCase`, `UpdateMileageUseCase`, `DeleteTaskUseCase` (`CarUseCasesTest`), `UpdateSettingsUseCase`, `CarAlertsUseCase` и `SortedTaskStatsUseCase` (`TaskStatsUseCasesTest`), отказы `AddTaskUseCase` и `UpdateTaskUseCase`, `CalculateTaskStatusUseCase`, `NormalizeTaskUseCase`, `PlanRemindersUseCase`, `DoneMarksUseCase`, `UnmarkTaskDoneUseCase`, `UpdateHistoryEntryUseCase`, правила `TaskHistoryRules` (`TaskHistoryRulesTest`), use case-ы запуска (`LaunchCarUseCasesTest`), `ForgetCarInSettingsUseCase`, удаление машины и общая история (`CarRemovalAndHistoryTest`), `DetectPlateStyleUseCase`, `AddHistoryEntryUseCase`, иконка работы в `AddTaskUseCase` и `UpdateTaskUseCase` (`TaskIconStorageTest`), запись при новой работе и передача введённой даты (`TaskEditUseCasesTest`); синхронизация связанной записи, в том числе при совпадении пробега и даты, — в `TaskHistoryRulesTest`. Транзакции `TaskHistoryRepositoryImpl` тестами не покрыты: нужен тестовый драйвер SQLDelight.

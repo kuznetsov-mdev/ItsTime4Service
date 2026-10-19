@@ -84,7 +84,7 @@ ui/
 
 ### `AppViewModel`
 
-Состояние над графом навигации. Зависимости: `ObserveSettingsUseCase`, `ObserveCarsUseCase`, `SyncRemindersUseCase`, `UpdateSettingsUseCase`, `GetLaunchCarUseCase`.
+Состояние над графом навигации. Зависимости: `ObserveSettingsUseCase`, `ObserveCarsUseCase`, `KeepRemindersInSyncUseCase`, `UpdateSettingsUseCase`, `GetLaunchCarUseCase`. Правила пересборки плана уведомлений — в `KeepRemindersInSyncUseCase` (см. `specs/domain.md`); ViewModel только запускает его в своём scope и сообщает о выданном разрешении.
 
 | Член | Тип | Смысл |
 |---|---|---|
@@ -96,8 +96,8 @@ ui/
 | Событие | Что происходит | Use case |
 |---|---|---|
 | создание (`init`) | один раз решается машина запуска | `GetLaunchCarUseCase` |
-| создание (`init`) | запускается сбор `combine(машины, настройки, permissionGrants)` через `collectLatest`; машины — с `distinctUntilChanged`, настройки — только при смене `pushEnabled`, `reminderTime` или `distanceUnit`; на каждое значение план строится заново | `SyncRemindersUseCase` |
-| разрешение выдано | счётчик `permissionGrants` + 1 → план строится ещё раз | `SyncRemindersUseCase` |
+| создание (`init`) | в `viewModelScope` запускается `KeepRemindersInSyncUseCase(permissionGrants)`; он работает, пока жив ViewModel | `KeepRemindersInSyncUseCase` |
+| разрешение выдано | событие в `permissionGrants` (`MutableSharedFlow<Unit>`) → план строится ещё раз | `KeepRemindersInSyncUseCase` |
 | в разрешении отказано | `pushEnabled = false` | `UpdateSettingsUseCase` |
 
 - Разрешение запрашивается, когда push включён и есть хотя бы одна машина: при запуске с машинами, после добавления первой, после включения push.
