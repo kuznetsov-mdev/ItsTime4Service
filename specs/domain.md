@@ -419,7 +419,7 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 
 ### Виды списка авто
 
-`Settings.carsView: CarsView` — `LIST`, `TASKS`, `TASKS_AND_HISTORY`; по умолчанию `LIST`; меняется через `UpdateSettingsUseCase`. Для карточек нужны ближайшие работы (`SortedTaskStatsUseCase`, первые 4) и последние записи истории (`ObserveHistoryUseCase`, первые 4).
+`Settings.carsView: CarsView` — `LIST`, `TASKS`, `TASKS_AND_HISTORY`; по умолчанию `LIST`, неизвестное сохранённое имя тоже читается как `LIST`; меняется через `UpdateSettingsUseCase`. Для карточек нужны ближайшие работы (`SortedTaskStatsUseCase`, первые 4) и последние записи истории (`ObserveAllHistoryUseCase`, сгруппированные по авто, первые 4).
 
 ### Ручные записи истории
 
@@ -446,4 +446,4 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 ## Что ещё не реализовано
 
 - Юнит-тесты на `AddCarUseCase`, `UpdateCarUseCase`, `UpdateMileageUseCase`, задачи и `SyncRemindersUseCase`. Покрыты: `CalculateTaskStatusUseCase`, `NormalizeTaskUseCase`, `PlanRemindersUseCase`, `DoneMarksUseCase`, `UnmarkTaskDoneUseCase`, `UpdateHistoryEntryUseCase`, use case-ы запуска (`LaunchCarUseCasesTest`), `ForgetCarInSettingsUseCase`, удаление машины и общая история (`CarRemovalAndHistoryTest`).
-- Доработки этапа 8б: добавление записей истории вручную, госномер, выбор иконки работы.
+- Доработки этапа 8б: добавление записей истории вручную, выбор иконки работы.
