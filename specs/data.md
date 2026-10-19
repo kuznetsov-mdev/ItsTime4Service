@@ -411,7 +411,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
 | `maintenance_tasks` | `icon` | `TEXT`, может быть `NULL` | имя `TaskIcon`; `NULL` у работ до этапа 8б — подбор по названию |
 | `settings` | `cars_view` | `TEXT NOT NULL DEFAULT 'LIST'` | имя `CarsView` |
 
-Ручная запись истории — обычный `service_history.insert` с пустыми `task_id` и `prev_*`; новых запросов, кроме записи номера (`cars.updateDetails` расширяется на `plate`), не нужно.
+Ручная запись истории — обычный `service_history.insert` с пустыми `task_id` и `prev_*` (`ServiceHistoryRepository.addEntry`, id — случайный UUID); новых запросов, кроме записи номера (`cars.updateDetails` расширяется на `plate`), не нужно.
 
 ## Открытые вопросы
 

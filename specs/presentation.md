@@ -379,7 +379,6 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 
 ## Что ещё не реализовано
 
-- Доработки этапа 8б (`dev_plan.md`): добавление записей истории вручную.
 - Анимации индикаторов и остальная полировка этапа 9; сейчас анимированы ползунок `AppSwitch` и прокрутка списка работ.
 - Переключатель языка в приложении.
 - Юнит-тесты на ViewModel-и, кроме `CarsViewModel`, и тесты Composable-компонентов.

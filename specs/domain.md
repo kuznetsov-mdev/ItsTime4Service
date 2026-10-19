@@ -445,4 +445,3 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 ## Что ещё не реализовано
 
 - Юнит-тесты на `AddCarUseCase`, `UpdateCarUseCase`, `UpdateMileageUseCase`, задачи и `SyncRemindersUseCase`. Покрыты: `CalculateTaskStatusUseCase`, `NormalizeTaskUseCase`, `PlanRemindersUseCase`, `DoneMarksUseCase`, `UnmarkTaskDoneUseCase`, `UpdateHistoryEntryUseCase`, use case-ы запуска (`LaunchCarUseCasesTest`), `ForgetCarInSettingsUseCase`, удаление машины и общая история (`CarRemovalAndHistoryTest`).
-- Доработки этапа 8б: добавление записей истории вручную.
