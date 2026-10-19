@@ -1,6 +1,6 @@
 package ru.kuznetsov.itstime4service.domain.usecase
 
-import ru.kuznetsov.itstime4service.domain.repository.CarRepository
+import ru.kuznetsov.itstime4service.domain.repository.TaskHistoryRepository
 
 /**
  * Deletes a car from its screen: its tasks go, the car stays as sold so that its service history is kept;
@@ -8,11 +8,11 @@ import ru.kuznetsov.itstime4service.domain.repository.CarRepository
  * (see [ForgetCarInSettingsUseCase]).
  */
 class DeleteCarUseCase(
-    private val carRepository: CarRepository,
+    private val taskHistoryRepository: TaskHistoryRepository,
     private val forgetCarInSettings: ForgetCarInSettingsUseCase,
 ) {
     suspend operator fun invoke(carId: String) {
-        carRepository.sellCar(carId)
+        taskHistoryRepository.sellCar(carId)
         forgetCarInSettings(carId)
     }
 }

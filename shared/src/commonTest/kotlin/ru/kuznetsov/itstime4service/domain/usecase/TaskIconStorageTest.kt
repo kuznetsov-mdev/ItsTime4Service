@@ -15,7 +15,7 @@ import kotlin.test.assertNull
  */
 class TaskIconStorageTest {
 
-    private val repository = FakeCarRepository(emptyList())
+    private val repository = FakeTaskHistoryRepository()
     private val normalizeTask = NormalizeTaskUseCase()
 
     private fun task(icon: TaskIcon?) = NewMaintenanceTask(name = "Oil change", intervalKm = 10_000, icon = icon)
@@ -48,16 +48,16 @@ class TaskIconStorageTest {
 
     @Test
     fun pickedIconIsStoredOnUpdate() = runTest {
-        UpdateTaskUseCase(repository, FakeHistoryRepository(emptyList()), normalizeTask)("kia", "t", task(TaskIcon.TIRE))
+        UpdateTaskUseCase(repository, normalizeTask)("kia", "t", task(TaskIcon.TIRE))
 
-        assertEquals(TaskIcon.TIRE, repository.updatedTasks.single().icon)
+        assertEquals(TaskIcon.TIRE, repository.updatedTasks.single().first.icon)
     }
 
     @Test
     fun taskWithoutIconStaysWithoutOneWhenEdited() = runTest {
-        UpdateTaskUseCase(repository, FakeHistoryRepository(emptyList()), normalizeTask)("kia", "t", task(icon = null))
+        UpdateTaskUseCase(repository, normalizeTask)("kia", "t", task(icon = null))
 
-        assertNull(repository.updatedTasks.single().icon)
+        assertNull(repository.updatedTasks.single().first.icon)
     }
 
     @Test

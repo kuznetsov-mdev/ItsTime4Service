@@ -1,7 +1,7 @@
 package ru.kuznetsov.itstime4service.domain.usecase
 
 import kotlinx.datetime.LocalDate
-import ru.kuznetsov.itstime4service.domain.repository.CarRepository
+import ru.kuznetsov.itstime4service.domain.repository.TaskHistoryRepository
 
 /**
  * Marks a task as done at the car's current mileage on the given date and adds a matching record
@@ -10,7 +10,7 @@ import ru.kuznetsov.itstime4service.domain.repository.CarRepository
  * Returns `false` and changes nothing when the car or the task does not exist.
  */
 class MarkTaskDoneUseCase(
-    private val carRepository: CarRepository,
+    private val taskHistoryRepository: TaskHistoryRepository,
 ) {
     suspend operator fun invoke(
         carId: String,
@@ -19,7 +19,7 @@ class MarkTaskDoneUseCase(
         serviceName: String? = null,
         costRub: Int? = null,
         comment: String? = null,
-    ): Boolean = carRepository.markTaskDone(
+    ): Boolean = taskHistoryRepository.markTaskDone(
         carId = carId,
         taskId = taskId,
         date = today,

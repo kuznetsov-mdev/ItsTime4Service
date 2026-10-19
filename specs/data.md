@@ -201,39 +201,47 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 
 ### `CarRepositoryImpl`
 
-Реализует `CarRepository`. Работает с `carQueries`, `maintenanceTaskQueries` и `serviceHistoryQueries`. Каждая запись, которая трогает больше одной строки или таблицы, идёт одной транзакцией.
+Реализует `CarRepository`. Работает с `carQueries` и `maintenanceTaskQueries`; в историю не пишет.
 
 | Метод | Что выполняет |
 |---|---|
 | `observeCars()` | `combine` двух потоков: `cars.selectAll` (без проданных) и `maintenance_tasks.selectAll`. Работы группируются по `car_id` и раскладываются по машинам; машина без работ получает пустой список |
 | `observeCarById(carId)` | `combine` потоков `cars.selectById(carId)` (`mapToOneOrNull`) и `maintenance_tasks.selectByCar(carId)`. Нет строки или машина продана → `null` |
 | `observeCarSummaries()` | поток `cars.selectAllWithSold`, строки → `toSummary()` |
-| `addCar(car)` | создаёт `id` машины; в одной транзакции — `cars.insert` (с номером) и `maintenance_tasks.insert` на каждую работу; возвращает `id` машины |
-| `sellCar(carId)` | в одной транзакции: `maintenance_tasks.deleteByCar`; если `service_history.countByCar > 0` — `cars.markSold`, иначе `cars.deleteById` |
-| `purgeCar(carId)` | в одной транзакции: `service_history.deleteByCar`, `maintenance_tasks.deleteByCar`, `cars.deleteById` |
 | `updateMileage(carId, mileageKm)` | `cars.updateMileage` |
-| `markTaskDone(…)` | в одной транзакции: читает машину и работу (нет — `false`); `markDone` с `last_done_km` = текущий пробег машины и `last_done_date` = `date`, если у работы есть `interval_months`, иначе прежнее значение; `service_history.insert` с новым `id`, `task_id`, переданными сервисом, стоимостью и комментарием и прежними `last_done_km`/`last_done_date` работы в `prev_*`; `true` |
-| `unmarkTaskDone(carId, taskId, entryId)` | в одной транзакции: читает запись; если её нет, она другой машины или работы или `prev_last_done_km` пуст — `false`; иначе `markDone` с `prev_*` и `service_history.deleteById`; `true` |
 | `updateCar(carId, brand, vin, plate)` | `cars.updateDetails` |
-| `addTask(carId, task)` | в одной транзакции `maintenance_tasks.insert` с новым `id` и, если у работы есть `record`, `service_history.insert` записи о ней |
-| `updateTask(carId, task, entry)` | в одной транзакции `maintenance_tasks.update` всех полей работы по `id` + `car_id` и, если передан `entry`, `service_history.update` этой записи |
 | `deleteTask(carId, taskId)` | `maintenance_tasks.deleteById` по `id` + `car_id` |
 
-- Вставка работы (приватный `insertTask`): `id` — новый UUID; `reminderWindowKm == null` записывается как `0`; `lastDoneDate` — через `toString()`; `icon` — имя константы или `NULL`. `updateTask` пишет иконку так же. Работа с `record` получает запись истории: новый UUID, `task_name` работы, `date` из `record`, `mileage_km` = `last_done_km` работы, `task_id` новой работы, `prev_*` — `NULL`. В `addCar` это происходит в общей транзакции машины.
 - Порядок машин и работ — порядок добавления (`rowid`).
 - Потоки строятся из двух независимых запросов: изменение любой из двух таблиц даёт новое значение. Запись, затронувшая обе таблицы (например, `addCar`), может дать два значения подряд.
 - Обновление или удаление по несуществующему `id` ошибкой не считается — запрос просто не затронет строк.
 
 ### `ServiceHistoryRepositoryImpl`
 
-Реализует `ServiceHistoryRepository`. Работает с `serviceHistoryQueries` и `maintenanceTaskQueries`.
+Реализует `ServiceHistoryRepository`. Работает с `serviceHistoryQueries`.
 
 | Метод | Что выполняет |
 |---|---|
 | `observeHistory(carId)` | поток `selectByCar(carId)`, строки — через `toDomain()`; порядок добавления |
 | `observeAllHistory()` | поток `selectAll`; порядок добавления (от новых к старым сортирует `ObserveAllHistoryUseCase`) |
-| `updateEntry(entry, syncTask)` | в одной транзакции: `update` по `id`; если `syncTask` и у записи есть `task_id` — `maintenance_tasks.markDone` этой работы с пробегом записи и датой записи, если у работы есть `interval_months` (иначе прежней `last_done_date`) |
 | `addEntry(carId, taskName, date, mileageKm, serviceName, costRub, comment)` | `insert` с новым UUID, пустыми `task_id` и `prev_*` — ручная запись; проверки (действующая машина, название, пробег) — в `AddHistoryEntryUseCase` |
+
+### `TaskHistoryRepositoryImpl`
+
+Реализует `TaskHistoryRepository`. Работает с `carQueries`, `maintenanceTaskQueries` и `serviceHistoryQueries`. Каждая операция — одна транзакция: строки, по которым принимается решение (работа до правки, история машины через `service_history.selectByCar` в порядке добавления, отметка), читаются внутри неё, и к ним применяются правила `TaskHistoryRules` из domain.
+
+| Метод | Что выполняет |
+|---|---|
+| `addCar(car)` | создаёт `id` машины; `cars.insert` (с номером) и `insertTask` на каждую работу; возвращает `id` машины |
+| `sellCar(carId)` | `maintenance_tasks.deleteByCar`; если `service_history.countByCar > 0` — `cars.markSold`, иначе `cars.deleteById` |
+| `purgeCar(carId)` | `service_history.deleteByCar`, `maintenance_tasks.deleteByCar`, `cars.deleteById` |
+| `addTask(carId, task)` | `insertTask` |
+| `updateTask(carId, task, recordDate)` | читает работу до правки и историю машины; `TaskHistoryRules.entryAfterTaskEdit` даёт новую связанную запись или ничего; `maintenance_tasks.update` всех полей работы по `id` + `car_id` и, если запись есть, `service_history.update` |
+| `markTaskDone(…)` | читает машину и работу (нет — `false`); `markDone` с `last_done_km` = текущий пробег машины и `last_done_date` = `date`, если у работы есть `interval_months`, иначе прежнее значение; `service_history.insert` с новым `id`, `task_id`, переданными сервисом, стоимостью и комментарием и прежними `last_done_km`/`last_done_date` работы в `prev_*`; `true` |
+| `unmarkTaskDone(carId, taskId)` | читает машину (нет — `false`), её работы и историю; отметка работы — `TaskHistoryRules.doneMarks` (нет — `false`); `markDone` с `prev_*` записи и `service_history.deleteById`; `true` |
+| `updateEntry(entry)` | читает запись по `id` (нет — `false`), её работу и историю машины; `service_history.update` с новыми датой, пробегом, стоимостью, сервисом и комментарием при прежнем `task_name`; если `TaskHistoryRules.taskFollowsEntryEdit` — `maintenance_tasks.markDone` работы с пробегом записи и её датой, если у работы есть `interval_months` (иначе прежней `last_done_date`); `true` |
+
+- Вставка работы (приватный `insertTask`): `id` — новый UUID; `reminderWindowKm == null` записывается как `0`; `lastDoneDate` — через `toString()`; `icon` — имя константы или `NULL`. `updateTask` пишет иконку так же. Работа с `record` получает запись истории: новый UUID, `task_name` работы, `date` из `record`, `mileage_km` = `last_done_km` работы, `task_id` новой работы, `prev_*` — `NULL`. В `addCar` это происходит в общей транзакции машины.
 
 ### `SettingsRepositoryImpl`
 
@@ -372,6 +380,7 @@ expect class LocalNotifications {
 | `ItsTime4ServiceDatabase` | `single { ItsTime4ServiceDatabase(get<DatabaseDriverFactory>().create()) }` |
 | `CarRepository` | `singleOf(::CarRepositoryImpl) bind CarRepository::class` |
 | `ServiceHistoryRepository` | `singleOf(::ServiceHistoryRepositoryImpl) bind …` |
+| `TaskHistoryRepository` | `singleOf(::TaskHistoryRepositoryImpl) bind …` |
 | `SettingsRepository` | `singleOf(::SettingsRepositoryImpl) bind …` |
 | `ReminderRepository` | `singleOf(::ReminderRepositoryImpl) bind …` |
 | `ReminderScheduler` | `singleOf(::ReminderSchedulerImpl) bind …` |
@@ -426,5 +435,5 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
 
 ## Что ещё не реализовано
 
-- Юнит-тесты на репозитории, мапперы (кроме чтения иконки работы в `TaskIconStorageTest`) и `ReminderSchedulerImpl`; тесты миграций.
+- Юнит-тесты на репозитории, в том числе на транзакции `TaskHistoryRepositoryImpl` (нужен тестовый драйвер SQLDelight; правила, которые они применяют, покрыты в `TaskHistoryRulesTest`), мапперы (кроме чтения иконки работы в `TaskIconStorageTest`) и `ReminderSchedulerImpl`; тесты миграций.
 - Синхронизация, резервная копия средствами приложения, экспорт и импорт данных — данные живут только в локальном файле `itstime4service.db`.

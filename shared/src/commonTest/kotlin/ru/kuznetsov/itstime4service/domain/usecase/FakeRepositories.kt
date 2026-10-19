@@ -16,12 +16,11 @@ import ru.kuznetsov.itstime4service.domain.model.ThemeMode
 import ru.kuznetsov.itstime4service.domain.repository.CarRepository
 import ru.kuznetsov.itstime4service.domain.repository.ServiceHistoryRepository
 import ru.kuznetsov.itstime4service.domain.repository.SettingsRepository
+import ru.kuznetsov.itstime4service.domain.repository.TaskHistoryRepository
 
 /**
- * [CarRepository] for use case tests: serves fixed active cars and [sold] cars, and records the done marks it was
- * asked to remove, the cars it was asked to add, edit, sell or purge, the mileage it was given, the tasks it was asked
- * to add, update or delete and the history records passed along with an update.
- * Methods the tests do not need fail.
+ * [CarRepository] for use case tests: serves fixed active cars and [sold] cars, and records the edits of a car,
+ * the mileage it was given and the tasks it was asked to delete.
  */
 internal class FakeCarRepository(
     private val cars: List<Car>,
@@ -29,13 +28,6 @@ internal class FakeCarRepository(
 ) : CarRepository {
     constructor(car: Car?) : this(listOfNotNull(car))
 
-    val unmarked = mutableListOf<Triple<String, String, String>>()
-    val soldIds = mutableListOf<String>()
-    val purgedIds = mutableListOf<String>()
-    val addedTasks = mutableListOf<NewMaintenanceTask>()
-    val updatedTasks = mutableListOf<MaintenanceTask>()
-    val updatedEntries = mutableListOf<ServiceHistoryEntry?>()
-    val addedCars = mutableListOf<NewCar>()
     val updatedCars = mutableListOf<List<String?>>()
     val mileageUpdates = mutableListOf<Pair<String, Int>>()
     val deletedTasks = mutableListOf<Pair<String, String>>()
@@ -44,51 +36,15 @@ internal class FakeCarRepository(
 
     override fun observeCarById(carId: String): Flow<Car?> = flowOf(cars.firstOrNull { it.id == carId })
 
-    override suspend fun unmarkTaskDone(carId: String, taskId: String, entryId: String): Boolean {
-        unmarked += Triple(carId, taskId, entryId)
-        return true
-    }
-
-    override suspend fun addCar(car: NewCar): String {
-        addedCars += car
-        return "new-car"
-    }
-
     override fun observeCarSummaries(): Flow<List<CarSummary>> =
         flowOf(cars.map { CarSummary(it.id, it.brand, it.mileageKm, isSold = false) } + sold)
-
-    override suspend fun sellCar(carId: String) {
-        soldIds += carId
-    }
-
-    override suspend fun purgeCar(carId: String) {
-        purgedIds += carId
-    }
 
     override suspend fun updateMileage(carId: String, mileageKm: Int) {
         mileageUpdates += carId to mileageKm
     }
 
-    override suspend fun markTaskDone(
-        carId: String,
-        taskId: String,
-        date: LocalDate,
-        serviceName: String?,
-        costRub: Int?,
-        comment: String?,
-    ): Boolean = error("not used")
-
     override suspend fun updateCar(carId: String, brand: String, vin: String?, plate: String?) {
         updatedCars += listOf(carId, brand, vin, plate)
-    }
-
-    override suspend fun addTask(carId: String, task: NewMaintenanceTask) {
-        addedTasks += task
-    }
-
-    override suspend fun updateTask(carId: String, task: MaintenanceTask, entry: ServiceHistoryEntry?) {
-        updatedTasks += task
-        updatedEntries += entry
     }
 
     override suspend fun deleteTask(carId: String, taskId: String) {
@@ -97,19 +53,13 @@ internal class FakeCarRepository(
 }
 
 /**
- * [ServiceHistoryRepository] for use case tests: serves fixed records and records every edit it was given
- * together with whether its task was asked to follow, and every record added by hand.
+ * [ServiceHistoryRepository] for use case tests: serves fixed records and records every record added by hand.
  */
 internal class FakeHistoryRepository(private val entries: List<ServiceHistoryEntry>) : ServiceHistoryRepository {
-    val updated = mutableListOf<Pair<ServiceHistoryEntry, Boolean>>()
     val added = mutableListOf<ServiceHistoryEntry>()
 
     override fun observeHistory(carId: String): Flow<List<ServiceHistoryEntry>> =
         flowOf(entries.filter { it.carId == carId })
-
-    override suspend fun updateEntry(entry: ServiceHistoryEntry, syncTask: Boolean) {
-        updated += entry to syncTask
-    }
 
     override fun observeAllHistory(): Flow<List<ServiceHistoryEntry>> = flowOf(entries)
 
@@ -123,6 +73,64 @@ internal class FakeHistoryRepository(private val entries: List<ServiceHistoryEnt
         comment: String?,
     ) {
         added += ServiceHistoryEntry("added-${added.size}", carId, taskName, date, mileageKm, costRub, serviceName, comment)
+    }
+}
+
+/**
+ * [TaskHistoryRepository] for use case tests: records every write it was asked for and answers [result] where an
+ * operation reports whether it found what it changes. The rules it applies in the app are tested on their own.
+ */
+internal class FakeTaskHistoryRepository(private val result: Boolean = true) : TaskHistoryRepository {
+    val addedCars = mutableListOf<NewCar>()
+    val soldIds = mutableListOf<String>()
+    val purgedIds = mutableListOf<String>()
+    val addedTasks = mutableListOf<NewMaintenanceTask>()
+    val updatedTasks = mutableListOf<Pair<MaintenanceTask, LocalDate?>>()
+    val marked = mutableListOf<List<Any?>>()
+    val unmarked = mutableListOf<Pair<String, String>>()
+    val updatedEntries = mutableListOf<ServiceHistoryEntry>()
+
+    override suspend fun addCar(car: NewCar): String {
+        addedCars += car
+        return "new-car"
+    }
+
+    override suspend fun sellCar(carId: String) {
+        soldIds += carId
+    }
+
+    override suspend fun purgeCar(carId: String) {
+        purgedIds += carId
+    }
+
+    override suspend fun addTask(carId: String, task: NewMaintenanceTask) {
+        addedTasks += task
+    }
+
+    override suspend fun updateTask(carId: String, task: MaintenanceTask, recordDate: LocalDate?) {
+        updatedTasks += task to recordDate
+    }
+
+    override suspend fun markTaskDone(
+        carId: String,
+        taskId: String,
+        date: LocalDate,
+        serviceName: String?,
+        costRub: Int?,
+        comment: String?,
+    ): Boolean {
+        marked += listOf(carId, taskId, date, serviceName, costRub, comment)
+        return result
+    }
+
+    override suspend fun unmarkTaskDone(carId: String, taskId: String): Boolean {
+        unmarked += carId to taskId
+        return result
+    }
+
+    override suspend fun updateEntry(entry: ServiceHistoryEntry): Boolean {
+        updatedEntries += entry
+        return result
     }
 }
 

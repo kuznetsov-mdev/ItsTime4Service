@@ -16,7 +16,8 @@ import kotlin.test.assertTrue
 class CarUseCasesTest {
 
     private val repository = FakeCarRepository(emptyList())
-    private val addCar = AddCarUseCase(repository, NormalizeTaskUseCase())
+    private val taskHistory = FakeTaskHistoryRepository()
+    private val addCar = AddCarUseCase(taskHistory, NormalizeTaskUseCase())
     private val updateCar = UpdateCarUseCase(repository)
     private val updateMileage = UpdateMileageUseCase(repository)
 
@@ -31,14 +32,14 @@ class CarUseCasesTest {
     @Test
     fun carWithBlankBrandIsRejected() = runTest {
         assertNull(addCar(newCar(brand = "  ")))
-        assertTrue(repository.addedCars.isEmpty())
+        assertTrue(taskHistory.addedCars.isEmpty())
     }
 
     @Test
     fun carWithNonPositiveMileageIsRejected() = runTest {
         assertNull(addCar(newCar(mileageKm = 0)))
         assertNull(addCar(newCar(mileageKm = -5)))
-        assertTrue(repository.addedCars.isEmpty())
+        assertTrue(taskHistory.addedCars.isEmpty())
     }
 
     @Test
@@ -46,7 +47,7 @@ class CarUseCasesTest {
         val id = addCar(newCar(brand = "  Kia Rio ", vin = "  ", plate = " а123 вс  77 "))
 
         assertEquals("new-car", id)
-        val stored = repository.addedCars.single()
+        val stored = taskHistory.addedCars.single()
         assertEquals("Kia Rio", stored.brand)
         assertNull(stored.vin)
         assertEquals("А123 ВС 77", stored.plate)
@@ -62,7 +63,7 @@ class CarUseCasesTest {
 
         addCar(newCar(tasks = tasks))
 
-        val stored = repository.addedCars.single().tasks.single()
+        val stored = taskHistory.addedCars.single().tasks.single()
         assertEquals("Oil change", stored.name)
         assertEquals(1_125, stored.reminderWindowKm)
     }

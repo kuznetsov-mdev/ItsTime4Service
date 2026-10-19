@@ -22,23 +22,25 @@ class CarRemovalAndHistoryTest {
     @Test
     fun deletingFromTheScreenSellsTheCarAndClearsSettings() = runTest {
         val cars = FakeCarRepository(listOf(testCar("camry")))
+        val taskHistory = FakeTaskHistoryRepository()
         val settings = FakeSettingsRepository(defaultTestSettings.copy(lastOpenedCarId = "kia"))
 
-        DeleteCarUseCase(cars, ForgetCarInSettingsUseCase(settings, cars))("kia")
+        DeleteCarUseCase(taskHistory, ForgetCarInSettingsUseCase(settings, cars))("kia")
 
-        assertEquals(listOf("kia"), cars.soldIds)
-        assertTrue(cars.purgedIds.isEmpty())
+        assertEquals(listOf("kia"), taskHistory.soldIds)
+        assertTrue(taskHistory.purgedIds.isEmpty())
         assertNull(settings.settings.lastOpenedCarId)
     }
 
     @Test
     fun deletingCompletelyPurgesTheCarAndClearsSettings() = runTest {
         val cars = FakeCarRepository(listOf(testCar("camry")))
+        val taskHistory = FakeTaskHistoryRepository()
         val settings = FakeSettingsRepository(defaultTestSettings.copy(openDefaultCar = true, defaultCarId = "kia"))
 
-        PurgeCarUseCase(cars, ForgetCarInSettingsUseCase(settings, cars))("kia")
+        PurgeCarUseCase(taskHistory, ForgetCarInSettingsUseCase(settings, cars))("kia")
 
-        assertEquals(listOf("kia"), cars.purgedIds)
+        assertEquals(listOf("kia"), taskHistory.purgedIds)
         assertEquals("camry", settings.settings.defaultCarId)
     }
 

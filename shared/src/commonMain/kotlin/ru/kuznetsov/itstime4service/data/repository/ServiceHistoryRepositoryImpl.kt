@@ -17,14 +17,12 @@ import ru.kuznetsov.itstime4service.domain.repository.ServiceHistoryRepository
 /**
  * [ServiceHistoryRepository] backed by the SQLDelight database.
  * Records are emitted in the order they were added.
- * Editing a record may also set its task's last-done mileage; both rows change in one transaction.
  * A record added by hand gets a new random id and no task or rollback data.
  */
 @OptIn(ExperimentalUuidApi::class)
 class ServiceHistoryRepositoryImpl(database: ItsTime4ServiceDatabase) : ServiceHistoryRepository {
 
     private val queries = database.serviceHistoryQueries
-    private val taskQueries = database.maintenanceTaskQueries
     private val dispatcher = Dispatchers.Default
 
     override fun observeHistory(carId: String): Flow<List<ServiceHistoryEntry>> =
@@ -32,25 +30,6 @@ class ServiceHistoryRepositoryImpl(database: ItsTime4ServiceDatabase) : ServiceH
 
     override fun observeAllHistory(): Flow<List<ServiceHistoryEntry>> =
         queries.selectAll().asFlow().mapToList(dispatcher).map { rows -> rows.map { it.toDomain() } }
-
-    override suspend fun updateEntry(entry: ServiceHistoryEntry, syncTask: Boolean): Unit = withContext(dispatcher) {
-        queries.transaction {
-            queries.update(
-                task_name = entry.taskName,
-                date = entry.date.toString(),
-                mileage_km = entry.mileageKm.toLong(),
-                cost_rub = entry.costRub?.toLong(),
-                service_name = entry.serviceName,
-                comment = entry.comment,
-                id = entry.id,
-            )
-            val taskId = entry.taskId ?: return@transaction
-            if (!syncTask) return@transaction
-            val task = taskQueries.selectById(taskId, entry.carId).executeAsOneOrNull() ?: return@transaction
-            val lastDoneDate = if (task.interval_months != null) entry.date.toString() else task.last_done_date
-            taskQueries.markDone(entry.mileageKm.toLong(), lastDoneDate, taskId, entry.carId)
-        }
-    }
 
     override suspend fun addEntry(
         carId: String,

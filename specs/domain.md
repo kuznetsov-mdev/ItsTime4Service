@@ -8,6 +8,7 @@ Domain-слой — чистый Kotlin без зависимостей от UI 
 domain/
 ├── model/        # модели
 ├── usecase/      # бизнес-логика; единственная точка входа для ViewModel-ов
+├── rule/         # чистые правила, общие для use case-ов и хранилища (TaskHistoryRules)
 └── repository/   # интерфейсы репозиториев
 ```
 
@@ -123,9 +124,9 @@ MaintenanceTask ──▶ TaskIcon?            Car.plate ──(DetectPlateStyle
 | `NewMaintenanceTask` | нет `id`; `reminderWindowKm` может быть `null` — «взять долю интервала по умолчанию»; `icon` по умолчанию `WRENCH`, `null` — оставить работу без иконки; `record: NewTaskRecord?` — запись истории о последнем выполнении, которая сохраняется вместе с новой работой |
 | `NewTaskRecord` | `date`, `serviceName?`, `costRub?`, `comment?`; пробег записи — `lastDoneKm` работы. `date` хранится отдельно, потому что у работы без интервала по времени `lastDoneDate` не сохраняется |
 
-Отдельного черновика записи истории нет: запись отметкой создаёт сам `CarRepository.markTaskDone`, ручную — `ServiceHistoryRepository.addEntry` по полям, переданным по отдельности, запись при новой работе — `CarRepository.addCar`/`addTask` из `NewMaintenanceTask.record`.
+Отдельного черновика записи истории нет: запись отметкой создаёт сам `TaskHistoryRepository.markTaskDone`, ручную — `ServiceHistoryRepository.addEntry` по полям, переданным по отдельности, запись при новой работе — `TaskHistoryRepository.addCar`/`addTask` из `NewMaintenanceTask.record`.
 
-**Связанная запись** работы — самая поздняя по `date` запись с `taskId` этой работы, у которой пробег равен `lastDoneKm` работы; при равных датах — добавленная последней (репозиторий отдаёт записи в порядке добавления). Общее правило — `linkedEntryOf` в `LinkedEntry.kt`. Это запись о последнем выполнении: созданная отметкой или вместе с новой работой. Её пробег и дата синхронизируются с «последним разом» работы в обе стороны (`UpdateTaskUseCase`, `UpdateHistoryEntryUseCase`).
+**Связанная запись** работы — самая поздняя по `date` запись с `taskId` этой работы, у которой пробег равен `lastDoneKm` работы; при равных датах — добавленная последней (репозиторий отдаёт записи в порядке добавления). Общее правило — `TaskHistoryRules.linkedEntry` (`domain/rule/TaskHistoryRules.kt`): чистые функции, общие для экранов и для хранилища, которое применяет их внутри транзакции. Там же правило отметки (`doneMarks`), сдвиг связанной записи при правке работы (`entryAfterTaskEdit`) и условие, при котором правка записи сдвигает работу (`taskFollowsEntryEdit`). Это запись о последнем выполнении: созданная отметкой или вместе с новой работой. Её пробег и дата синхронизируются с «последним разом» работы в обе стороны (`UpdateTaskUseCase`, `UpdateHistoryEntryUseCase`).
 
 ### Вычисляемые
 
@@ -183,34 +184,41 @@ MaintenanceTask ──▶ TaskIcon?            Car.plate ──(DetectPlateStyle
 
 ### `CarRepository`
 
+Машины и их работы. Записи, которые меняют и работы, и историю, идут через `TaskHistoryRepository`.
+
 | Метод | Что делает |
 |---|---|
 | `observeCars(): Flow<List<Car>>` | действующие машины (без проданных) |
 | `observeCarById(carId): Flow<Car?>` | одна действующая машина; `null`, если её нет или она продана |
 | `observeCarSummaries(): Flow<List<CarSummary>>` | все машины без работ, проданные в конце |
-| `addCar(car: NewCar): String` | сохраняет машину и её работы, присваивает им `id`, возвращает `id` машины; работа с `record` получает запись истории (см. `addTask`); всё одной транзакцией |
-| `sellCar(carId)` | удаляет работы машины; машину с записями истории помечает проданной, машину без записей удаляет целиком |
-| `purgeCar(carId)` | удаляет машину (в том числе проданную), её работы и всю её историю |
 | `updateMileage(carId, mileageKm)` | меняет текущий пробег |
-| `markTaskDone(carId, taskId, date, serviceName, costRub, comment): Boolean` | ставит работе `lastDoneKm` = текущий пробег машины и, если у неё есть интервал по времени, `lastDoneDate` = `date`; добавляет запись истории с `taskId`, переданными значениями и прежними `lastDoneKm`/`lastDoneDate` работы. `false` и ничего не меняет, если нет машины или работы |
-| `unmarkTaskDone(carId, taskId, entryId): Boolean` | возвращает работе `prevLastDoneKm`/`prevLastDoneDate` из записи `entryId` и удаляет запись. `false` и ничего не меняет, если запись создана не отметкой этой работы |
 | `updateCar(carId, brand, vin, plate)` | меняет марку, VIN и госномер |
-| `addTask(carId, task: NewMaintenanceTask)` | добавляет работу существующей машине; с `record` той же транзакцией добавляет запись истории: название работы, `record.date`, пробег `lastDoneKm`, сервис, стоимость, комментарий, `taskId` новой работы, без данных отката — отметкой она не считается |
-| `updateTask(carId, task: MaintenanceTask, entry: ServiceHistoryEntry? = null)` | заменяет работу с тем же `id`; с `entry` той же транзакцией заменяет и эту запись истории |
-| `deleteTask(carId, taskId)` | удаляет работу |
-
-`sellCar`, `purgeCar`, `markTaskDone` и `unmarkTaskDone` пишут в несколько таблиц одной транзакцией.
+| `deleteTask(carId, taskId)` | удаляет работу; её записи истории остаются |
 
 ### `ServiceHistoryRepository`
+
+История обслуживания. Записи, связанные с работой, и удаление истории машины идут через `TaskHistoryRepository`.
 
 | Метод | Что делает |
 |---|---|
 | `observeHistory(carId): Flow<List<ServiceHistoryEntry>>` | записи одной машины в порядке добавления |
 | `observeAllHistory(): Flow<List<ServiceHistoryEntry>>` | записи всех машин, в том числе проданных, в порядке добавления |
-| `updateEntry(entry, syncTask: Boolean = false)` | заменяет запись с тем же `id`; с `syncTask` той же транзакцией ставит её работе пробег записи как «последний раз, км» и, если у работы есть интервал по времени, дату записи как `lastDoneDate` |
 | `addEntry(carId, taskName, date, mileageKm, serviceName, costRub, comment)` | добавляет ручную запись без `taskId` и данных отката, присваивает ей `id` |
 
-Кроме `addEntry`, записи появляются и исчезают только через `CarRepository`: отметка, её снятие, полное удаление машины.
+### `TaskHistoryRepository`
+
+Все записи, которые меняют работы и историю вместе, в том числе создание машины с работами и их записями, её продажа и полное удаление. Каждая операция — одна транзакция. Всё, по чему операция принимает решение (связанная запись, отметка, есть ли у машины история), читается внутри этой же транзакции по правилам `TaskHistoryRules`, поэтому изменение, сделанное между чтением и записью, не затирается. Use case-ы проверяют и чистят ввод и вызывают операцию с нужным намерением, транзакциями они не управляют.
+
+| Метод | Что делает |
+|---|---|
+| `addCar(car: NewCar): String` | сохраняет машину и её работы, присваивает им `id`, возвращает `id` машины; работа с `record` получает запись истории (см. `addTask`) |
+| `sellCar(carId)` | удаляет работы машины; машину с записями истории помечает проданной, машину без записей удаляет целиком |
+| `purgeCar(carId)` | удаляет машину (в том числе проданную), её работы и всю её историю |
+| `addTask(carId, task: NewMaintenanceTask)` | добавляет работу существующей машине; с `record` добавляет запись истории: название работы, `record.date`, пробег `lastDoneKm`, сервис, стоимость, комментарий, `taskId` новой работы, без данных отката — отметкой она не считается |
+| `updateTask(carId, task: MaintenanceTask, recordDate: LocalDate?)` | заменяет работу с тем же `id`; связанная запись работы (до правки) получает новый пробег и `recordDate` по `TaskHistoryRules.entryAfterTaskEdit`. `recordDate` — дата, введённая в форме: она доходит до записи и у работы без интервала по времени, которая дату не хранит |
+| `markTaskDone(carId, taskId, date, serviceName, costRub, comment): Boolean` | ставит работе `lastDoneKm` = текущий пробег машины и, если у неё есть интервал по времени, `lastDoneDate` = `date`; добавляет запись истории с `taskId`, переданными значениями и прежними `lastDoneKm`/`lastDoneDate` работы. `false` и ничего не меняет, если нет машины или работы |
+| `unmarkTaskDone(carId, taskId): Boolean` | находит отметку работы (`TaskHistoryRules.doneMarks`), возвращает работе `prevLastDoneKm`/`prevLastDoneDate` из её записи и удаляет запись. `false` и ничего не меняет, если машины нет или работа не отмечена |
+| `updateEntry(entry): Boolean` | меняет у записи дату, пробег, стоимость, сервис и комментарий; название работы, `taskId` и данные отката остаются прежними. Если это связанная запись своей работы и изменились пробег или дата (`TaskHistoryRules.taskFollowsEntryEdit`), работа получает пробег записи и, если у неё есть интервал по времени, её дату. `false`, если записи нет |
 
 ### `SettingsRepository`
 
@@ -330,7 +338,7 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 | `NormalizeTaskUseCase` | `task: NewMaintenanceTask` | `NewMaintenanceTask?` | см. ниже |
 | `UpdateCarUseCase` | `carId`, `brand`, `vin`, `plate` | `Boolean` | марка обрезается по краям; пустая → `false`, ничего не меняется; пустые VIN и номер сохраняются как `null`; номер приводится к виду, описанному у `Car.plate` |
 | `AddTaskUseCase` | `carId`, `task: NewMaintenanceTask` | `Boolean` | работа проходит `NormalizeTaskUseCase`; отклонённая → `false`, ничего не сохраняется |
-| `UpdateTaskUseCase` | `carId`, `taskId`, `task: NewMaintenanceTask` | `Boolean` | те же правила; заменяет все поля работы `taskId`, включая «последний раз» по пробегу и дате. Если изменился «последний раз» по пробегу или дате и у работы есть связанная запись, запись получает новый пробег (если он `> 0`) и введённую дату — одной транзакцией. Дата берётся как введена, до `NormalizeTaskUseCase`, поэтому доходит до записи и у работы без интервала по времени |
+| `UpdateTaskUseCase` | `carId`, `taskId`, `task: NewMaintenanceTask` | `Boolean` | те же правила; заменяет все поля работы `taskId`, включая «последний раз» по пробегу и дате. Вызывает `TaskHistoryRepository.updateTask` с датой, введённой до `NormalizeTaskUseCase`: внутри транзакции связанная запись получает новый пробег (если он `> 0`) и эту дату — она доходит до записи и у работы без интервала по времени |
 | `DeleteTaskUseCase` | `carId`, `taskId` | — | удаляет работу; записи истории по ней сохраняются |
 
 Название, VIN и пробег правятся на экране машины по одному, работы — по одной на экране работы. Форма авто только добавляет машину.
@@ -355,7 +363,7 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 #### `MarkTaskDoneUseCase`
 
 - Пустые строки сервиса и комментария и неположительная стоимость сохраняются как `null`.
-- Вызывает `CarRepository.markTaskDone`: работа и запись истории меняются одной транзакцией. `false`, если нет машины или работы.
+- Вызывает `TaskHistoryRepository.markTaskDone`: работа и запись истории меняются одной транзакцией. `false`, если нет машины или работы.
 
 #### Правило «работа отмечена» (`DoneMarksUseCase`)
 
@@ -368,7 +376,7 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 
 #### `UnmarkTaskDoneUseCase`
 
-Находит запись, которая держит отметку (`DoneMarksUseCase`), и вызывает `CarRepository.unmarkTaskDone`: работа возвращается к прежним `lastDoneKm` и `lastDoneDate`, запись удаляется — одной транзакцией. `false` и ничего не меняет, если машины нет или работа не отмечена.
+Вызывает `TaskHistoryRepository.unmarkTaskDone`: внутри транзакции находится запись, которая держит отметку (то же правило, что у `DoneMarksUseCase`), работа возвращается к прежним `lastDoneKm` и `lastDoneDate`, запись удаляется. `false` и ничего не меняет, если машины нет или работа не отмечена.
 
 ### История
 
@@ -385,7 +393,7 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 
 - Меняет у записи дату, пробег, стоимость, сервис и комментарий; название работы, машина и данные для отката не меняются.
 - Пробег `≤ 0` или запись, которой нет, — `false`, ничего не сохраняется. Пустые строки и неположительная стоимость сохраняются как `null`.
-- Если у записи с `taskId` изменился пробег или дата и до правки она была связанной записью своей работы, работа получает пробег записи и, если у неё есть интервал по времени, её дату — одной транзакцией с записью. В остальных случаях работа не трогается.
+- Сама запись и решение, сдвигать ли работу, — в `TaskHistoryRepository.updateEntry`, одной транзакцией: если у записи с `taskId` изменился пробег или дата и до правки она была связанной записью своей работы, работа получает пробег записи и, если у неё есть интервал по времени, её дату. В остальных случаях работа не трогается.
 - После смены пробега запись отметки перестаёт удовлетворять правилу «работа отмечена»: отметка пропадает без отката. Смена только даты, сервиса, стоимости или комментария на отметку не влияет.
 - Работает и для записей проданной машины.
 
@@ -449,4 +457,4 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 
 ## Что ещё не реализовано
 
-- Юнит-тесты на `SyncRemindersUseCase` и use case-ы наблюдения; для них нужно управляемое время в `GetNowUseCase`/`GetTodayUseCase`. Покрыты: `AddCarUseCase`, `UpdateCarUseCase`, `UpdateMileageUseCase`, `DeleteTaskUseCase` (`CarUseCasesTest`), `UpdateSettingsUseCase`, `CarAlertsUseCase` и `SortedTaskStatsUseCase` (`TaskStatsUseCasesTest`), отказы `AddTaskUseCase` и `UpdateTaskUseCase`, `CalculateTaskStatusUseCase`, `NormalizeTaskUseCase`, `PlanRemindersUseCase`, `DoneMarksUseCase`, `UnmarkTaskDoneUseCase`, `UpdateHistoryEntryUseCase`, use case-ы запуска (`LaunchCarUseCasesTest`), `ForgetCarInSettingsUseCase`, удаление машины и общая история (`CarRemovalAndHistoryTest`), `DetectPlateStyleUseCase`, `AddHistoryEntryUseCase`, иконка работы в `AddTaskUseCase` и `UpdateTaskUseCase` (`TaskIconStorageTest`), запись при новой работе и синхронизация связанной записи, в том числе при совпадении пробега и даты (`TaskRecordSyncTest`, `UpdateHistoryEntryUseCaseTest`).
+- Юнит-тесты на `SyncRemindersUseCase` и use case-ы наблюдения; для них нужно управляемое время в `GetNowUseCase`/`GetTodayUseCase`. Покрыты: `AddCarUseCase`, `UpdateCarUseCase`, `UpdateMileageUseCase`, `DeleteTaskUseCase` (`CarUseCasesTest`), `UpdateSettingsUseCase`, `CarAlertsUseCase` и `SortedTaskStatsUseCase` (`TaskStatsUseCasesTest`), отказы `AddTaskUseCase` и `UpdateTaskUseCase`, `CalculateTaskStatusUseCase`, `NormalizeTaskUseCase`, `PlanRemindersUseCase`, `DoneMarksUseCase`, `UnmarkTaskDoneUseCase`, `UpdateHistoryEntryUseCase`, правила `TaskHistoryRules` (`TaskHistoryRulesTest`), use case-ы запуска (`LaunchCarUseCasesTest`), `ForgetCarInSettingsUseCase`, удаление машины и общая история (`CarRemovalAndHistoryTest`), `DetectPlateStyleUseCase`, `AddHistoryEntryUseCase`, иконка работы в `AddTaskUseCase` и `UpdateTaskUseCase` (`TaskIconStorageTest`), запись при новой работе и передача введённой даты (`TaskEditUseCasesTest`); синхронизация связанной записи, в том числе при совпадении пробега и даты, — в `TaskHistoryRulesTest`. Транзакции `TaskHistoryRepositoryImpl` тестами не покрыты: нужен тестовый драйвер SQLDelight.
