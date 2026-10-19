@@ -15,5 +15,5 @@ select:
 SELECT * FROM settings WHERE id = 1;
 
 upsert:
-INSERT OR REPLACE INTO settings (id, theme_mode, distance_unit, push_enabled, default_reminder_window_km, reminder_time, last_opened_car_id, open_default_car, default_car_id)
-VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO settings (id, theme_mode, distance_unit, push_enabled, default_reminder_window_km, reminder_time, last_opened_car_id, open_default_car, default_car_id, cars_view)
+VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?);

@@ -8,6 +8,7 @@ import kotlinx.datetime.LocalTime
  * [reminderTime] is the time of day of the daily status check behind push notifications.
  * [lastOpenedCarId] is the car whose screen was opened last; with [openDefaultCar] on the app starts on
  * [defaultCarId] instead. Either may point to a car that no longer exists.
+ * [carsView] is how the "My cars" list is shown.
  */
 data class Settings(
     val themeMode: ThemeMode,
@@ -18,4 +19,5 @@ data class Settings(
     val lastOpenedCarId: String? = null,
     val openDefaultCar: Boolean = false,
     val defaultCarId: String? = null,
+    val carsView: CarsView = CarsView.LIST,
 )

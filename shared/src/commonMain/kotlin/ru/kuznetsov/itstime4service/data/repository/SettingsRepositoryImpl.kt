@@ -48,6 +48,7 @@ class SettingsRepositoryImpl(database: ItsTime4ServiceDatabase) : SettingsReposi
                 last_opened_car_id = settings.lastOpenedCarId,
                 open_default_car = settings.openDefaultCar,
                 default_car_id = settings.defaultCarId,
+                cars_view = settings.carsView.name,
             )
         }
     }
