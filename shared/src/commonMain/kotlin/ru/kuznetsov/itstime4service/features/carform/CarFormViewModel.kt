@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import ru.kuznetsov.itstime4service.domain.model.NewCar
 import ru.kuznetsov.itstime4service.domain.model.NewMaintenanceTask
 import ru.kuznetsov.itstime4service.domain.usecase.AddCarUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.GetTodayUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
 import ru.kuznetsov.itstime4service.ui.format.TaskPreset
@@ -23,11 +24,14 @@ import ru.kuznetsov.itstime4service.ui.format.kmFrom
  * the form to showing errors and expands every collapsed block with such a field; an unwanted block has to be removed, it is not skipped silently.
  * When the form has no blocks at all, the car gets a default oil-change task counted from its current
  * mileage, as in the design mockup. Repeated taps on save while the car is being stored are ignored. Distances are typed in the unit chosen in settings and stored in kilometers.
+ * A task block can be stored together with a history record of the task's last service; turning that on fills an
+ * empty last-done date with today.
  * The licence plate is optional and typed in upper case, up to 12 characters.
  */
 class CarFormViewModel(
     private val addCar: AddCarUseCase,
     observeSettings: ObserveSettingsUseCase,
+    private val getToday: GetTodayUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CarFormUiState())
@@ -52,6 +56,10 @@ class CarFormViewModel(
 
     fun onTaskChange(key: Int, fields: TaskFields) = _state.update { state ->
         state.copy(tasks = state.tasks.map { if (it.key == key) it.copy(fields = fields.sanitized()) else it })
+    }
+
+    fun onTaskRecordToggle(key: Int, on: Boolean) = _state.update { state ->
+        state.copy(tasks = state.tasks.map { if (it.key == key) it.copy(fields = it.fields.withRecord(on, getToday())) else it })
     }
 
     fun onAddTask() = _state.update { it.copy(tasks = it.tasks + TaskBlockState(key = nextKey++)) }
@@ -87,9 +95,9 @@ class CarFormViewModel(
                 listOf(
                     NewMaintenanceTask(
                         name = defaultTaskName,
-                        intervalKm = DEFAULT_TASK_INTERVAL_KM,
+                        intervalKm = TaskPreset.OIL.intervalKm,
                         lastDoneKm = mileageKm,
-                        reminderWindowKm = DEFAULT_TASK_REMINDER_WINDOW_KM,
+                        reminderWindowKm = TaskPreset.OIL.reminderWindowKm,
                     ),
                 )
             }
@@ -104,7 +112,5 @@ class CarFormViewModel(
         const val VIN_LENGTH = 17
         const val PLATE_LENGTH = 12
         const val MAX_NUMBER_LENGTH = 7
-        const val DEFAULT_TASK_INTERVAL_KM = 10_000
-        const val DEFAULT_TASK_REMINDER_WINDOW_KM = 1_500
     }
 }

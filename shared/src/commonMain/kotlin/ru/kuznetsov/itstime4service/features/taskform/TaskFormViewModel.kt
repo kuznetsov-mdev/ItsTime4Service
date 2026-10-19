@@ -12,6 +12,7 @@ import ru.kuznetsov.itstime4service.domain.model.MaintenanceTask
 import ru.kuznetsov.itstime4service.domain.model.TaskIcon
 import ru.kuznetsov.itstime4service.domain.usecase.AddTaskUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.DeleteTaskUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.GetTodayUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarByIdUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateTaskUseCase
@@ -27,6 +28,8 @@ import ru.kuznetsov.itstime4service.ui.format.toFields
  * Saving with an empty required field stores nothing and switches the form to showing errors.
  * The icon is picked in a window; a task saved before icons could be picked shows one guessed from its name and
  * stays without a stored icon until the user picks one.
+ * A new task can be stored together with a history record of its last service; turning that on fills an empty
+ * last-done date with today.
  * Repeated taps on save or "add another" while a task is being stored are ignored.
  * Distances are typed in the unit chosen in settings and stored in kilometers; a distance left as it was
  * keeps its stored value.
@@ -39,6 +42,7 @@ class TaskFormViewModel(
     private val updateTask: UpdateTaskUseCase,
     private val deleteTask: DeleteTaskUseCase,
     private val observeSettings: ObserveSettingsUseCase,
+    private val getToday: GetTodayUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TaskFormUiState(isEditing = taskId != null))
@@ -59,6 +63,8 @@ class TaskFormViewModel(
     fun onSave() = save(addAnother = false)
 
     fun onSaveAndAddAnother() = save(addAnother = true)
+
+    fun onRecordToggle(on: Boolean) = _state.update { it.copy(fields = it.fields.withRecord(on, getToday())) }
 
     fun onIconPickerOpen() = _state.update { it.copy(isPickingIcon = true) }
 

@@ -54,29 +54,25 @@ import itstime4service.shared.generated.resources.action_more_entry_fields
 import itstime4service.shared.generated.resources.action_reset
 import itstime4service.shared.generated.resources.action_save
 import itstime4service.shared.generated.resources.action_select_car
-import itstime4service.shared.generated.resources.comment_placeholder
 import itstime4service.shared.generated.resources.date_placeholder
 import itstime4service.shared.generated.resources.dialog_new_entry_text
 import itstime4service.shared.generated.resources.dialog_new_entry_title
 import itstime4service.shared.generated.resources.field_car
-import itstime4service.shared.generated.resources.field_comment
-import itstime4service.shared.generated.resources.field_cost_rub
 import itstime4service.shared.generated.resources.field_date
 import itstime4service.shared.generated.resources.field_mileage
 import itstime4service.shared.generated.resources.field_mileage_range
 import itstime4service.shared.generated.resources.field_period
 import itstime4service.shared.generated.resources.field_search_task
-import itstime4service.shared.generated.resources.field_service_name
 import itstime4service.shared.generated.resources.field_task
 import itstime4service.shared.generated.resources.history_sold_car
 import itstime4service.shared.generated.resources.search_task_placeholder
-import itstime4service.shared.generated.resources.service_name_placeholder
 import itstime4service.shared.generated.resources.task_name_placeholder
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.ui.components.buttons.PresetChip
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogButton
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogCard
 import ru.kuznetsov.itstime4service.ui.components.fields.LabeledMiniField
+import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
 import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
 import ru.kuznetsov.itstime4service.ui.format.unitLabel
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
@@ -117,6 +113,7 @@ internal fun HistoryFilterCard(
                     label = stringResource(Res.string.field_period),
                     value = filter.dateFrom,
                     onValueChange = { onChange(filter.copy(dateFrom = it)) },
+                    onDone = onApply,
                     placeholder = stringResource(Res.string.date_placeholder),
                     keyboardType = KeyboardType.Number,
                     visualTransformation = DateInputFormat.current.visualTransformation,
@@ -127,6 +124,7 @@ internal fun HistoryFilterCard(
                     label = "",
                     value = filter.dateTo,
                     onValueChange = { onChange(filter.copy(dateTo = it)) },
+                    onDone = onApply,
                     placeholder = stringResource(Res.string.date_placeholder),
                     keyboardType = KeyboardType.Number,
                     visualTransformation = DateInputFormat.current.visualTransformation,
@@ -138,6 +136,7 @@ internal fun HistoryFilterCard(
                 label = stringResource(Res.string.field_search_task),
                 value = filter.query,
                 onValueChange = { onChange(filter.copy(query = it)) },
+                onDone = onApply,
                 placeholder = stringResource(Res.string.search_task_placeholder),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -146,6 +145,7 @@ internal fun HistoryFilterCard(
                     label = stringResource(Res.string.field_mileage_range, unitLabel(distanceUnit)),
                     value = filter.mileageFrom,
                     onValueChange = { onChange(filter.copy(mileageFrom = it)) },
+                    onDone = onApply,
                     placeholder = "0",
                     keyboardType = KeyboardType.Number,
                     modifier = Modifier.weight(1f),
@@ -154,6 +154,7 @@ internal fun HistoryFilterCard(
                     label = "",
                     value = filter.mileageTo,
                     onValueChange = { onChange(filter.copy(mileageTo = it)) },
+                    onDone = onApply,
                     placeholder = "100000",
                     keyboardType = KeyboardType.Number,
                     modifier = Modifier.weight(1f),
@@ -209,6 +210,7 @@ internal fun HistoryEntryCard(
                     label = stringResource(Res.string.field_date),
                     value = form.date,
                     onValueChange = { onChange(form.copy(date = it)) },
+                    onDone = onSave,
                     placeholder = stringResource(Res.string.date_placeholder),
                     keyboardType = KeyboardType.Number,
                     visualTransformation = DateInputFormat.current.visualTransformation,
@@ -220,6 +222,7 @@ internal fun HistoryEntryCard(
                     label = stringResource(Res.string.field_mileage, unitLabel(distanceUnit)),
                     value = form.mileage,
                     onValueChange = { onChange(form.copy(mileage = it)) },
+                    onDone = onSave,
                     placeholder = "78000",
                     keyboardType = KeyboardType.Number,
                     isError = form.showErrors && form.isMileageInvalid,
@@ -227,28 +230,14 @@ internal fun HistoryEntryCard(
                     modifier = Modifier.weight(1f),
                 )
             }
-            LabeledMiniField(
-                label = stringResource(Res.string.field_service_name),
-                value = form.serviceName,
-                onValueChange = { onChange(form.copy(serviceName = it)) },
-                placeholder = stringResource(Res.string.service_name_placeholder),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            LabeledMiniField(
-                label = stringResource(Res.string.field_cost_rub),
-                value = form.cost,
-                onValueChange = { onChange(form.copy(cost = it)) },
-                placeholder = "2400",
-                keyboardType = KeyboardType.Number,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            LabeledMiniField(
-                label = stringResource(Res.string.field_comment),
-                value = form.comment,
-                onValueChange = { onChange(form.copy(comment = it)) },
-                placeholder = stringResource(Res.string.comment_placeholder),
-                minLines = 2,
-                modifier = Modifier.fillMaxWidth(),
+            ServiceRecordFields(
+                serviceName = form.serviceName,
+                cost = form.cost,
+                comment = form.comment,
+                onServiceNameChange = { onChange(form.copy(serviceName = it)) },
+                onCostChange = { onChange(form.copy(cost = it)) },
+                onCommentChange = { onChange(form.copy(comment = it)) },
+                onDone = onSave,
             )
         }
         Spacer(Modifier.height(18.dp))
@@ -322,6 +311,7 @@ internal fun NewHistoryEntryCard(
                     label = stringResource(Res.string.field_task),
                     value = form.taskName,
                     onValueChange = { onChange(form.copy(taskName = it)) },
+                    onDone = onSave,
                     placeholder = stringResource(Res.string.task_name_placeholder),
                     isError = form.showErrors && form.isNameMissing,
                     required = true,
@@ -344,6 +334,7 @@ internal fun NewHistoryEntryCard(
                     label = stringResource(Res.string.field_date),
                     value = form.date,
                     onValueChange = { onChange(form.copy(date = it)) },
+                    onDone = onSave,
                     placeholder = stringResource(Res.string.date_placeholder),
                     keyboardType = KeyboardType.Number,
                     visualTransformation = DateInputFormat.current.visualTransformation,
@@ -355,6 +346,7 @@ internal fun NewHistoryEntryCard(
                     label = stringResource(Res.string.field_mileage, unitLabel(distanceUnit)),
                     value = form.mileage,
                     onValueChange = { onChange(form.copy(mileage = it)) },
+                    onDone = onSave,
                     placeholder = "61500",
                     keyboardType = KeyboardType.Number,
                     isError = form.showErrors && form.isMileageInvalid,
@@ -363,28 +355,14 @@ internal fun NewHistoryEntryCard(
                 )
             }
             if (form.isExpanded) {
-                LabeledMiniField(
-                    label = stringResource(Res.string.field_service_name),
-                    value = form.serviceName,
-                    onValueChange = { onChange(form.copy(serviceName = it)) },
-                    placeholder = stringResource(Res.string.service_name_placeholder),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                LabeledMiniField(
-                    label = stringResource(Res.string.field_cost_rub),
-                    value = form.cost,
-                    onValueChange = { onChange(form.copy(cost = it)) },
-                    placeholder = "2400",
-                    keyboardType = KeyboardType.Number,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                LabeledMiniField(
-                    label = stringResource(Res.string.field_comment),
-                    value = form.comment,
-                    onValueChange = { onChange(form.copy(comment = it)) },
-                    placeholder = stringResource(Res.string.comment_placeholder),
-                    minLines = 2,
-                    modifier = Modifier.fillMaxWidth(),
+                ServiceRecordFields(
+                    serviceName = form.serviceName,
+                    cost = form.cost,
+                    comment = form.comment,
+                    onServiceNameChange = { onChange(form.copy(serviceName = it)) },
+                    onCostChange = { onChange(form.copy(cost = it)) },
+                    onCommentChange = { onChange(form.copy(comment = it)) },
+                    onDone = onSave,
                 )
             } else {
                 Text(

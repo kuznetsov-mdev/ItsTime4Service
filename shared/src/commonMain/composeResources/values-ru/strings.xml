@@ -214,4 +214,5 @@
     <string name="licenses_subtitle">Приложение собрано на этих компонентах с открытым кодом</string>
     <string name="action_show_license">Показать текст лицензии</string>
     <string name="action_hide_license">Скрыть текст лицензии</string>
+    <string name="task_create_record">Создать запись в истории</string>
 </resources>

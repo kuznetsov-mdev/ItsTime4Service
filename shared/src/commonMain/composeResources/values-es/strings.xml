@@ -212,4 +212,5 @@
     <string name="licenses_subtitle">La app está hecha con estos componentes de código abierto</string>
     <string name="action_show_license">Mostrar texto de la licencia</string>
     <string name="action_hide_license">Ocultar texto de la licencia</string>
+    <string name="task_create_record">Crear un registro en el historial</string>
 </resources>

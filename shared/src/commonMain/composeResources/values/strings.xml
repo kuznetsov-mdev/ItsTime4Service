@@ -210,4 +210,5 @@
     <string name="licenses_subtitle">The app is built with these open-source components</string>
     <string name="action_show_license">Show license text</string>
     <string name="action_hide_license">Hide license text</string>
+    <string name="task_create_record">Create a history record</string>
 </resources>

@@ -19,6 +19,6 @@ val featureModule = module {
     viewModel { params -> HistoryViewModel(params.values.firstOrNull() as String?, get(), get(), get(), get(), get(), get()) }
     viewModelOf(::SettingsViewModel)
     viewModel { params ->
-        TaskFormViewModel(params.get<String>(0), params.values.getOrNull(1) as String?, get(), get(), get(), get(), get())
+        TaskFormViewModel(params.get<String>(0), params.values.getOrNull(1) as String?, get(), get(), get(), get(), get(), get())
     }
 }

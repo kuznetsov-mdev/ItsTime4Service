@@ -49,6 +49,7 @@ import itstime4service.shared.generated.resources.field_reminder_window
 import itstime4service.shared.generated.resources.field_task_name
 import itstime4service.shared.generated.resources.screen_edit_task
 import itstime4service.shared.generated.resources.screen_new_task
+import itstime4service.shared.generated.resources.task_create_record
 import itstime4service.shared.generated.resources.task_name_placeholder
 import ru.kuznetsov.itstime4service.domain.model.TaskIcon
 import ru.kuznetsov.itstime4service.ui.components.ScreenPreview
@@ -61,6 +62,8 @@ import ru.kuznetsov.itstime4service.ui.components.dialogs.TaskIconDialog
 import ru.kuznetsov.itstime4service.ui.components.fields.AppNumberField
 import ru.kuznetsov.itstime4service.ui.components.fields.AppTextField
 import ru.kuznetsov.itstime4service.ui.components.fields.FieldLabel
+import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
+import ru.kuznetsov.itstime4service.ui.components.indicators.AppCheckbox
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTopBar
@@ -94,6 +97,7 @@ fun TaskFormScreen(
         onFieldsChange = viewModel::onFieldsChange,
         onPreset = viewModel::onPreset,
         onIconPickerOpen = viewModel::onIconPickerOpen,
+        onRecordToggle = viewModel::onRecordToggle,
         onIconPickerDismiss = viewModel::onIconPickerDismiss,
         onIconSelect = viewModel::onIconSelect,
         onSave = viewModel::onSave,
@@ -113,6 +117,7 @@ internal fun TaskFormContent(
     onFieldsChange: (TaskFields) -> Unit,
     onPreset: (TaskPreset, String) -> Unit,
     onIconPickerOpen: () -> Unit,
+    onRecordToggle: (Boolean) -> Unit,
     onIconPickerDismiss: () -> Unit,
     onIconSelect: (TaskIcon) -> Unit,
     onSave: () -> Unit,
@@ -169,6 +174,7 @@ internal fun TaskFormContent(
                     AppTextField(
                         value = fields.name,
                         onValueChange = { onFieldsChange(fields.copy(name = it)) },
+                        onDone = onSave,
                         placeholder = stringResource(Res.string.task_name_placeholder),
                         isError = state.showErrors && fields.isNameMissing,
                         modifier = Modifier.weight(1f),
@@ -184,6 +190,7 @@ internal fun TaskFormContent(
                         AppNumberField(
                             value = fields.intervalKm,
                             onValueChange = { onFieldsChange(fields.copy(intervalKm = it)) },
+                            onDone = onSave,
                             placeholder = "10000",
                             isError = state.showErrors && fields.isIntervalMissing,
                             modifier = Modifier.fillMaxWidth(),
@@ -194,34 +201,61 @@ internal fun TaskFormContent(
                         AppNumberField(
                             value = fields.intervalMonths,
                             onValueChange = { onFieldsChange(fields.copy(intervalMonths = it)) },
+                            onDone = onSave,
                             placeholder = "12",
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
                 Row(
-                    modifier = Modifier.padding(bottom = 18.dp),
+                    modifier = Modifier.padding(bottom = if (state.isEditing) 18.dp else 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.Bottom,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        FieldLabel(stringResource(Res.string.field_last_done, unitLabel(state.distanceUnit)), required = true)
+                        FieldLabel(
+                            stringResource(Res.string.field_last_done, unitLabel(state.distanceUnit)),
+                            required = fields.createsRecord,
+                        )
                         AppNumberField(
                             value = fields.lastDoneKm,
                             onValueChange = { onFieldsChange(fields.copy(lastDoneKm = it)) },
+                            onDone = onSave,
                             placeholder = "78000",
                             isError = state.showErrors && fields.isLastDoneMissing,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
                     Column(Modifier.weight(1f)) {
-                        FieldLabel(stringResource(Res.string.field_last_done_date_short))
+                        FieldLabel(stringResource(Res.string.field_last_done_date_short), required = fields.createsRecord)
                         AppNumberField(
                             value = fields.lastDoneDate,
                             onValueChange = { onFieldsChange(fields.copy(lastDoneDate = it)) },
+                            onDone = onSave,
                             placeholder = stringResource(Res.string.date_placeholder),
+                            isError = state.showErrors && fields.isLastDoneDateMissing,
                             visualTransformation = DateInputFormat.current.visualTransformation,
                             modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+                if (!state.isEditing) {
+                    AppCheckbox(
+                        checked = fields.createsRecord,
+                        onCheckedChange = onRecordToggle,
+                        label = stringResource(Res.string.task_create_record),
+                        modifier = Modifier.padding(bottom = if (fields.createsRecord) 10.dp else 12.dp),
+                    )
+                    if (fields.createsRecord) {
+                        ServiceRecordFields(
+                            serviceName = fields.serviceName,
+                            cost = fields.cost,
+                            comment = fields.comment,
+                            onServiceNameChange = { onFieldsChange(fields.copy(serviceName = it)) },
+                            onCostChange = { onFieldsChange(fields.copy(cost = it)) },
+                            onCommentChange = { onFieldsChange(fields.copy(comment = it)) },
+                            onDone = onSave,
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
                         )
                     }
                 }
@@ -229,6 +263,7 @@ internal fun TaskFormContent(
                 AppNumberField(
                     value = fields.reminderWindowKm,
                     onValueChange = { onFieldsChange(fields.copy(reminderWindowKm = it)) },
+                    onDone = onSave,
                     placeholder = "1500",
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -317,6 +352,7 @@ private fun TaskFormPreviewContent(state: TaskFormUiState) {
         onFieldsChange = {},
         onPreset = { _, _ -> },
         onIconPickerOpen = {},
+        onRecordToggle = {},
         onIconPickerDismiss = {},
         onIconSelect = {},
         onSave = {},

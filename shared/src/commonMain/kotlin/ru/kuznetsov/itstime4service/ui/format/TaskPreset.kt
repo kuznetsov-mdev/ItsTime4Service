@@ -19,7 +19,7 @@ import itstime4service.shared.generated.resources.task_name_timing_belt
  * and are converted to the unit chosen in settings when they fill a form.
  */
 enum class TaskPreset(val intervalKm: Int, val reminderWindowKm: Int) {
-    OIL(10_000, 1_500),
+    OIL(7_500, 1_500),
     PADS(30_000, 3_000),
     AIR_FILTER(15_000, 2_000),
     TIMING_BELT(60_000, 5_000),

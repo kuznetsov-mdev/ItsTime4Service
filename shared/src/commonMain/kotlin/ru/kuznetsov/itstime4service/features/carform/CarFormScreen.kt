@@ -39,6 +39,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_add_task_button
 import itstime4service.shared.generated.resources.action_collapse_task
@@ -60,6 +63,7 @@ import itstime4service.shared.generated.resources.plate_placeholder
 import itstime4service.shared.generated.resources.screen_add_car
 import itstime4service.shared.generated.resources.section_tasks
 import itstime4service.shared.generated.resources.task_block_title
+import itstime4service.shared.generated.resources.task_create_record
 import itstime4service.shared.generated.resources.task_every
 import itstime4service.shared.generated.resources.task_interval_missing
 import itstime4service.shared.generated.resources.task_last_done
@@ -68,9 +72,6 @@ import itstime4service.shared.generated.resources.task_name_oil
 import itstime4service.shared.generated.resources.task_name_placeholder
 import itstime4service.shared.generated.resources.tasks_added
 import itstime4service.shared.generated.resources.vin_placeholder
-import org.jetbrains.compose.resources.pluralStringResource
-import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.ui.components.ScreenPreview
 import ru.kuznetsov.itstime4service.ui.components.buttons.AppIconButton
@@ -81,6 +82,8 @@ import ru.kuznetsov.itstime4service.ui.components.fields.AppNumberField
 import ru.kuznetsov.itstime4service.ui.components.fields.AppTextField
 import ru.kuznetsov.itstime4service.ui.components.fields.FieldLabel
 import ru.kuznetsov.itstime4service.ui.components.fields.LabeledMiniField
+import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
+import ru.kuznetsov.itstime4service.ui.components.indicators.AppCheckbox
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTopBar
@@ -117,6 +120,7 @@ fun CarFormScreen(
         onAddPreset = viewModel::onAddPreset,
         onToggleTask = viewModel::onToggleTask,
         onRemoveTask = viewModel::onRemoveTask,
+        onTaskRecordToggle = viewModel::onTaskRecordToggle,
         onSave = viewModel::onSave,
         modifier = modifier,
     )
@@ -136,11 +140,14 @@ internal fun CarFormContent(
     onAddPreset: (TaskPreset, String) -> Unit,
     onToggleTask: (key: Int) -> Unit,
     onRemoveTask: (key: Int) -> Unit,
+    onTaskRecordToggle: (key: Int, on: Boolean) -> Unit,
     onSave: (defaultTaskName: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = ItsTime4ServiceTheme.colors
     val typography = ItsTime4ServiceTheme.typography
+    val defaultTaskName = stringResource(Res.string.task_name_oil)
+    val save = { onSave(defaultTaskName) }
     Column(modifier.fillMaxSize()) {
         ScreenTopBar(onBack = onBack)
         ScreenTitle(title = stringResource(Res.string.screen_add_car))
@@ -155,6 +162,7 @@ internal fun CarFormContent(
             AppTextField(
                 value = state.brand,
                 onValueChange = onBrandChange,
+                onDone = save,
                 placeholder = stringResource(Res.string.car_name_placeholder),
                 isError = state.showErrors && state.isBrandMissing,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
@@ -169,6 +177,7 @@ internal fun CarFormContent(
                     AppNumberField(
                         value = state.mileageKm,
                         onValueChange = onMileageChange,
+                        onDone = save,
                         placeholder = "84300",
                         isError = state.showErrors && state.isMileageMissing,
                         modifier = Modifier.fillMaxWidth(),
@@ -179,6 +188,7 @@ internal fun CarFormContent(
                     AppTextField(
                         value = state.vin,
                         onValueChange = onVinChange,
+                        onDone = save,
                         placeholder = stringResource(Res.string.vin_placeholder),
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -188,6 +198,7 @@ internal fun CarFormContent(
             AppTextField(
                 value = state.plate,
                 onValueChange = onPlateChange,
+                onDone = save,
                 placeholder = stringResource(Res.string.plate_placeholder),
                 modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
             )
@@ -224,12 +235,13 @@ internal fun CarFormContent(
                         onChange = { onTaskChange(task.key, it) },
                         onToggle = { onToggleTask(task.key) },
                         onRemove = { onRemoveTask(task.key) },
+                        onRecordToggle = { onTaskRecordToggle(task.key, it) },
+                        onDone = save,
                         modifier = Modifier.padding(bottom = 14.dp),
                     )
                 }
             }
         }
-        val defaultTaskName = stringResource(Res.string.task_name_oil)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -244,7 +256,7 @@ internal fun CarFormContent(
             )
             PrimaryButton(
                 text = stringResource(Res.string.action_save_car),
-                onClick = { onSave(defaultTaskName) },
+                onClick = save,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
@@ -262,6 +274,8 @@ private fun TaskBlock(
     onChange: (TaskFields) -> Unit,
     onToggle: () -> Unit,
     onRemove: () -> Unit,
+    onRecordToggle: (Boolean) -> Unit,
+    onDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = ItsTime4ServiceTheme.colors
@@ -328,6 +342,7 @@ private fun TaskBlock(
         AppTextField(
             value = fields.name,
             onValueChange = { onChange(fields.copy(name = it)) },
+            onDone = onDone,
             placeholder = stringResource(Res.string.task_name_placeholder),
             isError = showErrors && fields.isNameMissing,
             modifier = Modifier.fillMaxWidth(),
@@ -337,6 +352,7 @@ private fun TaskBlock(
                 label = stringResource(Res.string.field_task_interval, unitLabel(distanceUnit)),
                 value = fields.intervalKm,
                 onValueChange = { onChange(fields.copy(intervalKm = it)) },
+                onDone = onDone,
                 placeholder = "10000",
                 keyboardType = KeyboardType.Number,
                 isError = showErrors && fields.isIntervalMissing,
@@ -347,6 +363,7 @@ private fun TaskBlock(
                 label = stringResource(Res.string.field_interval_months),
                 value = fields.intervalMonths,
                 onValueChange = { onChange(fields.copy(intervalMonths = it)) },
+                onDone = onDone,
                 placeholder = "12",
                 keyboardType = KeyboardType.Number,
                 modifier = Modifier.weight(1f),
@@ -357,26 +374,48 @@ private fun TaskBlock(
                 label = stringResource(Res.string.field_last_done, unitLabel(distanceUnit)),
                 value = fields.lastDoneKm,
                 onValueChange = { onChange(fields.copy(lastDoneKm = it)) },
+                onDone = onDone,
                 placeholder = "78000",
                 keyboardType = KeyboardType.Number,
                 isError = showErrors && fields.isLastDoneMissing,
-                required = true,
+                required = fields.createsRecord,
                 modifier = Modifier.weight(1f),
             )
             LabeledMiniField(
                 label = stringResource(Res.string.field_last_done_date),
                 value = fields.lastDoneDate,
                 onValueChange = { onChange(fields.copy(lastDoneDate = it)) },
+                onDone = onDone,
                 placeholder = stringResource(Res.string.date_placeholder),
                 keyboardType = KeyboardType.Number,
+                isError = showErrors && fields.isLastDoneDateMissing,
+                required = fields.createsRecord,
                 visualTransformation = DateInputFormat.current.visualTransformation,
                 modifier = Modifier.weight(1f),
+            )
+        }
+        AppCheckbox(
+            checked = fields.createsRecord,
+            onCheckedChange = onRecordToggle,
+            label = stringResource(Res.string.task_create_record),
+        )
+        if (fields.createsRecord) {
+            ServiceRecordFields(
+                serviceName = fields.serviceName,
+                cost = fields.cost,
+                comment = fields.comment,
+                onServiceNameChange = { onChange(fields.copy(serviceName = it)) },
+                onCostChange = { onChange(fields.copy(cost = it)) },
+                onCommentChange = { onChange(fields.copy(comment = it)) },
+                onDone = onDone,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
         LabeledMiniField(
             label = stringResource(Res.string.field_reminder_window, unitGenitive(distanceUnit)),
             value = fields.reminderWindowKm,
             onValueChange = { onChange(fields.copy(reminderWindowKm = it)) },
+            onDone = onDone,
             placeholder = "1500",
             keyboardType = KeyboardType.Number,
             modifier = Modifier.fillMaxWidth(),
@@ -431,6 +470,7 @@ private fun CarFormPreviewContent() {
         onAddPreset = { _, _ -> },
         onToggleTask = {},
         onRemoveTask = {},
+        onTaskRecordToggle = { _, _ -> },
         onSave = {},
     )
 }
