@@ -38,6 +38,3 @@ DELETE FROM maintenance_tasks WHERE id = ? AND car_id = ?;
 
 deleteByCar:
 DELETE FROM maintenance_tasks WHERE car_id = ?;
-
-updateLastDoneKm:
-UPDATE maintenance_tasks SET last_done_km = ? WHERE id = ? AND car_id = ?;

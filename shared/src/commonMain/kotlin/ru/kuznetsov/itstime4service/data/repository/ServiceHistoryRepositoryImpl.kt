@@ -33,7 +33,7 @@ class ServiceHistoryRepositoryImpl(database: ItsTime4ServiceDatabase) : ServiceH
     override fun observeAllHistory(): Flow<List<ServiceHistoryEntry>> =
         queries.selectAll().asFlow().mapToList(dispatcher).map { rows -> rows.map { it.toDomain() } }
 
-    override suspend fun updateEntry(entry: ServiceHistoryEntry, taskLastDoneKm: Int?): Unit = withContext(dispatcher) {
+    override suspend fun updateEntry(entry: ServiceHistoryEntry, syncTask: Boolean): Unit = withContext(dispatcher) {
         queries.transaction {
             queries.update(
                 task_name = entry.taskName,
@@ -44,10 +44,11 @@ class ServiceHistoryRepositoryImpl(database: ItsTime4ServiceDatabase) : ServiceH
                 comment = entry.comment,
                 id = entry.id,
             )
-            val taskId = entry.taskId
-            if (taskLastDoneKm != null && taskId != null) {
-                taskQueries.updateLastDoneKm(taskLastDoneKm.toLong(), taskId, entry.carId)
-            }
+            val taskId = entry.taskId ?: return@transaction
+            if (!syncTask) return@transaction
+            val task = taskQueries.selectById(taskId, entry.carId).executeAsOneOrNull() ?: return@transaction
+            val lastDoneDate = if (task.interval_months != null) entry.date.toString() else task.last_done_date
+            taskQueries.markDone(entry.mileageKm.toLong(), lastDoneDate, taskId, entry.carId)
         }
     }
 

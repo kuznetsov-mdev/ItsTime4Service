@@ -7,6 +7,7 @@ import ru.kuznetsov.itstime4service.domain.model.CarSummary
 import ru.kuznetsov.itstime4service.domain.model.MaintenanceTask
 import ru.kuznetsov.itstime4service.domain.model.NewCar
 import ru.kuznetsov.itstime4service.domain.model.NewMaintenanceTask
+import ru.kuznetsov.itstime4service.domain.model.ServiceHistoryEntry
 
 /**
  * Source of truth for cars and their maintenance tasks.
@@ -23,6 +24,9 @@ import ru.kuznetsov.itstime4service.domain.model.NewMaintenanceTask
  * [unmarkTaskDone] gives the task back the previous values kept in the record [entryId] and deletes the record;
  * it returns `false` and changes nothing when that record was not created by marking this task.
  * Both run in a single transaction.
+ * [addCar] and [addTask] store a task's [NewMaintenanceTask.record] as a history record of that task, at its last-done
+ * mileage, without the values for rolling back a mark; [updateTask] with an `entry` also updates that history record.
+ * Each runs in a single transaction.
  */
 interface CarRepository {
     fun observeCars(): Flow<List<Car>>
@@ -54,7 +58,7 @@ interface CarRepository {
 
     suspend fun addTask(carId: String, task: NewMaintenanceTask)
 
-    suspend fun updateTask(carId: String, task: MaintenanceTask)
+    suspend fun updateTask(carId: String, task: MaintenanceTask, entry: ServiceHistoryEntry? = null)
 
     suspend fun deleteTask(carId: String, taskId: String)
 }

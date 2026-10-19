@@ -19,7 +19,8 @@ import ru.kuznetsov.itstime4service.domain.repository.SettingsRepository
 
 /**
  * [CarRepository] for use case tests: serves fixed active cars and [sold] cars, and records the done marks it was
- * asked to remove, the cars it was asked to sell or purge and the tasks it was asked to add or update.
+ * asked to remove, the cars it was asked to sell or purge, the tasks it was asked to add or update and the history
+ * records passed along with an update.
  * Methods the tests do not need fail.
  */
 internal class FakeCarRepository(
@@ -33,6 +34,7 @@ internal class FakeCarRepository(
     val purgedIds = mutableListOf<String>()
     val addedTasks = mutableListOf<NewMaintenanceTask>()
     val updatedTasks = mutableListOf<MaintenanceTask>()
+    val updatedEntries = mutableListOf<ServiceHistoryEntry?>()
 
     override fun observeCars(): Flow<List<Car>> = flowOf(cars)
 
@@ -73,8 +75,9 @@ internal class FakeCarRepository(
         addedTasks += task
     }
 
-    override suspend fun updateTask(carId: String, task: MaintenanceTask) {
+    override suspend fun updateTask(carId: String, task: MaintenanceTask, entry: ServiceHistoryEntry?) {
         updatedTasks += task
+        updatedEntries += entry
     }
 
     override suspend fun deleteTask(carId: String, taskId: String) = error("not used")
@@ -82,17 +85,17 @@ internal class FakeCarRepository(
 
 /**
  * [ServiceHistoryRepository] for use case tests: serves fixed records and records every edit it was given
- * together with the task mileage passed along, and every record added by hand.
+ * together with whether its task was asked to follow, and every record added by hand.
  */
 internal class FakeHistoryRepository(private val entries: List<ServiceHistoryEntry>) : ServiceHistoryRepository {
-    val updated = mutableListOf<Pair<ServiceHistoryEntry, Int?>>()
+    val updated = mutableListOf<Pair<ServiceHistoryEntry, Boolean>>()
     val added = mutableListOf<ServiceHistoryEntry>()
 
     override fun observeHistory(carId: String): Flow<List<ServiceHistoryEntry>> =
         flowOf(entries.filter { it.carId == carId })
 
-    override suspend fun updateEntry(entry: ServiceHistoryEntry, taskLastDoneKm: Int?) {
-        updated += entry to taskLastDoneKm
+    override suspend fun updateEntry(entry: ServiceHistoryEntry, syncTask: Boolean) {
+        updated += entry to syncTask
     }
 
     override fun observeAllHistory(): Flow<List<ServiceHistoryEntry>> = flowOf(entries)

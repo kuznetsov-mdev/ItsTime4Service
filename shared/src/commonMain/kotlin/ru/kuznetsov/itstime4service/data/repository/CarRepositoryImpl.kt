@@ -19,6 +19,7 @@ import ru.kuznetsov.itstime4service.domain.model.CarSummary
 import ru.kuznetsov.itstime4service.domain.model.MaintenanceTask
 import ru.kuznetsov.itstime4service.domain.model.NewCar
 import ru.kuznetsov.itstime4service.domain.model.NewMaintenanceTask
+import ru.kuznetsov.itstime4service.domain.model.ServiceHistoryEntry
 import ru.kuznetsov.itstime4service.domain.repository.CarRepository
 
 /**
@@ -129,30 +130,45 @@ class CarRepositoryImpl(database: ItsTime4ServiceDatabase) : CarRepository {
     }
 
     override suspend fun addTask(carId: String, task: NewMaintenanceTask): Unit = withContext(dispatcher) {
-        insertTask(carId, task)
+        taskQueries.transaction { insertTask(carId, task) }
     }
 
-    override suspend fun updateTask(carId: String, task: MaintenanceTask): Unit = withContext(dispatcher) {
-        taskQueries.update(
-            name = task.name,
-            interval_km = task.intervalKm.toLong(),
-            last_done_km = task.lastDoneKm.toLong(),
-            reminder_window_km = task.reminderWindowKm.toLong(),
-            interval_months = task.intervalMonths?.toLong(),
-            last_done_date = task.lastDoneDate?.toString(),
-            icon = task.icon?.name,
-            id = task.id,
-            car_id = carId,
-        )
-    }
+    override suspend fun updateTask(carId: String, task: MaintenanceTask, entry: ServiceHistoryEntry?): Unit =
+        withContext(dispatcher) {
+            taskQueries.transaction {
+                taskQueries.update(
+                    name = task.name,
+                    interval_km = task.intervalKm.toLong(),
+                    last_done_km = task.lastDoneKm.toLong(),
+                    reminder_window_km = task.reminderWindowKm.toLong(),
+                    interval_months = task.intervalMonths?.toLong(),
+                    last_done_date = task.lastDoneDate?.toString(),
+                    icon = task.icon?.name,
+                    id = task.id,
+                    car_id = carId,
+                )
+                if (entry != null) {
+                    historyQueries.update(
+                        task_name = entry.taskName,
+                        date = entry.date.toString(),
+                        mileage_km = entry.mileageKm.toLong(),
+                        cost_rub = entry.costRub?.toLong(),
+                        service_name = entry.serviceName,
+                        comment = entry.comment,
+                        id = entry.id,
+                    )
+                }
+            }
+        }
 
     override suspend fun deleteTask(carId: String, taskId: String): Unit = withContext(dispatcher) {
         taskQueries.deleteById(taskId, carId)
     }
 
     private fun insertTask(carId: String, task: NewMaintenanceTask) {
+        val taskId = Uuid.random().toString()
         taskQueries.insert(
-            id = Uuid.random().toString(),
+            id = taskId,
             car_id = carId,
             name = task.name,
             interval_km = task.intervalKm.toLong(),
@@ -161,6 +177,20 @@ class CarRepositoryImpl(database: ItsTime4ServiceDatabase) : CarRepository {
             interval_months = task.intervalMonths?.toLong(),
             last_done_date = task.lastDoneDate?.toString(),
             icon = task.icon?.name,
+        )
+        val record = task.record ?: return
+        historyQueries.insert(
+            id = Uuid.random().toString(),
+            car_id = carId,
+            task_name = task.name,
+            date = record.date.toString(),
+            mileage_km = task.lastDoneKm.toLong(),
+            cost_rub = record.costRub?.toLong(),
+            service_name = record.serviceName,
+            task_id = taskId,
+            comment = record.comment,
+            prev_last_done_km = null,
+            prev_last_done_date = null,
         )
     }
 }

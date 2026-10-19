@@ -48,14 +48,14 @@ class TaskIconStorageTest {
 
     @Test
     fun pickedIconIsStoredOnUpdate() = runTest {
-        UpdateTaskUseCase(repository, normalizeTask)("kia", "t", task(TaskIcon.TIRE))
+        UpdateTaskUseCase(repository, FakeHistoryRepository(emptyList()), normalizeTask)("kia", "t", task(TaskIcon.TIRE))
 
         assertEquals(TaskIcon.TIRE, repository.updatedTasks.single().icon)
     }
 
     @Test
     fun taskWithoutIconStaysWithoutOneWhenEdited() = runTest {
-        UpdateTaskUseCase(repository, normalizeTask)("kia", "t", task(icon = null))
+        UpdateTaskUseCase(repository, FakeHistoryRepository(emptyList()), normalizeTask)("kia", "t", task(icon = null))
 
         assertNull(repository.updatedTasks.single().icon)
     }

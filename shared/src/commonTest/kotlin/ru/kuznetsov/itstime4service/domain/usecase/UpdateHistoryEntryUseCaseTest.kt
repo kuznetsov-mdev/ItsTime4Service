@@ -12,8 +12,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Covers [UpdateHistoryEntryUseCase]: how a record is cleaned up and when its task's last-done mileage follows
- * the record's new mileage.
+ * Covers [UpdateHistoryEntryUseCase]: how a record is cleaned up and when its task follows the record's new mileage
+ * or date — only for the task's linked record, the latest one at its last-done mileage.
  */
 class UpdateHistoryEntryUseCaseTest {
 
@@ -49,7 +49,7 @@ class UpdateHistoryEntryUseCaseTest {
     fun newMileageOfMarkRecordMovesItsTask() = runTest {
         val history = update(mark.copy(mileageKm = 84_000))
 
-        assertEquals(84_000, history.updated.single().second)
+        assertTrue(history.updated.single().second)
         assertEquals(84_000, history.updated.single().first.mileageKm)
     }
 
@@ -57,7 +57,7 @@ class UpdateHistoryEntryUseCaseTest {
     fun taskEditedAfterTheMarkIsNotMoved() = runTest {
         val history = update(mark.copy(mileageKm = 84_000), car = car(lastDoneKm = 84_100))
 
-        assertNull(history.updated.single().second)
+        assertFalse(history.updated.single().second)
     }
 
     @Test
@@ -65,14 +65,39 @@ class UpdateHistoryEntryUseCaseTest {
         val old = mark.copy(taskId = null, prevLastDoneKm = null)
         val history = update(old.copy(mileageKm = 84_000), history = listOf(old))
 
-        assertNull(history.updated.single().second)
+        assertFalse(history.updated.single().second)
     }
 
     @Test
-    fun unchangedMileageDoesNotMoveTheTask() = runTest {
+    fun unchangedMileageAndDateDoNotMoveTheTask() = runTest {
         val history = update(mark.copy(comment = "Motul 5W-30"))
 
-        assertNull(history.updated.single().second)
+        assertFalse(history.updated.single().second)
+    }
+
+    @Test
+    fun newDateOfLinkedRecordMovesItsTask() = runTest {
+        val history = update(mark.copy(date = LocalDate(2026, 10, 1)))
+
+        assertTrue(history.updated.single().second)
+    }
+
+    @Test
+    fun olderRecordAtSameMileageDoesNotMoveTheTask() = runTest {
+        val older = mark.copy(id = "older", date = LocalDate(2026, 4, 1), prevLastDoneKm = null)
+
+        val history = update(older.copy(date = LocalDate(2026, 5, 1)), history = listOf(older, mark))
+
+        assertFalse(history.updated.single().second)
+    }
+
+    @Test
+    fun laterAddedRecordWinsOnSameDate() = runTest {
+        val earlier = mark.copy(id = "earlier", prevLastDoneKm = null)
+        val history = listOf(earlier, mark)
+
+        assertFalse(update(earlier.copy(date = LocalDate(2026, 10, 1)), history = history).updated.single().second)
+        assertTrue(update(mark.copy(date = LocalDate(2026, 10, 1)), history = history).updated.single().second)
     }
 
     @Test

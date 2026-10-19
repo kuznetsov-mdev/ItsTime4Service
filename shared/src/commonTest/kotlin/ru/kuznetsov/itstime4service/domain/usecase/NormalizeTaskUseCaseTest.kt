@@ -2,6 +2,7 @@ package ru.kuznetsov.itstime4service.domain.usecase
 
 import kotlinx.datetime.LocalDate
 import ru.kuznetsov.itstime4service.domain.model.NewMaintenanceTask
+import ru.kuznetsov.itstime4service.domain.model.NewTaskRecord
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -77,5 +78,21 @@ class NormalizeTaskUseCaseTest {
     @Test
     fun lastDoneDateIsDroppedWithNonPositiveTimeInterval() {
         assertNull(normalizeTask(task(intervalMonths = 0, lastDoneDate = lastDoneDate))?.lastDoneDate)
+    }
+
+    @Test
+    fun taskWithRecordNeedsLastDoneMileage() {
+        val record = NewTaskRecord(lastDoneDate)
+
+        assertNull(normalizeTask(task().copy(lastDoneKm = 0, record = record)))
+    }
+
+    @Test
+    fun recordTextsAreCleanedAndItsDateIsKeptWithoutTimeInterval() {
+        val record = NewTaskRecord(lastDoneDate, serviceName = "  ", costRub = 0, comment = " Motul ")
+
+        val stored = normalizeTask(task().copy(record = record))?.record
+
+        assertEquals(NewTaskRecord(lastDoneDate, serviceName = null, costRub = null, comment = "Motul"), stored)
     }
 }
