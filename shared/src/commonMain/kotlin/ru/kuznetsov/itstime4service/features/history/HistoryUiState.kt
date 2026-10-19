@@ -9,7 +9,9 @@ import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
  * [cars] fills the car picker; [selectedCarId] is `null` for "all cars".
  * [years] holds the records that pass the car choice and the [filter], newest first, grouped by year
  * and month; [hasEntries] tells an empty history apart from a filter that matched nothing.
- * [filterDraft] is non-null while the filter window is open, [entryForm] while a record is open.
+ * [filterDraft] is non-null while the filter window is open, [entryForm] while a record is open,
+ * [newEntry] while a record is being added by hand. Records can be added only to [activeCars], the cars not sold;
+ * [newEntrySuggestions] are the task names of the car chosen in [newEntry], offered as chips.
  */
 data class HistoryUiState(
     val isLoading: Boolean = true,
@@ -21,9 +23,12 @@ data class HistoryUiState(
     val years: List<HistoryYear> = emptyList(),
     val hasEntries: Boolean = false,
     val entryForm: HistoryEntryForm? = null,
+    val newEntry: NewHistoryEntryForm? = null,
+    val newEntrySuggestions: List<String> = emptyList(),
     val distanceUnit: DistanceUnit = DistanceUnit.KILOMETERS,
 ) {
     val selectedCar: HistoryCar? get() = cars.firstOrNull { it.id == selectedCarId }
+    val activeCars: List<HistoryCar> get() = cars.filterNot { it.isSold }
 }
 
 /**
@@ -105,4 +110,29 @@ data class HistoryEntryForm(
     val isDateInvalid: Boolean get() = DateInputFormat.current.parse(date) == null
     val isMileageInvalid: Boolean get() = (mileage.toIntOrNull() ?: 0) <= 0
     val isValid: Boolean get() = !isDateInvalid && !isMileageInvalid
+}
+
+/**
+ * The window of a record added by hand; everything is kept as text: the date as its typed digits
+ * in the [DateInputFormat] of the app language, the mileage in the unit chosen in settings.
+ * The car, the task name, the date and the mileage are required; the service, the cost and the comment
+ * are shown once [isExpanded] is on. [isCarMenuOpen] shows the car list. [showErrors] turns on after
+ * a save attempt with a required field invalid and outlines it in red.
+ */
+data class NewHistoryEntryForm(
+    val carId: String,
+    val taskName: String = "",
+    val date: String = "",
+    val mileage: String = "",
+    val serviceName: String = "",
+    val cost: String = "",
+    val comment: String = "",
+    val isExpanded: Boolean = false,
+    val isCarMenuOpen: Boolean = false,
+    val showErrors: Boolean = false,
+) {
+    val isNameMissing: Boolean get() = taskName.isBlank()
+    val isDateInvalid: Boolean get() = DateInputFormat.current.parse(date) == null
+    val isMileageInvalid: Boolean get() = (mileage.toIntOrNull() ?: 0) <= 0
+    val isValid: Boolean get() = !isNameMissing && !isDateInvalid && !isMileageInvalid
 }

@@ -49,6 +49,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import itstime4service.shared.generated.resources.Res
+import itstime4service.shared.generated.resources.action_add_entry
 import itstime4service.shared.generated.resources.action_filter
 import itstime4service.shared.generated.resources.action_select_car
 import itstime4service.shared.generated.resources.cost_rub
@@ -60,6 +61,7 @@ import itstime4service.shared.generated.resources.screen_history
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.domain.model.ServiceHistoryEntry
 import ru.kuznetsov.itstime4service.ui.components.ScreenPreview
+import ru.kuznetsov.itstime4service.ui.components.buttons.Fab
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.format.distanceText
@@ -89,6 +91,10 @@ fun HistoryScreen(
         onEntryChange = viewModel::onEntryChange,
         onEntrySave = viewModel::onEntrySave,
         onEntryDismiss = viewModel::onEntryDismiss,
+        onNewEntryOpen = viewModel::onNewEntryOpen,
+        onNewEntryChange = viewModel::onNewEntryChange,
+        onNewEntrySave = viewModel::onNewEntrySave,
+        onNewEntryDismiss = viewModel::onNewEntryDismiss,
         modifier = modifier,
     )
 }
@@ -109,40 +115,60 @@ internal fun HistoryContent(
     onEntryChange: (HistoryEntryForm) -> Unit,
     onEntrySave: () -> Unit,
     onEntryDismiss: () -> Unit,
+    onNewEntryOpen: () -> Unit,
+    onNewEntryChange: (NewHistoryEntryForm) -> Unit,
+    onNewEntrySave: () -> Unit,
+    onNewEntryDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxSize()) {
-        ScreenTitle(title = stringResource(Res.string.screen_history), modifier = Modifier.padding(top = 12.dp))
-        HistoryBar(
-            state = state,
-            onCarMenuToggle = onCarMenuToggle,
-            onCarMenuDismiss = onCarMenuDismiss,
-            onCarSelect = onCarSelect,
-            onFilterOpen = onFilterOpen,
-        )
-        if (state.years.isEmpty()) {
-            if (!state.isLoading) {
-                EmptyHistory(
-                    text = stringResource(
-                        if (state.hasEntries) Res.string.history_nothing_found else Res.string.history_empty,
-                    ),
+    val canAddEntry = !state.isLoading && state.activeCars.isNotEmpty()
+    Box(modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            ScreenTitle(title = stringResource(Res.string.screen_history), modifier = Modifier.padding(top = 12.dp))
+            HistoryBar(
+                state = state,
+                onCarMenuToggle = onCarMenuToggle,
+                onCarMenuDismiss = onCarMenuDismiss,
+                onCarSelect = onCarSelect,
+                onFilterOpen = onFilterOpen,
+            )
+            if (state.years.isEmpty()) {
+                if (!state.isLoading) {
+                    EmptyHistory(
+                        text = stringResource(
+                            if (state.hasEntries) Res.string.history_nothing_found else Res.string.history_empty,
+                        ),
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            } else {
+                LazyColumn(
                     modifier = Modifier.weight(1f),
-                )
-            }
-        } else {
-            LazyColumn(modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = 18.dp)) {
-                state.years.forEach { year ->
-                    stickyHeader(key = "year-${year.year}") { YearHeader(year.year) }
-                    items(year.months, key = { "month-${year.year}-${it.month}" }) { month ->
-                        MonthCard(
-                            month = month,
-                            showCar = state.selectedCarId == null,
-                            distanceUnit = state.distanceUnit,
-                            onEntryOpen = onEntryOpen,
-                        )
+                    contentPadding = PaddingValues(bottom = if (canAddEntry) 88.dp else 18.dp),
+                ) {
+                    state.years.forEach { year ->
+                        stickyHeader(key = "year-${year.year}") { YearHeader(year.year) }
+                        items(year.months, key = { "month-${year.year}-${it.month}" }) { month ->
+                            MonthCard(
+                                month = month,
+                                showCar = state.selectedCarId == null,
+                                distanceUnit = state.distanceUnit,
+                                onEntryOpen = onEntryOpen,
+                            )
+                        }
                     }
                 }
             }
+        }
+        if (canAddEntry) {
+            Fab(
+                icon = ItsTime4ServiceIcons.Plus,
+                onClick = onNewEntryOpen,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 18.dp, bottom = 22.dp),
+                contentDescription = stringResource(Res.string.action_add_entry),
+            )
         }
     }
     val filterDraft = state.filterDraft
@@ -164,6 +190,18 @@ internal fun HistoryContent(
             onChange = onEntryChange,
             onSave = onEntrySave,
             onDismiss = onEntryDismiss,
+        )
+    }
+    val newEntry = state.newEntry
+    if (newEntry != null) {
+        NewHistoryEntryDialog(
+            form = newEntry,
+            cars = state.activeCars,
+            suggestions = state.newEntrySuggestions,
+            distanceUnit = state.distanceUnit,
+            onChange = onNewEntryChange,
+            onSave = onNewEntrySave,
+            onDismiss = onNewEntryDismiss,
         )
     }
 }
@@ -452,6 +490,10 @@ private fun HistoryPreviewContent() {
         onEntryChange = {},
         onEntrySave = {},
         onEntryDismiss = {},
+        onNewEntryOpen = {},
+        onNewEntryChange = {},
+        onNewEntrySave = {},
+        onNewEntryDismiss = {},
     )
 }
 

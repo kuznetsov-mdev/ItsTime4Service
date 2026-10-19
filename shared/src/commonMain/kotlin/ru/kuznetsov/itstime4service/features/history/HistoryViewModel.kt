@@ -14,12 +14,15 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.number
 import ru.kuznetsov.itstime4service.domain.model.CarSummary
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
+import ru.kuznetsov.itstime4service.domain.usecase.AddHistoryEntryUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveAllHistoryUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarSummariesUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateHistoryEntryUseCase
 import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
 import ru.kuznetsov.itstime4service.ui.format.keepKm
+import ru.kuznetsov.itstime4service.ui.format.kmFrom
 import ru.kuznetsov.itstime4service.ui.format.kmIn
 
 /**
@@ -33,16 +36,22 @@ import ru.kuznetsov.itstime4service.ui.format.kmIn
  * or mileage keeps it open and marks the field.
  * Sold cars — deleted from their screen with the history kept — are listed after the others and marked;
  * their records can be edited like any other.
+ * A record can also be added by hand for a car that is not sold: the window starts on the car chosen in the picker,
+ * or the first one, and offers the car's task names as chips. Such a record is not tied to a task. Repeated taps
+ * on "Add" while the record is being stored are ignored.
  */
 class HistoryViewModel(
     initialCarId: String?,
     observeCarSummaries: ObserveCarSummariesUseCase,
     observeAllHistory: ObserveAllHistoryUseCase,
     observeSettings: ObserveSettingsUseCase,
+    observeCars: ObserveCarsUseCase,
     private val updateHistoryEntry: UpdateHistoryEntryUseCase,
+    private val addHistoryEntry: AddHistoryEntryUseCase,
 ) : ViewModel() {
 
     private val view = MutableStateFlow(View(selectedCarId = initialCarId))
+    private var isAdding = false
 
     private val rows: Flow<List<HistoryRow>> = observeAllHistory().map { records ->
         records.map { HistoryRow(it.entry, it.car.toHistoryCar()) }
@@ -52,8 +61,9 @@ class HistoryViewModel(
         observeCarSummaries(),
         rows,
         observeSettings(),
+        observeCars(),
         view,
-    ) { cars, rows, settings, view ->
+    ) { cars, rows, settings, activeCars, view ->
         val owners = cars.map { it.toHistoryCar() }
         val selectedCarId = view.selectedCarId?.takeIf { id -> owners.any { it.id == id } }
         val ofCar = rows.filter { selectedCarId == null || it.car.id == selectedCarId }
@@ -67,6 +77,14 @@ class HistoryViewModel(
             years = ofCar.filter { view.filter.matches(it, settings.distanceUnit) }.grouped(),
             hasEntries = ofCar.isNotEmpty(),
             entryForm = view.entryForm,
+            newEntry = view.newEntry,
+            newEntrySuggestions = view.newEntry
+                ?.let { form -> activeCars.firstOrNull { it.id == form.carId } }
+                ?.tasks
+                ?.map { it.name }
+                ?.distinct()
+                ?.take(SUGGESTION_COUNT)
+                .orEmpty(),
             distanceUnit = settings.distanceUnit,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HistoryUiState())
@@ -160,6 +178,49 @@ class HistoryViewModel(
 
     fun onEntryDismiss() = view.update { it.copy(entryForm = null) }
 
+    fun onNewEntryOpen() {
+        val cars = state.value.activeCars
+        val carId = cars.firstOrNull { it.id == state.value.selectedCarId }?.id ?: cars.firstOrNull()?.id ?: return
+        view.update { it.copy(isCarMenuOpen = false, newEntry = NewHistoryEntryForm(carId = carId)) }
+    }
+
+    fun onNewEntryChange(form: NewHistoryEntryForm) = view.update {
+        it.copy(
+            newEntry = form.copy(
+                date = DateInputFormat.current.digits(form.date),
+                mileage = form.mileage.digits(),
+                cost = form.cost.digits(),
+            ),
+        )
+    }
+
+    fun onNewEntrySave() {
+        val form = view.value.newEntry ?: return
+        val date = DateInputFormat.current.parse(form.date)
+        val mileage = form.mileage.toIntOrNull()
+        if (date == null || mileage == null || !form.isValid) {
+            view.update { it.copy(newEntry = form.copy(showErrors = true)) }
+            return
+        }
+        if (isAdding) return
+        isAdding = true
+        viewModelScope.launch {
+            val added = addHistoryEntry(
+                carId = form.carId,
+                taskName = form.taskName,
+                date = date,
+                mileageKm = mileage.kmFrom(state.value.distanceUnit),
+                serviceName = form.serviceName,
+                costRub = form.cost.toIntOrNull(),
+                comment = form.comment,
+            )
+            isAdding = false
+            if (added) onNewEntryDismiss()
+        }
+    }
+
+    fun onNewEntryDismiss() = view.update { it.copy(newEntry = null) }
+
     private fun HistoryFilter.matches(row: HistoryRow, unit: DistanceUnit): Boolean {
         val entry = row.entry
         val from = DateInputFormat.current.parse(dateFrom)
@@ -195,10 +256,12 @@ class HistoryViewModel(
         val filter: HistoryFilter = HistoryFilter(),
         val filterDraft: HistoryFilter? = null,
         val entryForm: HistoryEntryForm? = null,
+        val newEntry: NewHistoryEntryForm? = null,
     )
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
         const val MAX_NUMBER_LENGTH = 7
+        const val SUGGESTION_COUNT = 3
     }
 }

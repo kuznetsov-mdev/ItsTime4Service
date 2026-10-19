@@ -199,4 +199,11 @@
     <string name="dialog_task_icon_title">Icono de la tarea</string>
     <string name="dialog_task_icon_text">Por defecto, la tarea lleva una llave inglesa.</string>
     <string name="action_pick_task_icon">Icono de la tarea: elegir</string>
+    <string name="action_add_entry">Añadir registro</string>
+    <string name="dialog_new_entry_title">Nuevo registro</string>
+    <string name="dialog_new_entry_text">Un trabajo hecho antes, por ejemplo, antes de instalar la aplicación.</string>
+    <string name="field_car">Coche</string>
+    <string name="field_task">Tarea</string>
+    <string name="action_more_entry_fields">+ Más: taller, coste, comentario</string>
+    <string name="action_add">Añadir</string>
 </resources>

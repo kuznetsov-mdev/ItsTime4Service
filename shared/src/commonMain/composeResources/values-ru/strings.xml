@@ -201,4 +201,11 @@
     <string name="dialog_task_icon_title">Иконка работы</string>
     <string name="dialog_task_icon_text">По умолчанию у работы — гаечный ключ.</string>
     <string name="action_pick_task_icon">Иконка работы — выбрать</string>
+    <string name="action_add_entry">Добавить запись</string>
+    <string name="dialog_new_entry_title">Новая запись</string>
+    <string name="dialog_new_entry_text">Работа, сделанная раньше, — например, до установки приложения.</string>
+    <string name="field_car">Авто</string>
+    <string name="field_task">Работа</string>
+    <string name="action_more_entry_fields">+ Ещё: сервис, стоимость, комментарий</string>
+    <string name="action_add">Добавить</string>
 </resources>

@@ -197,4 +197,11 @@
     <string name="dialog_task_icon_title">Task icon</string>
     <string name="dialog_task_icon_text">A new task gets a wrench.</string>
     <string name="action_pick_task_icon">Task icon — choose</string>
+    <string name="action_add_entry">Add a record</string>
+    <string name="dialog_new_entry_title">New record</string>
+    <string name="dialog_new_entry_text">Work done earlier — for example, before the app was installed.</string>
+    <string name="field_car">Car</string>
+    <string name="field_task">Task</string>
+    <string name="action_more_entry_fields">+ More: service, cost, comment</string>
+    <string name="action_add">Add</string>
 </resources>
