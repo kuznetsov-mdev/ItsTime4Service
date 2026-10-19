@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
@@ -28,6 +29,7 @@ fun AppNumberField(
     enabled: Boolean = true,
     isError: Boolean = false,
     visualTransformation: VisualTransformation = VisualTransformation.None,
+    onDone: (() -> Unit)? = null,
 ) {
     val colors = ItsTime4ServiceTheme.colors
     FieldBox(
@@ -41,6 +43,8 @@ fun AppNumberField(
         keyboardType = KeyboardType.Number,
         enabled = enabled,
         isError = isError,
+        imeAction = if (onDone != null) ImeAction.Done else ImeAction.Default,
+        onImeAction = onDone,
         visualTransformation = visualTransformation,
         trailing = unit?.let {
             {

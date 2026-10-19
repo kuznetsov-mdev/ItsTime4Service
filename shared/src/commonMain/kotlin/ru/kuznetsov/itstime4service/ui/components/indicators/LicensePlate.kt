@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -62,30 +61,7 @@ fun LicensePlate(look: PlateLook, modifier: Modifier = Modifier, compact: Boolea
     val fontSize = if (compact) 15.sp else 18.sp
     val described = modifier.semantics { contentDescription = look.text }
     when (look) {
-        is PlateLook.Russian -> {
-            val shape = RoundedCornerShape(5.dp)
-            Row(
-                modifier = described
-                    .height(IntrinsicSize.Min)
-                    .clip(shape)
-                    .background(colors.plateBg)
-                    .border(1.5.dp, colors.plateEdge, shape),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PlateText(look.series, fontSize, colors.plateInk, Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
-                Box(Modifier.fillMaxHeight().width(1.5.dp).background(colors.plateEdge))
-                Column(
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    PlateText(look.region, fontSize * 0.78f, colors.plateInk)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                        PlateText("RUS", fontSize * 0.36f, colors.plateInk)
-                        RussianFlag()
-                    }
-                }
-            }
-        }
+        is PlateLook.Russian -> RussianPlate(look, compact, described)
         is PlateLook.European -> {
             val shape = RoundedCornerShape(5.dp)
             Row(
@@ -152,15 +128,6 @@ private fun PlateText(text: String, fontSize: TextUnit, color: Color, modifier: 
 }
 
 @Composable
-private fun RussianFlag() {
-    Column(Modifier.size(width = 9.dp, height = 6.dp).border(0.5.dp, Color(0xFF999999))) {
-        Box(Modifier.weight(1f).fillMaxWidth().background(Color.White))
-        Box(Modifier.weight(1f).fillMaxWidth().background(Color(0xFF1C57A5)))
-        Box(Modifier.weight(1f).fillMaxWidth().background(Color(0xFFD52B1E)))
-    }
-}
-
-@Composable
 private fun EuStars() {
     Box(
         Modifier.size(9.dp).drawBehind {
@@ -180,6 +147,7 @@ private val EuYellow = Color(0xFFF7D117)
 private fun LicensePlatePreviewContent() {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         LicensePlate(PlateLook.Russian("А 123 ВС", "77", "А123ВС77"))
+        LicensePlate(PlateLook.Russian("С 065 МК", "323", "С065МК323"))
         LicensePlate(PlateLook.European("E", "1234 BCD"))
         LicensePlate(PlateLook.American("7ABC123"))
         LicensePlate(PlateLook.Universal("01 A 123 BC"))

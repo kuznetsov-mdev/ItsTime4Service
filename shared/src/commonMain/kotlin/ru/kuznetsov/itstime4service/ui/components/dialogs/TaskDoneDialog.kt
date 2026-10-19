@@ -23,7 +23,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,15 +31,10 @@ import org.jetbrains.compose.resources.stringResource
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_cancel
 import itstime4service.shared.generated.resources.action_save
-import itstime4service.shared.generated.resources.comment_placeholder
 import itstime4service.shared.generated.resources.dialog_task_done_text
 import itstime4service.shared.generated.resources.dialog_task_done_title
-import itstime4service.shared.generated.resources.field_comment
-import itstime4service.shared.generated.resources.field_cost_rub
-import itstime4service.shared.generated.resources.field_service_name
-import itstime4service.shared.generated.resources.service_name_placeholder
 import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
-import ru.kuznetsov.itstime4service.ui.components.fields.LabeledMiniField
+import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 
@@ -103,28 +97,14 @@ private fun TaskDoneDialogCard(
         )
         Spacer(Modifier.height(14.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            LabeledMiniField(
-                label = stringResource(Res.string.field_service_name),
-                value = serviceName,
-                onValueChange = { serviceName = it },
-                placeholder = stringResource(Res.string.service_name_placeholder),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            LabeledMiniField(
-                label = stringResource(Res.string.field_cost_rub),
-                value = cost,
-                onValueChange = { cost = it.filter(Char::isDigit).take(MAX_COST_LENGTH) },
-                placeholder = "2400",
-                keyboardType = KeyboardType.Number,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            LabeledMiniField(
-                label = stringResource(Res.string.field_comment),
-                value = comment,
-                onValueChange = { comment = it },
-                placeholder = stringResource(Res.string.comment_placeholder),
-                minLines = 2,
-                modifier = Modifier.fillMaxWidth(),
+            ServiceRecordFields(
+                serviceName = serviceName,
+                cost = cost,
+                comment = comment,
+                onServiceNameChange = { serviceName = it },
+                onCostChange = { cost = it.filter(Char::isDigit).take(MAX_COST_LENGTH) },
+                onCommentChange = { comment = it },
+                onDone = { onConfirm(serviceName, cost, comment) },
             )
         }
         Spacer(Modifier.height(18.dp))

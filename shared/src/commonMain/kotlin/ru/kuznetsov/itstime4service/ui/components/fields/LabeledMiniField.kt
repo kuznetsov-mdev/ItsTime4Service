@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
@@ -35,6 +36,7 @@ fun LabeledMiniField(
     required: Boolean = false,
     minLines: Int = 1,
     visualTransformation: VisualTransformation = VisualTransformation.None,
+    onDone: (() -> Unit)? = null,
 ) {
     val colors = ItsTime4ServiceTheme.colors
     Column(modifier = modifier) {
@@ -59,6 +61,8 @@ fun LabeledMiniField(
             placeholder = placeholder,
             keyboardType = keyboardType,
             isError = isError,
+            imeAction = if (onDone != null) ImeAction.Done else ImeAction.Default,
+            onImeAction = onDone,
             minLines = minLines,
             visualTransformation = visualTransformation,
         )

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -23,6 +24,7 @@ fun AppTextField(
     enabled: Boolean = true,
     isError: Boolean = false,
     minLines: Int = 1,
+    onDone: (() -> Unit)? = null,
 ) {
     FieldBox(
         value = value,
@@ -34,6 +36,8 @@ fun AppTextField(
         placeholder = placeholder,
         enabled = enabled,
         isError = isError,
+        imeAction = if (onDone != null) ImeAction.Done else ImeAction.Default,
+        onImeAction = onDone,
         minLines = minLines,
     )
 }
