@@ -182,4 +182,19 @@
     <string name="car_card_recent">Recent work</string>
     <string name="car_card_no_tasks">No tasks</string>
     <string name="car_card_no_history">No records yet</string>
+    <string name="task_icon_wrench">Wrench</string>
+    <string name="task_icon_droplet">Oil</string>
+    <string name="task_icon_disc">Brakes</string>
+    <string name="task_icon_filter">Filters</string>
+    <string name="task_icon_zap">Spark plugs, electrics</string>
+    <string name="task_icon_battery">Battery</string>
+    <string name="task_icon_thermometer">Cooling</string>
+    <string name="task_icon_tire">Tyres</string>
+    <string name="task_icon_wind">Air conditioning</string>
+    <string name="task_icon_gear">Transmission</string>
+    <string name="task_icon_gauge">Diagnostics</string>
+    <string name="task_icon_car">Body</string>
+    <string name="dialog_task_icon_title">Task icon</string>
+    <string name="dialog_task_icon_text">A new task gets a wrench.</string>
+    <string name="action_pick_task_icon">Task icon — choose</string>
 </resources>

@@ -186,4 +186,19 @@
     <string name="car_card_recent">Последние работы</string>
     <string name="car_card_no_tasks">Работ нет</string>
     <string name="car_card_no_history">Записей пока нет</string>
+    <string name="task_icon_wrench">Гаечный ключ</string>
+    <string name="task_icon_droplet">Масло</string>
+    <string name="task_icon_disc">Тормоза</string>
+    <string name="task_icon_filter">Фильтры</string>
+    <string name="task_icon_zap">Свечи, электрика</string>
+    <string name="task_icon_battery">Аккумулятор</string>
+    <string name="task_icon_thermometer">Охлаждение</string>
+    <string name="task_icon_tire">Шины</string>
+    <string name="task_icon_wind">Кондиционер</string>
+    <string name="task_icon_gear">Трансмиссия</string>
+    <string name="task_icon_gauge">Диагностика</string>
+    <string name="task_icon_car">Кузов</string>
+    <string name="dialog_task_icon_title">Иконка работы</string>
+    <string name="dialog_task_icon_text">По умолчанию у работы — гаечный ключ.</string>
+    <string name="action_pick_task_icon">Иконка работы — выбрать</string>
 </resources>

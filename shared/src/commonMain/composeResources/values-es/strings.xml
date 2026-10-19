@@ -184,4 +184,19 @@
     <string name="car_card_recent">Trabajos recientes</string>
     <string name="car_card_no_tasks">Sin tareas</string>
     <string name="car_card_no_history">Aún no hay registros</string>
+    <string name="task_icon_wrench">Llave inglesa</string>
+    <string name="task_icon_droplet">Aceite</string>
+    <string name="task_icon_disc">Frenos</string>
+    <string name="task_icon_filter">Filtros</string>
+    <string name="task_icon_zap">Bujías, electricidad</string>
+    <string name="task_icon_battery">Batería</string>
+    <string name="task_icon_thermometer">Refrigeración</string>
+    <string name="task_icon_tire">Neumáticos</string>
+    <string name="task_icon_wind">Aire acondicionado</string>
+    <string name="task_icon_gear">Transmisión</string>
+    <string name="task_icon_gauge">Diagnóstico</string>
+    <string name="task_icon_car">Carrocería</string>
+    <string name="dialog_task_icon_title">Icono de la tarea</string>
+    <string name="dialog_task_icon_text">Por defecto, la tarea lleva una llave inglesa.</string>
+    <string name="action_pick_task_icon">Icono de la tarea: elegir</string>
 </resources>

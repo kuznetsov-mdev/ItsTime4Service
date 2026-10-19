@@ -3,6 +3,7 @@ package ru.kuznetsov.itstime4service.ui.format
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.domain.model.MaintenanceTask
 import ru.kuznetsov.itstime4service.domain.model.NewMaintenanceTask
+import ru.kuznetsov.itstime4service.domain.model.TaskIcon
 
 /**
  * The fields of one maintenance task as typed in a form — in a task block of the add-car form
@@ -12,6 +13,7 @@ import ru.kuznetsov.itstime4service.domain.model.NewMaintenanceTask
  * The last-done date is kept as its typed digits in the [DateInputFormat] of the app language.
  * The name, the mileage interval and the last-done mileage are required; a last-done mileage of zero
  * is valid and means the task has not been done yet.
+ * A new task starts with a wrench [icon]; a task saved before icons could be picked keeps `null` until one is picked.
  */
 data class TaskFields(
     val name: String = "",
@@ -20,6 +22,7 @@ data class TaskFields(
     val lastDoneKm: String = "",
     val lastDoneDate: String = "",
     val reminderWindowKm: String = "",
+    val icon: TaskIcon? = TaskIcon.WRENCH,
 ) {
     val isNameMissing: Boolean get() = name.isBlank()
     val isIntervalMissing: Boolean get() = (intervalKm.toIntOrNull() ?: 0) <= 0
@@ -43,6 +46,7 @@ data class TaskFields(
             reminderWindowKm = reminderWindowKm.toIntOrNull()?.let { keepKm(original?.reminderWindowKm, it, unit) },
             intervalMonths = intervalMonths.toIntOrNull(),
             lastDoneDate = DateInputFormat.current.parse(lastDoneDate),
+            icon = icon,
         )
     }
 
@@ -60,4 +64,5 @@ fun MaintenanceTask.toFields(unit: DistanceUnit): TaskFields = TaskFields(
     lastDoneKm = lastDoneKm.kmIn(unit).toString(),
     lastDoneDate = lastDoneDate?.let { DateInputFormat.current.digitsOf(it) }.orEmpty(),
     reminderWindowKm = reminderWindowKm.kmIn(unit).toString(),
+    icon = icon,
 )
