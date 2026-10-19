@@ -14,6 +14,7 @@ import ru.kuznetsov.itstime4service.domain.model.ThemeMode
 import ru.kuznetsov.itstime4service.features.navigation.ItsTime4ServiceNavGraph
 import ru.kuznetsov.itstime4service.ui.notification.rememberNotificationPermissionRequest
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
+import ru.kuznetsov.itstime4service.ui.theme.SystemAppearance
 
 @Composable
 fun App(viewModel: AppViewModel = koinViewModel()) {
@@ -29,6 +30,7 @@ fun App(viewModel: AppViewModel = koinViewModel()) {
         if (needsNotificationPermission) requestNotificationPermission()
     }
     val launch by viewModel.launch.collectAsStateWithLifecycle()
+    SystemAppearance(themeMode, darkTheme)
     ItsTime4ServiceTheme(darkTheme = darkTheme) {
         when (val current = launch) {
             Launch.Pending -> Box(Modifier.fillMaxSize().background(ItsTime4ServiceTheme.colors.bg))
