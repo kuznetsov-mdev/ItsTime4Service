@@ -335,6 +335,28 @@
   .task-block-title { font-size: 12px; font-weight: 700; color: var(--ink-muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.04em; }
   .task-block .text-input, .task-block .num-input { margin: 0 0 10px; width: 100%; }
   .mini-label { font-size: 10.5px; color: var(--ink-faint); margin: 0 0 4px; display: block; }
+  /* чекбокс с подписью: вся строка переключает; включённый — акцентный квадрат с галочкой */
+  .app-check { display: flex; align-items: center; gap: 10px; padding: 6px 0; margin: 0 0 8px; background: none; border: 0; color: var(--ink); font: 500 13px/18px var(--sans); cursor: pointer; text-align: left; }
+  .app-check .box { width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--rule); background: var(--surface-2); display: flex; align-items: center; justify-content: center; color: var(--on-accent); flex-shrink: 0; box-sizing: border-box; }
+  .app-check.on .box { background: var(--accent); border-color: var(--accent); }
+  .record-fields { display: flex; flex-direction: column; gap: 10px; margin: 0 0 14px; }
+  .record-fields .text-input, .record-fields .num-input { width: 100%; margin: 0; box-sizing: border-box; }
+  .record-fields textarea.text-input, .record-fields .text-input.multiline { min-height: 58px; resize: none; line-height: 1.4; }
+  .task-form .app-check { margin: 4px 18px 8px; }
+  .task-form .record-fields { padding: 0 18px; }
+  .task-block .app-check { margin: 0; }
+  .task-block .record-fields { margin: 0; }
+  /* лицензии открытого ПО: карточка библиотеки, тап раскрывает текст лицензии */
+  .lic-list { display: flex; flex-direction: column; gap: 8px; }
+  .lic-card { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; }
+  .lic-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; }
+  .lic-head > div { flex: 1; min-width: 0; }
+  .lic-head .t1 { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .lic-head .t2 { font-family: var(--mono); font-size: 10.5px; color: var(--ink-muted); }
+  .lic-head .t3 { font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lic-head .chev { display: flex; color: var(--ink-faint); transform: rotate(-90deg); }
+  .lic-card.open .lic-head .chev { transform: rotate(90deg); }
+  .lic-text { background: var(--surface-2); padding: 12px 14px; font-family: var(--mono); font-size: 10px; line-height: 1.45; color: var(--ink-muted); white-space: pre-wrap; }
   .mini-row { display: flex; gap: 8px; }
   .mini-row > div { flex: 1; min-width: 0; }
 
@@ -465,10 +487,10 @@
   /* ---------- Stage 8b: licence plates ---------- */
   .plate { display: inline-flex; align-items: stretch; font-family: var(--mono); font-weight: 700; color: var(--plate-ink); line-height: 1; white-space: nowrap; background: var(--plate-bg); border: 1.5px solid var(--plate-edge); border-radius: 5px; overflow: hidden; vertical-align: middle; }
   .plate-main { display: flex; align-items: center; padding: 4px 8px; font-size: 18px; letter-spacing: -0.03em; word-spacing: -0.33em; }
-  .plate-ru .plate-region { display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1.5px solid var(--plate-edge); padding: 2px 6px; gap: 2px; }
-  .plate-ru .plate-region b { font-size: 14px; }
-  .plate-ru .plate-region i { font-style: normal; font-size: 6.5px; display: flex; align-items: center; gap: 2px; letter-spacing: 0.04em; }
-  .plate-flag { width: 9px; height: 6px; background: linear-gradient(#fff 0 33%, #1c57a5 33% 66%, #d52b1e 66%); border: 0.5px solid #999; }
+  /* российский номер рисуется SVG в пропорциях 520 × 112 мм: высота 30px, в карточке списка — 22px */
+  .plate.plate-ru { border: 0; background: none; border-radius: 0; overflow: visible; }
+  .plate-ru svg { display: block; height: 30px; width: 139px; }
+  .car-t-plate .plate-ru svg { height: 22px; width: 102px; }
   .plate-us { flex-direction: column; align-items: center; border-radius: 7px; border-color: var(--plate-us-ink); background: linear-gradient(var(--plate-bg), var(--plate-us-bg)); padding: 2px 10px 4px; }
   .plate-us .plate-top { font-size: 6.5px; letter-spacing: 0.16em; color: #b8202f; font-family: var(--sans); font-weight: 800; padding-top: 2px; }
   .plate-us .plate-main { color: var(--plate-us-ink); padding: 2px 0 0; font-size: 18px; }
@@ -673,6 +695,24 @@
     <div class="locked-light" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery" id="gallery8bLight"></div></div>
     <div style="height:28px"></div>
     <div class="locked-dark" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery" id="gallery8bDark"></div></div>
+  </div>
+
+  <!-- ================= STAGE 9 ================= -->
+  <div class="section-block panel" id="stage9Block">
+    <div class="section-head"><h2>Этап 9: доработки после проверки на устройстве</h2></div>
+    <p class="section-sub">Изменения перенесены в основной набор экранов и в интерактивный макет. Экраны ниже — светлая и тёмная тема.</p>
+    <ol class="decisions">
+      <li><b>Масло по умолчанию — 7 500 км:</b> чип «Масло» и работа, которую форма авто подставляет без блоков работ.</li>
+      <li><b>«Последний раз, км» необязателен:</b> пустое поле сохраняется как 0 — работа ещё не проводилась (например, авто только куплено).</li>
+      <li><b>«Создать запись в истории»</b> — чекбокс под «Последний раз» и датой у новой работы на экране работы (33) и в каждом блоке формы авто (34); по умолчанию выключен. Включённый заполняет пустую дату сегодняшней, делает пробег и дату обязательными и показывает «Где обслуживались», «Сколько стоило», «Комментарий». Работа сохраняется вместе с записью истории о последнем выполнении.</li>
+      <li><b>Работа и её запись связаны:</b> связанная запись — самая поздняя по дате запись этой работы на её «последнем разе» (при равных датах — добавленная последней): созданная чекбоксом или отметкой «выполнено». Правка «последнего раза» на экране работы меняет пробег и дату записи; правка даты или пробега записи в «Истории» меняет «последний раз» работы. Остальные записи не трогаются.</li>
+      <li><b>Российский номер</b> — в пропорциях 520 × 112 мм по образцам: толстая рамка без «болтов», буквы серии меньше цифр и стоят на общей линии, секция региона вмещает три цифры в полную высоту (37).</li>
+      <li><b>Клавиша «готово» (Enter)</b> в любом поле делает то же, что главная кнопка: «Сохранить» формы, «Сохранить» / «Добавить» / «Применить» окна, галочка правки на месте.</li>
+      <li><b>Лицензии открытого ПО:</b> раздел «О приложении» в конце «Настроек» (35) открывает список библиотек с их лицензиями; тап по библиотеке раскрывает текст лицензии (36).</li>
+    </ol>
+    <div class="locked-light" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery" id="gallery9Light"></div></div>
+    <div style="height:28px"></div>
+    <div class="locked-dark" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery" id="gallery9Dark"></div></div>
   </div>
 
   <!-- ================= STYLE GUIDE: TOKENS ================= -->
@@ -1075,6 +1115,8 @@
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.3 2"/>',
     check: '<path d="M4 12l5 5L20 6"/>',
     chevronLeft: '<path d="M15 5l-7 7 7 7"/>',
+    chevronRight: '<path d="M9 5l7 7-7 7"/>',
+    scrollText: '<path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/>',
     pencil: '<path d="M4 20l4-1 11-11-3-3L5 16l-1 4Z"/>',
     trash: '<path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M7 7l1 13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-13"/>',
     bell: '<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/>',
@@ -1597,7 +1639,7 @@
     }).join('') + '</div>';
   }
   var PRESET_DEFS = {
-    oil: { name: 'Замена масла и фильтра', intervalKm: 10000, reminderKm: 1500 },
+    oil: { name: 'Замена масла и фильтра', intervalKm: 7500, reminderKm: 1500 },
     pads: { name: 'Тормозные колодки', intervalKm: 30000, reminderKm: 3000 },
     filter: { name: 'Воздушный фильтр', intervalKm: 15000, reminderKm: 2000 },
     belt: { name: 'Ремень ГРМ', intervalKm: 60000, reminderKm: 5000 }
@@ -1605,9 +1647,41 @@
 
   function blockNameMissing(block) { return !String(block.name || '').trim(); }
   function blockIntervalMissing(block) { return !(parseInt(block.intervalKm, 10) > 0); }
-  /* «Последний раз, км» обязательно и без значения по умолчанию; 0 — допустимый ответ («ещё не проводилась») */
-  function blockLastKmMissing(block) { return !(parseInt(block.lastKm, 10) >= 0); }
-  function blockInvalid(block) { return blockNameMissing(block) || blockIntervalMissing(block) || blockLastKmMissing(block); }
+  /* «Последний раз, км» необязателен: пусто — 0, работа ещё не проводилась (например, авто только куплено).
+     С «Создать запись в истории» пробег (> 0) и дата обязательны */
+  function blockLastKmMissing(block) { return !!block.createsRecord && !(parseInt(block.lastKm, 10) > 0); }
+  function blockLastDateMissing(block) { return !!block.createsRecord && !validIsoFromRu(block.lastDate || ''); }
+  function blockInvalid(block) { return blockNameMissing(block) || blockIntervalMissing(block) || blockLastKmMissing(block) || blockLastDateMissing(block); }
+  function lastKmOf(typed) { return String(typed === undefined || typed === null ? '' : typed).trim() === '' ? 0 : fromUnit(parseInt(typed, 10)); }
+  /* связанная запись работы — самая поздняя по дате запись этой работы на её «последнем разе»; при равных датах — добавленная последней */
+  function linkedEntry(car, task) {
+    var found = null;
+    (car.history || []).forEach(function (h) {
+      if (h.taskId === task.id && h.mileageKm === task.lastKm && (!found || h.date >= found.date)) found = h;
+    });
+    return found;
+  }
+  function recordCheckHtml(on, attr) {
+    return '<button class="app-check' + (on ? ' on' : '') + '"' + attr + ' role="checkbox" aria-checked="' + on + '"><span class="box">' + (on ? icon('check', 14) : '') + '</span>Создать запись в истории</button>';
+  }
+  function recordFieldsHtml(f, interactive, ids) {
+    function val(v) { return v === undefined || v === null ? '' : v; }
+    if (!interactive) {
+      return '<div class="record-fields">' +
+        '<div><span class="mini-label">Где обслуживались</span><div class="text-input static">' + (f.service || 'Например, АвтоСервис Юг') + '</div></div>' +
+        '<div><span class="mini-label">Сколько стоило, ₽</span><div class="num-input static">' + (f.cost || '2400') + '</div></div>' +
+        '<div><span class="mini-label">Комментарий</span><div class="text-input static multiline">' + (f.comment || 'Что меняли, какие запчасти') + '</div></div></div>';
+    }
+    return '<div class="record-fields">' +
+      '<div><span class="mini-label">Где обслуживались</span><input class="text-input"' + ids.service + ' placeholder="Например, АвтоСервис Юг" value="' + val(f.service) + '"></div>' +
+      '<div><span class="mini-label">Сколько стоило, ₽</span><input class="num-input"' + ids.cost + ' type="number" placeholder="2400" value="' + val(f.cost) + '"></div>' +
+      '<div><span class="mini-label">Комментарий</span><textarea class="text-input"' + ids.comment + ' placeholder="Что меняли, какие запчасти">' + val(f.comment) + '</textarea></div></div>';
+  }
+  function recordFromForm(f, taskId, taskName, lastKm) {
+    var cost = parseInt(f.cost, 10);
+    return { id: 'r' + Date.now() + Math.random().toString(36).slice(2, 6), taskId: taskId, taskName: taskName, date: validIsoFromRu(f.lastDate), mileageKm: lastKm,
+      costRub: cost > 0 ? cost : null, service: String(f.service || '').trim() || null, comment: String(f.comment || '').trim() || null };
+  }
 
   function collapsedMeta(block) {
     var interval = parseInt(String(block.intervalKm).replace(/\s/g, ''), 10), last = parseInt(String(block.lastKm).replace(/\s/g, ''), 10);
@@ -1633,9 +1707,9 @@
         '<div><span class="mini-label">Интервал по времени, мес (опц.)</span><div class="num-input static">' + staticVal(block.intervalMonths, '12') + '</div></div>' +
         '</div>' +
         '<div class="mini-row">' +
-        '<div><span class="mini-label">Последний раз, ' + unitLabel() + '<span class="req"> *</span></span><div class="num-input static' + (block.errorLastKm ? ' error' : '') + '">' + staticVal(block.lastKm, '78 000') + '</div></div>' +
-        '<div><span class="mini-label">Дата последней замены (опц.)</span><div class="text-input static">' + staticVal(block.lastDate, '15.01.2026') + '</div></div>' +
-        '</div>' +
+        '<div><span class="mini-label">Последний раз, ' + unitLabel() + (block.createsRecord ? '<span class="req"> *</span>' : '') + '</span><div class="num-input static">' + staticVal(block.lastKm, '78 000') + '</div></div>' +
+        '<div><span class="mini-label">Дата последней замены' + (block.createsRecord ? '<span class="req"> *</span>' : ' (опц.)') + '</span><div class="text-input static">' + staticVal(block.lastDate, '15.01.2026') + '</div></div>' +
+        '</div>' + recordCheckHtml(!!block.createsRecord, '') + (block.createsRecord ? recordFieldsHtml(block, false) : '') +
         '<span class="mini-label">Напоминать за N ' + unitWord() + ' до срока</span><div class="num-input static">' + staticVal(block.reminderKm, '1 500') + '</div>' +
         '</div>';
     }
@@ -1654,20 +1728,24 @@
     var nameError = opts.showErrors && blockNameMissing(block) ? ' error' : '';
     var intervalError = opts.showErrors && blockIntervalMissing(block) ? ' error' : '';
     var lastKmError = opts.showErrors && blockLastKmMissing(block) ? ' error' : '';
+    var lastDateError = opts.showErrors && blockLastDateMissing(block) ? ' error' : '';
+    var req = block.createsRecord ? '<span class="req"> *</span>' : '';
     return '<div class="task-block" data-block="' + n + '">' +
       '<div class="task-block-head"><span class="task-block-title">Работа ' + n + '</span>' +
       '<div class="icon-row"><button class="icon-btn" data-toggle-block="' + n + '" aria-label="Свернуть"><span class="chev">' + icon('chevronLeft', 14) + '</span></button>' +
       '<button class="icon-btn" data-remove-block="' + n + '">' + icon('trash', 14) + '</button></div></div>' +
-      '<input class="text-input' + nameError + '" placeholder="Например, Замена масла и фильтра" value="' + inputVal(block.name) + '">' +
+      '<input class="text-input' + nameError + '" data-f="name" placeholder="Например, Замена масла и фильтра" value="' + inputVal(block.name) + '">' +
       '<div class="mini-row">' +
-      '<div><span class="mini-label">Интервал замены, ' + unitLabel() + '<span class="req"> *</span></span><input class="num-input' + intervalError + '" type="number" placeholder="10000" value="' + inputVal(block.intervalKm) + '"></div>' +
-      '<div><span class="mini-label">Интервал по времени, мес (опц.)</span><input class="num-input" type="number" placeholder="12" value="' + inputVal(block.intervalMonths) + '"></div>' +
+      '<div><span class="mini-label">Интервал замены, ' + unitLabel() + '<span class="req"> *</span></span><input class="num-input' + intervalError + '" data-f="intervalKm" type="number" placeholder="10000" value="' + inputVal(block.intervalKm) + '"></div>' +
+      '<div><span class="mini-label">Интервал по времени, мес (опц.)</span><input class="num-input" data-f="intervalMonths" type="number" placeholder="12" value="' + inputVal(block.intervalMonths) + '"></div>' +
       '</div>' +
       '<div class="mini-row">' +
-      '<div><span class="mini-label">Последний раз, ' + unitLabel() + '<span class="req"> *</span></span><input class="num-input' + lastKmError + '" type="number" placeholder="78000" value="' + inputVal(block.lastKm) + '"></div>' +
-      '<div><span class="mini-label">Дата последней замены (опц.)</span><input class="text-input" placeholder="дд.мм.гггг" value="' + inputVal(block.lastDate) + '"></div>' +
+      '<div><span class="mini-label">Последний раз, ' + unitLabel() + req + '</span><input class="num-input' + lastKmError + '" data-f="lastKm" type="number" placeholder="78000" value="' + inputVal(block.lastKm) + '"></div>' +
+      '<div><span class="mini-label">Дата последней замены' + (req || ' (опц.)') + '</span><input class="text-input' + lastDateError + '" data-f="lastDate" placeholder="дд.мм.гггг" value="' + inputVal(block.lastDate) + '"></div>' +
       '</div>' +
-      '<span class="mini-label">Напоминать за N ' + unitWord() + ' до срока</span><input class="num-input" type="number" placeholder="1500" value="' + inputVal(block.reminderKm) + '">' +
+      recordCheckHtml(!!block.createsRecord, ' data-record-block="' + n + '"') +
+      (block.createsRecord ? recordFieldsHtml(block, true, { service: ' data-f="service"', cost: ' data-f="cost"', comment: ' data-f="comment"' }) : '') +
+      '<span class="mini-label">Напоминать за N ' + unitWord() + ' до срока</span><input class="num-input" data-f="reminderKm" type="number" placeholder="1500" value="' + inputVal(block.reminderKm) + '">' +
       '</div>';
   }
 
@@ -1751,6 +1829,10 @@
     var nameError = opts.showErrors && blockNameMissing(form);
     var intervalError = opts.showErrors && blockIntervalMissing(form);
     var lastKmError = opts.showErrors && blockLastKmMissing(form);
+    var lastDateError = opts.showErrors && blockLastDateMissing(form);
+    var req = form.createsRecord ? '<span class="req"> *</span>' : '';
+    var recordPart = editing ? '' : recordCheckHtml(!!form.createsRecord, opts.interactive ? ' id="taskRecordCheck"' : '') +
+      (form.createsRecord ? recordFieldsHtml(form, opts.interactive, { service: ' id="taskService"', cost: ' id="taskCost"', comment: ' id="taskComment"' }) : '');
     var backAttr = opts.interactive ? ' data-back="detail"' : '';
     var deleteBtn = editing ? '<div class="icon-row"><button class="icon-btn"' + (opts.interactive ? ' data-delete-task' : '') + '>' + icon('trash', 16) + '</button></div>' : '<span></span>';
     /* «Добавить ещё» есть только у новой работы: сохраняет её и открывает пустую форму для следующей */
@@ -1773,9 +1855,9 @@
       '<div><span class="field-label" style="padding:0 0 8px">Интервал, мес</span>' + field('num', 'taskMonths', '12', form.intervalMonths) + '</div>' +
       '</div>' +
       '<div class="row-2">' +
-      '<div><span class="field-label" style="padding:0 0 8px">Последний раз, ' + unitLabel() + '<span class="req"> *</span></span>' + field('num', 'taskLastKm', '78000', form.lastKm, lastKmError) + '</div>' +
-      '<div><span class="field-label" style="padding:0 0 8px">Дата замены</span>' + field('text', 'taskLastDate', 'дд.мм.гггг', form.lastDate) + '</div>' +
-      '</div>' +
+      '<div><span class="field-label" style="padding:0 0 8px">Последний раз, ' + unitLabel() + req + '</span>' + field('num', 'taskLastKm', '78000', form.lastKm, lastKmError) + '</div>' +
+      '<div><span class="field-label" style="padding:0 0 8px">Дата замены' + req + '</span>' + field('text', 'taskLastDate', 'дд.мм.гггг', form.lastDate, lastDateError) + '</div>' +
+      '</div>' + recordPart +
       '<span class="field-label">Напоминать за N ' + unitWord() + ' до срока</span>' +
       field('num', 'taskReminder', '1500', form.reminderKm) +
       '</div>' + addMoreBtn + saveBtn +
@@ -1855,8 +1937,46 @@
       '<span style="font-family:var(--mono);font-size:12px;color:var(--ink-muted)">' + state.reminderTime + '</span></div>' +
       '</div>' +
       purgeGroup +
+      '<div class="settings-group"><div class="settings-group-title">О приложении</div>' +
+      '<div class="setting-row tappable"' + (opts.interactive ? ' data-open-licenses' : '') + '><button class="icon-btn">' + icon('scrollText', 16) + '</button>' +
+      '<div class="setting-text"><div class="t1">Лицензии открытого ПО</div><div class="t2">Библиотеки, на которых собрано приложение</div></div>' +
+      '<span style="display:flex;color:var(--ink-faint)">' + icon('chevronRight', 16) + '</span></div></div>' +
       '</div>' + tabbar + purgeDialog +
       (state.timeDraft ? timeDialogHtml(state.timeDraft, opts) : '') +
+      '</div>';
+  }
+
+  /* ---------------- screen: open-source licenses ---------------- */
+  /* список совпадает с THIRD_PARTY_NOTICES.md; в приложении под карточкой раскрывается полный текст лицензии,
+     в макете — его начало */
+  var LICENSE_TEXTS = {
+    apache: 'Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions. …',
+    isc: 'ISC License\n\nCopyright (c) 2026 Lucide Icons and Contributors\n\nPermission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies. …',
+    mit: 'MIT License\n\nCopyright (c) 2025 Composable Horizons\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software … to deal in the Software without restriction. …'
+  };
+  var OPEN_SOURCE = [
+    ['Kotlin standard library', 'apache', 'github.com/JetBrains/kotlin'], ['kotlinx.coroutines', 'apache', 'github.com/Kotlin/kotlinx.coroutines'],
+    ['kotlinx-datetime', 'apache', 'github.com/Kotlin/kotlinx-datetime'], ['Compose Multiplatform', 'apache', 'github.com/JetBrains/compose-multiplatform'],
+    ['AndroidX', 'apache', 'github.com/androidx/androidx'], ['Koin', 'apache', 'github.com/InsertKoinIO/koin'],
+    ['SQLDelight', 'apache', 'github.com/sqldelight/sqldelight'], ['Lucide', 'isc', 'github.com/lucide-icons/lucide'],
+    ['Compose Icons for Lucide', 'mit', 'github.com/composablehorizons/compose-icons']
+  ];
+  var LICENSE_NAMES = { apache: 'Apache License 2.0', isc: 'ISC License', mit: 'MIT License' };
+  function licensesScreenHtml(opts) {
+    opts = opts || {};
+    var backAttr = opts.interactive ? ' data-back="settings"' : '';
+    var cards = OPEN_SOURCE.map(function (lib) {
+      var open = opts.open === lib[0];
+      return '<div class="lic-card' + (open ? ' open' : '') + '"><div class="lic-head"' + (opts.interactive ? ' data-license="' + lib[0] + '"' : '') + '>' +
+        '<div><div class="t1">' + lib[0] + '</div><div class="t2">' + LICENSE_NAMES[lib[1]] + '</div><div class="t3">https://' + lib[2] + '</div></div>' +
+        '<span class="chev">' + icon('chevronLeft', 14) + '</span></div>' +
+        (open ? '<div class="lic-text">' + LICENSE_TEXTS[lib[1]] + '</div>' : '') + '</div>';
+    }).join('');
+    return '<div class="view" data-view="licenses">' +
+      '<div class="s-topbar"><button class="icon-btn"' + backAttr + '>' + icon('chevronLeft', 16) + '</button><span></span></div>' +
+      '<div class="s-title">Лицензии открытого ПО</div>' +
+      '<div class="task-form-sub" style="font-family:var(--sans)">Приложение собрано на этих компонентах с открытым кодом</div>' +
+      '<div class="form-body" style="padding:14px 18px 18px"><div class="lic-list">' + cards + '</div></div>' +
       '</div>';
   }
 
@@ -1885,7 +2005,7 @@
         { themeIdx: settingsState.themeIdx, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00', timeDraft: { h: 9, m: 0 } },
         { interactive: false })) +
       phoneWrap('09', 'Незаполненные поля', newScreenHtml({ interactive: false, staticErrors: true },
-        [{ n: 1, filled: true, errorName: true, errorInterval: true, errorLastKm: true, name: 'Например, Замена масла и фильтра', intervalKm: '10000', intervalMonths: '12', lastKm: '78000', lastDate: 'дд.мм.гггг', reminderKm: '1500' }])) +
+        [{ n: 1, filled: true, errorName: true, errorInterval: true, name: 'Например, Замена масла и фильтра', intervalKm: '10000', intervalMonths: '12', lastKm: '78000', lastDate: 'дд.мм.гггг', reminderKm: '1500' }])) +
       phoneWrap('10', 'Работа выполнена', detailScreenHtml(cars[0], { interactive: false, doneTaskId: 't3' })) +
       phoneWrap('11', 'Снятие отметки', detailScreenHtml(markedCar, { interactive: false, unmarkTaskId: 't3' })) +
       phoneWrap('12', 'Новая работа', taskScreenHtml(cars[0], emptyTaskForm(), { interactive: false })) +
@@ -1917,13 +2037,34 @@
     text = String(text || '').toUpperCase();
     if (style === 'ru') {
       var m = /^([А-ЯA-Z])\s?(\d{3})\s?([А-ЯA-Z]{2})\s?(\d{2,3})$/.exec(text);
-      var main = m ? m[1] + ' ' + m[2] + ' ' + m[3] : text;
-      var region = m ? '<span class="plate-region"><b>' + m[4] + '</b><i>RUS<span class="plate-flag"></span></i></span>' : '';
-      return '<span class="plate plate-ru" aria-label="Госномер ' + text + '"><span class="plate-main">' + main + '</span>' + region + '</span>';
+      if (m) return '<span class="plate plate-ru">' + ruPlateSvg(m[1], m[2], m[3], m[4], text) + '</span>';
+      style = 'any';
     }
     if (style === 'us') return '<span class="plate plate-us" aria-label="Plate ' + text + '"><span class="plate-top">USA</span><span class="plate-main">' + text + '</span></span>';
     if (style === 'eu') return '<span class="plate plate-eu" aria-label="Matrícula ' + text + '"><span class="plate-band"><span class="plate-stars"></span>' + (country || 'E') + '</span><span class="plate-main">' + text + '</span></span>';
     return '<span class="plate plate-any" aria-label="Plate ' + text + '"><span class="plate-main">' + text + '</span></span>';
+  }
+  /* российский номер в пропорциях 520 × 112 мм по образцам docs/img.png и docs/X999AM199.png, высота номера — 100:
+     толстая рамка без «болтов»; буквы серии (0,51) меньше цифр (0,626) и стоят на общей базовой линии;
+     секция региона — 28 % внутренней ширины, вмещает три цифры в полную высоту; знаки сужены по ширине до 0,86 */
+  function ruPlateSvg(letter, digits, letters, region, text) {
+    var W = 464, H = 100, F = 6, divider = F + (W - 2 * F) * 0.72;
+    var mainCx = (F + divider) / 2, regionL = divider + F + 7, regionR = W - F - 7, regionCx = (regionL + regionR) / 2;
+    function condensed(cx, inner) { return '<g transform="translate(' + cx + ' 0) scale(0.86 1) translate(' + (-cx) + ' 0)">' + inner + '</g>'; }
+    var series = '<text x="' + mainCx + '" y="' + (H - F - 11) + '" text-anchor="middle">' +
+      '<tspan font-size="72">' + letter + '</tspan><tspan dx="10" font-size="88">' + digits + '</tspan><tspan dx="10" font-size="72">' + letters + '</tspan></text>';
+    var regionText = '<text x="' + regionCx + '" y="' + (F + 8 + 48) + '" text-anchor="middle" font-size="68">' + region + '</text>';
+    var rusW = 44, flagW = 34, flagH = 18, groupL = regionCx - (rusW + 5 + flagW) / 2, rusBase = H - F - 11, flagX = groupL + rusW + 5, flagY = rusBase - flagH;
+    var flag = '<rect x="' + flagX + '" y="' + flagY + '" width="' + flagW + '" height="6" fill="#fff"/>' +
+      '<rect x="' + flagX + '" y="' + (flagY + 6) + '" width="' + flagW + '" height="6" fill="#1c57a5"/>' +
+      '<rect x="' + flagX + '" y="' + (flagY + 12) + '" width="' + flagW + '" height="6" fill="#d52b1e"/>' +
+      '<rect x="' + flagX + '" y="' + flagY + '" width="' + flagW + '" height="' + flagH + '" fill="none" stroke="#999" stroke-width="1"/>';
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Госномер ' + text + '">' +
+      '<rect x="3" y="3" width="' + (W - 6) + '" height="' + (H - 6) + '" rx="9" style="fill:var(--plate-bg);stroke:var(--plate-ink)" stroke-width="6"/>' +
+      '<rect x="' + divider + '" y="' + F + '" width="' + F + '" height="' + (H - 2 * F) + '" style="fill:var(--plate-ink)"/>' +
+      '<g style="fill:var(--plate-ink);font-family:var(--sans)" font-weight="600">' +
+      condensed(mainCx, series) + condensed(regionCx, regionText) +
+      '<text x="' + groupL + '" y="' + rusBase + '" font-size="22.5">RUS</text></g>' + flag + '</svg>';
   }
   /* три вида списка: строки, карточки с ближайшими работами, карточки с работами и историей */
   function viewToggleHtml(active, interactive) {
@@ -2036,13 +2177,34 @@
       phoneWrap('29', 'Работа: выбор иконки', taskScreenHtml(cars[0], form, { interactive: false, iconPicker: 'droplet', iconDialog: true }));
   }
   var plateSamplesHtml = [
-    ['ru', 'А123ВС77', 'Россия'], ['us', '7ABC123', 'США'], ['eu', '1234 BCD', 'Испания', 'E'], ['eu', 'B AB 1234', 'Германия', 'D'],
+    ['ru', 'А123ВС77', 'Россия'], ['ru', 'Х999АМ199', 'Россия, трёхзначный регион'], ['us', '7ABC123', 'США'], ['eu', '1234 BCD', 'Испания', 'E'], ['eu', 'B AB 1234', 'Германия', 'D'],
     ['any', '01 A 123 BC', 'Другие регионы']
   ].map(function (x) { return '<div class="plate-sample">' + plateHtml(x[1], x[0], x[3]) + '<span class="cap">' + x[2] + '</span></div>'; }).join('');
   document.getElementById('plateSamples').innerHTML = plateSamplesHtml;
   document.getElementById('plateSamplesDark').innerHTML = plateSamplesHtml;
   renderStage8b('gallery8bLight');
   renderStage8b('gallery8bDark');
+  function renderStage9(containerId) {
+    var cars = cloneCars();
+    var settingsState = { themeIdx: containerId === 'gallery9Dark' ? 1 : 0, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00' };
+    var recordForm = { taskId: null, name: 'Замена масла и фильтра', icon: 'droplet', intervalKm: '7500', intervalMonths: '12', lastKm: '82000', lastDate: '14.09.2026',
+      reminderKm: '1500', createsRecord: true, service: 'Kia Center', cost: '4200' };
+    document.getElementById(containerId).innerHTML =
+      phoneWrap('33', 'Новая работа: запись в историю', taskScreenHtml(cars[0], recordForm, { interactive: false, iconPicker: 'droplet' })) +
+      phoneWrap('34', 'Добавление авто: работа с записью', newScreenHtml({ interactive: false }, [
+        { n: 1, filled: true, name: 'Замена масла и фильтра', intervalKm: '7 500', intervalMonths: '12', lastKm: '82 000', lastDate: '14.09.2026', reminderKm: '1 500', createsRecord: true, service: 'Kia Center', cost: '4200' }
+      ])) +
+      phoneWrap('35', 'Настройки: о приложении', settingsScreenHtml(settingsState, { interactive: false, cars: cars, showEnd: true })) +
+      phoneWrap('36', 'Лицензии открытого ПО', licensesScreenHtml({ interactive: false, open: 'Lucide' })) +
+      phoneWrap('37', 'Номер с трёхзначным регионом', detailScreenHtml(cars[0], { interactive: false, plate: { text: 'Х999АМ199', style: 'ru' } }));
+    /* экраны 33 и 34 прокручены к чекбоксу записи */
+    document.querySelectorAll('#' + containerId + ' .form-body').forEach(function (body) {
+      var check = body.querySelector('.app-check');
+      if (check) body.scrollTop = check.getBoundingClientRect().top - body.getBoundingClientRect().top - 150;
+    });
+  }
+  renderStage9('gallery9Light');
+  renderStage9('gallery9Dark');
   /* ================= variants: mileage panel and task cards ================= */
   var vstate = { a: { km: 84300, mult: 1 }, b: { km: 84300, mult: 1 }, c: { km: 84300, history: [] }, d: { km: 84300 } };
   function vHeader(car) {
@@ -2186,7 +2348,7 @@
   function carById(id) { return cars.find(function (c) { return c.id === id; }); }
   function currentDetailCar() { return carById(istate.detailId) || cars[0]; }
 
-  var routeNames = { cars: 'Мои авто', detail: 'Регламентные работы', history: 'История ТО', new: 'Добавление авто', settings: 'Настройки' };
+  var routeNames = { cars: 'Мои авто', detail: 'Регламентные работы', history: 'История ТО', new: 'Добавление авто', settings: 'Настройки', licenses: 'Лицензии открытого ПО' };
   var SCROLLABLE = '.form-body, .task-list, .history-list, .car-list, .car-t-list';
   function paintInteractive() {
     var root = document.getElementById('interactiveScreen');
@@ -2205,7 +2367,8 @@
       }, { interactive: true }) +
       (detailCar && istate.taskForm ? taskScreenHtml(detailCar, istate.taskForm, { interactive: true, showErrors: istate.taskFormErrors, confirmDeleteTask: istate.confirmDeleteTask, iconPicker: istate.taskForm.icon || 'wrench', iconDialog: istate.iconDialog }) : '') +
       newScreenHtml({ interactive: true, form: istate.form, showErrors: istate.formErrors }, istate.taskBlocks) +
-      settingsScreenHtml(istate.settings, { interactive: true, cars: cars, sold: soldCars });
+      settingsScreenHtml(istate.settings, { interactive: true, cars: cars, sold: soldCars }) +
+      licensesScreenHtml({ interactive: true, open: istate.licenseOpen });
     root.parentElement.classList.add('interactive');
     wireInteractive();
     document.querySelectorAll('#interactiveScreen .view').forEach(function (v) {
@@ -2263,6 +2426,14 @@
         var newDate = validIsoFromRu(dateInput.value), newMileage = parseInt(mileageInput.value, 10) > 0 ? keepKm(entry.mileageKm, mileageInput.value) : NaN;
         dateInput.classList.toggle('error', !newDate); mileageInput.classList.toggle('error', !(newMileage > 0));
         if (!newDate || !(newMileage > 0)) return;
+        /* правка связанной записи переносится в работу: пробег и, у работы с интервалом по времени, дата */
+        if (entry.taskId && (newMileage !== entry.mileageKm || newDate !== entry.date)) {
+          cars.forEach(function (c) {
+            if ((c.history || []).indexOf(entry) < 0) return;
+            var task = c.tasks.find(function (t) { return t.id === entry.taskId; });
+            if (task && linkedEntry(c, task) === entry) { task.lastKm = newMileage; if (task.intervalMonths) task.lastDate = newDate; }
+          });
+        }
         if (newMileage !== entry.mileageKm) {
           /* запись с другим пробегом больше не считается отметкой: работа остаётся как есть, снять отметку нельзя */
           cars.forEach(function (c) { c.tasks.forEach(function (t) { if (t.doneMark && t.doneMark.historyId === entry.id) t.doneMark = null; }); });
@@ -2449,7 +2620,19 @@
       f.name = root.querySelector('#taskName').value; f.intervalKm = root.querySelector('#taskInterval').value;
       f.intervalMonths = root.querySelector('#taskMonths').value; f.lastKm = root.querySelector('#taskLastKm').value;
       f.lastDate = root.querySelector('#taskLastDate').value; f.reminderKm = root.querySelector('#taskReminder').value;
+      if (root.querySelector('#taskService')) {
+        f.service = root.querySelector('#taskService').value; f.cost = root.querySelector('#taskCost').value; f.comment = root.querySelector('#taskComment').value;
+      }
     }
+    /* «Создать запись в истории»: включённый заполняет пустую дату сегодняшней */
+    var taskRecordCheck = root.querySelector('#taskRecordCheck');
+    if (taskRecordCheck) taskRecordCheck.addEventListener('click', function () {
+      syncTaskForm();
+      var f = istate.taskForm;
+      f.createsRecord = !f.createsRecord;
+      if (f.createsRecord && !String(f.lastDate || '').trim()) f.lastDate = formatDateRu(TODAY);
+      paintInteractive();
+    });
     root.querySelectorAll('[data-task-preset]').forEach(function (b) {
       b.addEventListener('click', function () {
         var def = PRESET_DEFS[b.getAttribute('data-task-preset')];
@@ -2467,19 +2650,27 @@
       var stored = f.taskId ? car.tasks.find(function (t) { return t.id === f.taskId; }) : null;
       var intervalKm = keepKm(stored && stored.intervalKm, f.intervalKm);
       var intervalMonths = f.intervalMonths ? parseInt(f.intervalMonths, 10) : undefined;
+      var typedDate = validIsoFromRu(f.lastDate || '');
       var values = {
         name: name, icon: f.icon || 'wrench', intervalKm: intervalKm, intervalMonths: intervalMonths,
-        lastKm: keepKm(stored && stored.lastKm, f.lastKm),
-        lastDate: intervalMonths ? isoFromRu(f.lastDate) : undefined,
+        lastKm: String(f.lastKm || '').trim() === '' ? 0 : keepKm(stored && stored.lastKm, f.lastKm),
+        lastDate: intervalMonths ? typedDate || undefined : undefined,
         reminderKm: f.reminderKm ? keepKm(stored && stored.reminderKm, f.reminderKm) : Math.round(intervalKm * 0.15)
       };
       var existing = f.taskId ? car.tasks.find(function (t) { return t.id === f.taskId; }) : null;
       if (existing) {
+        /* правка «последнего раза» переносится в связанную запись истории: пробег (если > 0) и введённая дата */
+        var entry = linkedEntry(car, existing);
+        if (entry) {
+          if (values.lastKm > 0 && values.lastKm !== existing.lastKm) entry.mileageKm = values.lastKm;
+          if (typedDate && typedDate !== existing.lastDate) entry.date = typedDate;
+        }
         if (existing.lastKm !== values.lastKm) existing.doneMark = null;
         Object.keys(values).forEach(function (key) { existing[key] = values[key]; });
       } else {
         values.id = 'nt' + Date.now() + car.tasks.length;
         car.tasks.push(values);
+        if (f.createsRecord) { car.history = car.history || []; car.history.push(recordFromForm(f, values.id, name, values.lastKm)); }
       }
       return true;
     }
@@ -2604,7 +2795,7 @@
       if (task.intervalMonths) task.lastDate = TODAY;
       car.history = car.history || [];
       car.history.push({
-        id: historyId, taskName: task.name, date: TODAY, mileageKm: car.mileageKm,
+        id: historyId, taskId: task.id, taskName: task.name, date: TODAY, mileageKm: car.mileageKm,
         costRub: cost > 0 ? cost : null,
         service: root.querySelector('#doneService').value.trim() || null,
         comment: root.querySelector('#doneComment').value.trim() || null
@@ -2641,12 +2832,19 @@
       root.querySelectorAll('#taskBlocks .task-block').forEach(function (el) {
         var block = istate.taskBlocks.find(function (x) { return x.n === +el.getAttribute('data-block'); });
         if (!block) return;
-        var inputs = el.querySelectorAll('input');
-        if (inputs.length < 6) return;
-        block.name = inputs[0].value; block.intervalKm = inputs[1].value; block.intervalMonths = inputs[2].value;
-        block.lastKm = inputs[3].value; block.lastDate = inputs[4].value; block.reminderKm = inputs[5].value;
+        el.querySelectorAll('[data-f]').forEach(function (input) { block[input.getAttribute('data-f')] = input.value; });
       });
     }
+    root.querySelectorAll('[data-record-block]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        syncForm();
+        var block = istate.taskBlocks.find(function (x) { return x.n === +b.getAttribute('data-record-block'); });
+        if (!block) return;
+        block.createsRecord = !block.createsRecord;
+        if (block.createsRecord && !String(block.lastDate || '').trim()) block.lastDate = formatDateRu(TODAY);
+        paintInteractive();
+      });
+    });
     root.querySelectorAll('[data-toggle-block]').forEach(function (b) {
       b.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -2699,19 +2897,44 @@
       mileage = fromUnit(mileage);
       istate.formErrors = false;
       var vin = istate.form.vin.trim() || '—';
+      var history = [];
       var tasks = istate.taskBlocks.map(function (block, index) {
         var name = String(block.name).trim();
         var intervalKm = fromUnit(parseInt(block.intervalKm, 10));
         var intervalMonths = block.intervalMonths ? parseInt(block.intervalMonths, 10) : undefined;
-        var lastKm = fromUnit(parseInt(block.lastKm, 10));
-        var lastDateIso = intervalMonths ? isoFromRu(block.lastDate) : undefined;
+        var lastKm = lastKmOf(block.lastKm);
+        var lastDateIso = intervalMonths ? validIsoFromRu(block.lastDate || '') || undefined : undefined;
         var reminderKm = block.reminderKm ? fromUnit(parseInt(block.reminderKm, 10)) : Math.round(intervalKm * 0.15);
-        return { id: 'nt' + index + Date.now(), name: name, icon: 'wrench', intervalKm: intervalKm, lastKm: lastKm, reminderKm: reminderKm, intervalMonths: intervalMonths, lastDate: lastDateIso };
+        var id = 'nt' + index + Date.now();
+        if (block.createsRecord) history.push(recordFromForm(block, id, name, lastKm));
+        return { id: id, name: name, icon: 'wrench', intervalKm: intervalKm, lastKm: lastKm, reminderKm: reminderKm, intervalMonths: intervalMonths, lastDate: lastDateIso };
       });
-      if (tasks.length === 0) tasks.push({ id: 'nt0' + Date.now(), name: 'Замена масла и фильтра', icon: 'wrench', intervalKm: 10000, lastKm: mileage, reminderKm: 1500 });
+      if (tasks.length === 0) tasks.push({ id: 'nt0' + Date.now(), name: 'Замена масла и фильтра', icon: 'wrench', intervalKm: 7500, lastKm: mileage, reminderKm: 1500 });
       var plate = String(istate.form.plate || '').replace(/\s+/g, '').toUpperCase() || null;
-      cars.push({ id: 'c' + Date.now(), brand: brand, mileageKm: mileage, vin: vin, plate: plate, tasks: tasks, history: [] });
+      cars.push({ id: 'c' + Date.now(), brand: brand, mileageKm: mileage, vin: vin, plate: plate, tasks: tasks, history: history });
       istate.screen = 'cars'; paintInteractive();
+    });
+
+    /* клавиша «готово» (Enter) в любом поле — то же, что главная кнопка: окно, правка на месте или форма */
+    root.querySelectorAll('input, textarea').forEach(function (input) {
+      input.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+        var scope = input.closest('.stat-edit-row') || input.closest('.dialog');
+        var target = scope ? scope.querySelector(scope.classList.contains('dialog') ? '.dialog-btn.primary' : 'button')
+          : (input.closest('.view') || root).querySelector('#saveTaskBtn, #saveCarBtn');
+        if (!target || target.disabled) return;
+        e.preventDefault(); target.click();
+      });
+    });
+
+    /* --- about: open-source licenses --- */
+    var openLicenses = root.querySelector('[data-open-licenses]');
+    if (openLicenses) openLicenses.addEventListener('click', function () { istate.licenseOpen = null; istate.resetScroll = true; istate.screen = 'licenses'; paintInteractive(); });
+    root.querySelectorAll('[data-license]').forEach(function (head) {
+      head.addEventListener('click', function () {
+        var name = head.getAttribute('data-license');
+        istate.licenseOpen = istate.licenseOpen === name ? null : name; paintInteractive();
+      });
     });
 
     /* --- settings --- */

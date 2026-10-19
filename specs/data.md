@@ -95,8 +95,7 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 | `selectById` | `SELECT * FROM maintenance_tasks WHERE id = ? AND car_id = ?` |
 | `insert` | `INSERT` всех девяти колонок |
 | `update` | `UPDATE … SET name, interval_km, last_done_km, reminder_window_km, interval_months, last_done_date, icon WHERE id = ? AND car_id = ?` |
-| `markDone` | `UPDATE … SET last_done_km = ?, last_done_date = ? WHERE id = ? AND car_id = ?` — и для отметки, и для отката |
-| `updateLastDoneKm` | `UPDATE … SET last_done_km = ? WHERE id = ? AND car_id = ?` — при правке пробега записи истории |
+| `markDone` | `UPDATE … SET last_done_km = ?, last_done_date = ? WHERE id = ? AND car_id = ?` — для отметки, отката и при правке связанной записи истории |
 | `deleteById` | `DELETE … WHERE id = ? AND car_id = ?` |
 | `deleteByCar` | `DELETE … WHERE car_id = ?` |
 
@@ -216,11 +215,11 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 | `markTaskDone(…)` | в одной транзакции: читает машину и работу (нет — `false`); `markDone` с `last_done_km` = текущий пробег машины и `last_done_date` = `date`, если у работы есть `interval_months`, иначе прежнее значение; `service_history.insert` с новым `id`, `task_id`, переданными сервисом, стоимостью и комментарием и прежними `last_done_km`/`last_done_date` работы в `prev_*`; `true` |
 | `unmarkTaskDone(carId, taskId, entryId)` | в одной транзакции: читает запись; если её нет, она другой машины или работы или `prev_last_done_km` пуст — `false`; иначе `markDone` с `prev_*` и `service_history.deleteById`; `true` |
 | `updateCar(carId, brand, vin, plate)` | `cars.updateDetails` |
-| `addTask(carId, task)` | `maintenance_tasks.insert` с новым `id` |
-| `updateTask(carId, task)` | `maintenance_tasks.update` всех полей работы по `id` + `car_id` |
+| `addTask(carId, task)` | в одной транзакции `maintenance_tasks.insert` с новым `id` и, если у работы есть `record`, `service_history.insert` записи о ней |
+| `updateTask(carId, task, entry)` | в одной транзакции `maintenance_tasks.update` всех полей работы по `id` + `car_id` и, если передан `entry`, `service_history.update` этой записи |
 | `deleteTask(carId, taskId)` | `maintenance_tasks.deleteById` по `id` + `car_id` |
 
-- Вставка работы (приватный `insertTask`): `id` — новый UUID; `reminderWindowKm == null` записывается как `0`; `lastDoneDate` — через `toString()`; `icon` — имя константы или `NULL`. `updateTask` пишет иконку так же.
+- Вставка работы (приватный `insertTask`): `id` — новый UUID; `reminderWindowKm == null` записывается как `0`; `lastDoneDate` — через `toString()`; `icon` — имя константы или `NULL`. `updateTask` пишет иконку так же. Работа с `record` получает запись истории: новый UUID, `task_name` работы, `date` из `record`, `mileage_km` = `last_done_km` работы, `task_id` новой работы, `prev_*` — `NULL`. В `addCar` это происходит в общей транзакции машины.
 - Порядок машин и работ — порядок добавления (`rowid`).
 - Потоки строятся из двух независимых запросов: изменение любой из двух таблиц даёт новое значение. Запись, затронувшая обе таблицы (например, `addCar`), может дать два значения подряд.
 - Обновление или удаление по несуществующему `id` ошибкой не считается — запрос просто не затронет строк.
@@ -233,7 +232,7 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 |---|---|
 | `observeHistory(carId)` | поток `selectByCar(carId)`, строки — через `toDomain()`; порядок добавления |
 | `observeAllHistory()` | поток `selectAll`; порядок добавления (от новых к старым сортирует `ObserveAllHistoryUseCase`) |
-| `updateEntry(entry, taskLastDoneKm)` | в одной транзакции: `update` по `id`; если передан `taskLastDoneKm` и у записи есть `task_id` — `maintenance_tasks.updateLastDoneKm` этой работы |
+| `updateEntry(entry, syncTask)` | в одной транзакции: `update` по `id`; если `syncTask` и у записи есть `task_id` — `maintenance_tasks.markDone` этой работы с пробегом записи и датой записи, если у работы есть `interval_months` (иначе прежней `last_done_date`) |
 | `addEntry(carId, taskName, date, mileageKm, serviceName, costRub, comment)` | `insert` с новым UUID, пустыми `task_id` и `prev_*` — ручная запись; проверки (действующая машина, название, пробег) — в `AddHistoryEntryUseCase` |
 
 ### `SettingsRepositoryImpl`
