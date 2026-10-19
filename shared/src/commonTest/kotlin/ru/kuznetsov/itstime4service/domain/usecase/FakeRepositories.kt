@@ -19,7 +19,8 @@ import ru.kuznetsov.itstime4service.domain.repository.SettingsRepository
 
 /**
  * [CarRepository] for use case tests: serves fixed active cars and [sold] cars, and records the done marks it was
- * asked to remove and the cars it was asked to sell or purge. Methods the tests do not need fail.
+ * asked to remove, the cars it was asked to sell or purge and the tasks it was asked to add or update.
+ * Methods the tests do not need fail.
  */
 internal class FakeCarRepository(
     private val cars: List<Car>,
@@ -30,6 +31,8 @@ internal class FakeCarRepository(
     val unmarked = mutableListOf<Triple<String, String, String>>()
     val soldIds = mutableListOf<String>()
     val purgedIds = mutableListOf<String>()
+    val addedTasks = mutableListOf<NewMaintenanceTask>()
+    val updatedTasks = mutableListOf<MaintenanceTask>()
 
     override fun observeCars(): Flow<List<Car>> = flowOf(cars)
 
@@ -66,9 +69,13 @@ internal class FakeCarRepository(
 
     override suspend fun updateCar(carId: String, brand: String, vin: String?, plate: String?) = error("not used")
 
-    override suspend fun addTask(carId: String, task: NewMaintenanceTask) = error("not used")
+    override suspend fun addTask(carId: String, task: NewMaintenanceTask) {
+        addedTasks += task
+    }
 
-    override suspend fun updateTask(carId: String, task: MaintenanceTask) = error("not used")
+    override suspend fun updateTask(carId: String, task: MaintenanceTask) {
+        updatedTasks += task
+    }
 
     override suspend fun deleteTask(carId: String, taskId: String) = error("not used")
 }

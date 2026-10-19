@@ -22,12 +22,12 @@ selectById:
 SELECT * FROM maintenance_tasks WHERE id = ? AND car_id = ?;
 
 insert:
-INSERT INTO maintenance_tasks (id, car_id, name, interval_km, last_done_km, reminder_window_km, interval_months, last_done_date)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO maintenance_tasks (id, car_id, name, interval_km, last_done_km, reminder_window_km, interval_months, last_done_date, icon)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 update:
 UPDATE maintenance_tasks
-SET name = ?, interval_km = ?, last_done_km = ?, reminder_window_km = ?, interval_months = ?, last_done_date = ?
+SET name = ?, interval_km = ?, last_done_km = ?, reminder_window_km = ?, interval_months = ?, last_done_date = ?, icon = ?
 WHERE id = ? AND car_id = ?;
 
 markDone:

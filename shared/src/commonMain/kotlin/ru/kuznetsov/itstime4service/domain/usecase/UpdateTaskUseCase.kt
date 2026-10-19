@@ -24,6 +24,7 @@ class UpdateTaskUseCase(
                 reminderWindowKm = normalized.reminderWindowKm ?: 0,
                 intervalMonths = normalized.intervalMonths,
                 lastDoneDate = normalized.lastDoneDate,
+                icon = normalized.icon,
             ),
         )
         return true

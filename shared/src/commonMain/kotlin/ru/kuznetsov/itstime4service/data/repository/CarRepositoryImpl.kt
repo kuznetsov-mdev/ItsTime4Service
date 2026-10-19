@@ -140,6 +140,7 @@ class CarRepositoryImpl(database: ItsTime4ServiceDatabase) : CarRepository {
             reminder_window_km = task.reminderWindowKm.toLong(),
             interval_months = task.intervalMonths?.toLong(),
             last_done_date = task.lastDoneDate?.toString(),
+            icon = task.icon?.name,
             id = task.id,
             car_id = carId,
         )
@@ -159,6 +160,7 @@ class CarRepositoryImpl(database: ItsTime4ServiceDatabase) : CarRepository {
             reminder_window_km = (task.reminderWindowKm ?: 0).toLong(),
             interval_months = task.intervalMonths?.toLong(),
             last_done_date = task.lastDoneDate?.toString(),
+            icon = task.icon?.name,
         )
     }
 }

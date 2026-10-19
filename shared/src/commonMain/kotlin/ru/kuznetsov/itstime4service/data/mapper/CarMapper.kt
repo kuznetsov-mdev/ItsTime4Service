@@ -6,6 +6,7 @@ import ru.kuznetsov.itstime4service.data.local.Maintenance_tasks
 import ru.kuznetsov.itstime4service.domain.model.Car
 import ru.kuznetsov.itstime4service.domain.model.CarSummary
 import ru.kuznetsov.itstime4service.domain.model.MaintenanceTask
+import ru.kuznetsov.itstime4service.domain.model.TaskIcon
 
 internal fun Cars.toDomain(tasks: List<Maintenance_tasks>) = Car(
     id = id,
@@ -31,4 +32,5 @@ internal fun Maintenance_tasks.toDomain() = MaintenanceTask(
     reminderWindowKm = reminder_window_km.toInt(),
     intervalMonths = interval_months?.toInt(),
     lastDoneDate = last_done_date?.let(LocalDate::parse),
+    icon = TaskIcon.entries.firstOrNull { it.name == icon },
 )
