@@ -31,6 +31,7 @@ import ru.kuznetsov.itstime4service.ui.format.deviceRegion
 import ru.kuznetsov.itstime4service.ui.format.keepKm
 import ru.kuznetsov.itstime4service.ui.format.kmIn
 import ru.kuznetsov.itstime4service.ui.format.toLook
+import ru.kuznetsov.itstime4service.ui.icons.taskIcon
 
 /**
  * Drives the car screen: the task list sorted by urgency, in-place editing of the name, the licence plate, the VIN
@@ -197,6 +198,7 @@ class CarDetailViewModel(
                     status = stat.status,
                     progress = stat.progress,
                     isDone = task.id in doneTaskIds,
+                    icon = taskIcon(task.icon, task.name),
                 )
             },
         )

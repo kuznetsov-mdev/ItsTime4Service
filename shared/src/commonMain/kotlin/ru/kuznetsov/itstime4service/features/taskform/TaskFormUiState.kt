@@ -10,7 +10,7 @@ import ru.kuznetsov.itstime4service.ui.format.TaskFields
  * [formKey] changes when a saved task is replaced with a fresh empty form by "add another",
  * so the screen can scroll back to the top. [isClosed] tells the screen to close: the task was saved
  * or deleted, or the car or the task no longer exists. Distances are typed in [distanceUnit], the unit
- * chosen in settings.
+ * chosen in settings. [isPickingIcon] shows the window with the task icons.
  */
 data class TaskFormUiState(
     val isLoading: Boolean = true,
@@ -19,6 +19,7 @@ data class TaskFormUiState(
     val fields: TaskFields = TaskFields(),
     val showErrors: Boolean = false,
     val isConfirmingDelete: Boolean = false,
+    val isPickingIcon: Boolean = false,
     val formKey: Int = 0,
     val isClosed: Boolean = false,
     val distanceUnit: DistanceUnit = DistanceUnit.KILOMETERS,

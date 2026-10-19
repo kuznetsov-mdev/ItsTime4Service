@@ -57,6 +57,7 @@ import itstime4service.shared.generated.resources.vin_prefix
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import ru.kuznetsov.itstime4service.domain.model.TaskIcon
 import ru.kuznetsov.itstime4service.domain.model.TaskStatus
 import ru.kuznetsov.itstime4service.ui.components.ScreenPreview
 import ru.kuznetsov.itstime4service.ui.components.buttons.AppIconButton
@@ -400,8 +401,8 @@ private val previewState = CarDetailUiState(
         soonCount = 1,
         taskCount = 3,
         tasks = listOf(
-            TaskItem("t3", "Воздушный фильтр", 15_000, 700, null, TaskStatus.SOON, 0.95f),
-            TaskItem("t1", "Замена масла и фильтра", 10_000, 3_700, 4, TaskStatus.OK, 0.63f),
+            TaskItem("t3", "Воздушный фильтр", 15_000, 700, null, TaskStatus.SOON, 0.95f, icon = TaskIcon.FILTER),
+            TaskItem("t1", "Замена масла и фильтра", 10_000, 3_700, 4, TaskStatus.OK, 0.63f, icon = TaskIcon.DROPLET),
             TaskItem("t4", "Ремень ГРМ", 60_000, 5_700, null, TaskStatus.OK, 0.9f, isDone = true),
         ),
     ),

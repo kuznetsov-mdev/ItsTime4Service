@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.kuznetsov.itstime4service.domain.model.MaintenanceTask
+import ru.kuznetsov.itstime4service.domain.model.TaskIcon
 import ru.kuznetsov.itstime4service.domain.usecase.AddTaskUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.DeleteTaskUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarByIdUseCase
@@ -24,6 +25,8 @@ import ru.kuznetsov.itstime4service.ui.format.toFields
  * and the reminder window, and "add another" stores the task and clears the form for the next one.
  * With a [taskId] it edits that task and can delete it after a confirmation; its service history stays.
  * Saving with an empty required field stores nothing and switches the form to showing errors.
+ * The icon is picked in a window; a task saved before icons could be picked shows one guessed from its name and
+ * stays without a stored icon until the user picks one.
  * Repeated taps on save or "add another" while a task is being stored are ignored.
  * Distances are typed in the unit chosen in settings and stored in kilometers; a distance left as it was
  * keeps its stored value.
@@ -56,6 +59,12 @@ class TaskFormViewModel(
     fun onSave() = save(addAnother = false)
 
     fun onSaveAndAddAnother() = save(addAnother = true)
+
+    fun onIconPickerOpen() = _state.update { it.copy(isPickingIcon = true) }
+
+    fun onIconPickerDismiss() = _state.update { it.copy(isPickingIcon = false) }
+
+    fun onIconSelect(icon: TaskIcon) = _state.update { it.copy(fields = it.fields.copy(icon = icon), isPickingIcon = false) }
 
     fun onDeleteRequest() = _state.update { it.copy(isConfirmingDelete = true) }
 

@@ -57,6 +57,7 @@ import ru.kuznetsov.itstime4service.ui.format.kmIn
 import ru.kuznetsov.itstime4service.ui.format.toTier
 import ru.kuznetsov.itstime4service.ui.format.unitGenitive
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
+import ru.kuznetsov.itstime4service.ui.icons.vector
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 
 private const val MAX_MILEAGE_LENGTH = 7
@@ -234,20 +235,36 @@ internal fun TaskCard(
             }
             StatusChip(status = tier)
         }
-        Text(
-            task.name,
-            style = typography.sans.copy(fontSize = 13.5.sp, lineHeight = 18.sp, fontWeight = FontWeight.Bold),
-            color = colors.ink,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-        Text(
-            taskMeta(task, distanceUnit),
-            style = typography.mono.copy(fontSize = 10.5.sp, lineHeight = 14.sp, fontWeight = FontWeight.Normal),
-            color = colors.inkFaint,
-            modifier = Modifier.padding(top = 2.dp),
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(colors.surface2),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(task.icon.vector, contentDescription = null, tint = colors.inkMuted, modifier = Modifier.size(15.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(
+                    task.name,
+                    style = typography.sans.copy(fontSize = 13.5.sp, lineHeight = 18.sp, fontWeight = FontWeight.Bold),
+                    color = colors.ink,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    taskMeta(task, distanceUnit),
+                    style = typography.mono.copy(fontSize = 10.5.sp, lineHeight = 14.sp, fontWeight = FontWeight.Normal),
+                    color = colors.inkFaint,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+        }
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),

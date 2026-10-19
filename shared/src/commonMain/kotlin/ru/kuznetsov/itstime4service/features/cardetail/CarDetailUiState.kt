@@ -1,6 +1,7 @@
 package ru.kuznetsov.itstime4service.features.cardetail
 
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
+import ru.kuznetsov.itstime4service.domain.model.TaskIcon
 import ru.kuznetsov.itstime4service.domain.model.TaskStatus
 import ru.kuznetsov.itstime4service.ui.components.indicators.PlateLook
 
@@ -56,6 +57,7 @@ data class CarDetails(
  * One maintenance task row.
  * [remainingKm] is negative once overdue; [remainingMonths] is `null` for tasks without a time interval.
  * [isDone] is `true` while the task counts as just marked done, which turns its button into "done".
+ * [icon] is the one shown on the card, picked by the user or guessed from the name.
  */
 data class TaskItem(
     val id: String,
@@ -66,4 +68,5 @@ data class TaskItem(
     val status: TaskStatus,
     val progress: Float,
     val isDone: Boolean = false,
+    val icon: TaskIcon = TaskIcon.WRENCH,
 )
