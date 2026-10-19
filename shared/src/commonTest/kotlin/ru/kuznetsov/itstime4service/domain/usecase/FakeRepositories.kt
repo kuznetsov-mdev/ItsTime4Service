@@ -19,8 +19,8 @@ import ru.kuznetsov.itstime4service.domain.repository.SettingsRepository
 
 /**
  * [CarRepository] for use case tests: serves fixed active cars and [sold] cars, and records the done marks it was
- * asked to remove, the cars it was asked to sell or purge, the tasks it was asked to add or update and the history
- * records passed along with an update.
+ * asked to remove, the cars it was asked to add, edit, sell or purge, the mileage it was given, the tasks it was asked
+ * to add, update or delete and the history records passed along with an update.
  * Methods the tests do not need fail.
  */
 internal class FakeCarRepository(
@@ -35,6 +35,10 @@ internal class FakeCarRepository(
     val addedTasks = mutableListOf<NewMaintenanceTask>()
     val updatedTasks = mutableListOf<MaintenanceTask>()
     val updatedEntries = mutableListOf<ServiceHistoryEntry?>()
+    val addedCars = mutableListOf<NewCar>()
+    val updatedCars = mutableListOf<List<String?>>()
+    val mileageUpdates = mutableListOf<Pair<String, Int>>()
+    val deletedTasks = mutableListOf<Pair<String, String>>()
 
     override fun observeCars(): Flow<List<Car>> = flowOf(cars)
 
@@ -45,7 +49,10 @@ internal class FakeCarRepository(
         return true
     }
 
-    override suspend fun addCar(car: NewCar): String = error("not used")
+    override suspend fun addCar(car: NewCar): String {
+        addedCars += car
+        return "new-car"
+    }
 
     override fun observeCarSummaries(): Flow<List<CarSummary>> =
         flowOf(cars.map { CarSummary(it.id, it.brand, it.mileageKm, isSold = false) } + sold)
@@ -58,7 +65,9 @@ internal class FakeCarRepository(
         purgedIds += carId
     }
 
-    override suspend fun updateMileage(carId: String, mileageKm: Int) = error("not used")
+    override suspend fun updateMileage(carId: String, mileageKm: Int) {
+        mileageUpdates += carId to mileageKm
+    }
 
     override suspend fun markTaskDone(
         carId: String,
@@ -69,7 +78,9 @@ internal class FakeCarRepository(
         comment: String?,
     ): Boolean = error("not used")
 
-    override suspend fun updateCar(carId: String, brand: String, vin: String?, plate: String?) = error("not used")
+    override suspend fun updateCar(carId: String, brand: String, vin: String?, plate: String?) {
+        updatedCars += listOf(carId, brand, vin, plate)
+    }
 
     override suspend fun addTask(carId: String, task: NewMaintenanceTask) {
         addedTasks += task
@@ -80,7 +91,9 @@ internal class FakeCarRepository(
         updatedEntries += entry
     }
 
-    override suspend fun deleteTask(carId: String, taskId: String) = error("not used")
+    override suspend fun deleteTask(carId: String, taskId: String) {
+        deletedTasks += carId to taskId
+    }
 }
 
 /**

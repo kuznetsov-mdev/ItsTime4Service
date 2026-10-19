@@ -9,7 +9,9 @@ import ru.kuznetsov.itstime4service.domain.model.NewTaskRecord
 import ru.kuznetsov.itstime4service.domain.model.ServiceHistoryEntry
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Covers the history record of a task's last service: [AddTaskUseCase] passes it on with the new task, and
@@ -44,6 +46,25 @@ class TaskRecordSyncTest {
         AddTaskUseCase(repository, normalizeTask)("kia", edit().copy(record = record))
 
         assertEquals(record, repository.addedTasks.single().record)
+    }
+
+    @Test
+    fun rejectedNewTaskIsNotStored() = runTest {
+        val repository = FakeCarRepository(car)
+
+        assertFalse(AddTaskUseCase(repository, normalizeTask)("kia", edit(name = " ")))
+        assertFalse(AddTaskUseCase(repository, normalizeTask)("kia", edit(lastDoneKm = 0).copy(record = NewTaskRecord(doneDate))))
+        assertTrue(repository.addedTasks.isEmpty())
+    }
+
+    @Test
+    fun rejectedEditChangesNothing() = runTest {
+        val repository = FakeCarRepository(car)
+
+        val updateTask = UpdateTaskUseCase(repository, FakeHistoryRepository(listOf(record("r", 80_000))), normalizeTask)
+
+        assertFalse(updateTask("kia", "oil", edit().copy(intervalKm = 0)))
+        assertTrue(repository.updatedTasks.isEmpty())
     }
 
     @Test
