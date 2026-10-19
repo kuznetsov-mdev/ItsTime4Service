@@ -434,6 +434,8 @@
   .v-scale { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--ink-faint); }
   .v-group { font-family: var(--mono); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 14px 0 2px; display: flex; align-items: center; gap: 6px; }
   .v-progress-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .v-task-head { display: flex; align-items: center; gap: 9px; margin-top: 6px; }
+  .v-task-head .task-icon { width: 28px; height: 28px; border-radius: 8px; }
   .v-progress-row .task-track { flex: 1; margin: 0; }
   .v-done-circle { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--rule); background: var(--surface); color: var(--ink-faint); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; padding: 0; }
   .v-done-circle.done { background: var(--tier-ok); border-color: var(--tier-ok); color: var(--on-tier); }
@@ -665,7 +667,7 @@
       <li><b>Вид списка авто — три варианта:</b> строки (22), карточки с ближайшими работами (32) и карточки с работами и историей (23); переключатель — три иконки в левом верхнем углу «Мои авто»; выбранный вид запоминается в настройках и сохраняется между запусками. В карточке сверху марка и пробег, справа кольцо статусов; в самом низу — госномер по центру, его огибает пологая серая линия от нижнего края карточки, как вырез в бампере; фон карточки не вырезается; без номера линии нет; слева снизу — 3–4 самые срочные работы с остатком цветом статуса; справа — 3–4 последние записи истории с датой. Тап по верхней части и по работам открывает экран авто, по истории — вкладку «История» с этим авто. Пусто — «Работ нет» / «Записей пока нет».</li>
       <li><b>Добавление авто:</b> вместо FAB на «Мои авто» — кнопка в форме элемента списка с «+» по центру, всегда последней в списке, в обоих видах (экраны 22 и 23). Прокручивается вместе со списком и не перекрывает карточки.</li>
       <li><b>Добавление записи в историю:</b> кнопка «+» на вкладке «История». Окно: сразу видны обязательные поля — авто (по умолчанию выбранное в фильтре или первое, только действующие), название работы текстом с подсказками из работ этого авто, дата и пробег. Необязательные — сервис, стоимость, комментарий — раскрываются кнопкой «+ Ещё» (экраны 27 и 31). Запись не связана с работой: «последний раз» у работы не меняется и на экране не упоминается, отметкой запись не считается.</li>
-      <li><b>Иконка работы:</b> кнопка с текущей иконкой слева от поля «Название» на экране работы и в блоке работы формы авто. Нажатие открывает окно с сеткой из 12 иконок без подписей (подписи — для экранного диктора); тап по иконке выбирает её и закрывает окно. У новой работы сразу стоит гаечный рожковый ключ — в том числе у работы из чипа пресета. Выбранная иконка хранится у работы. Работам, сохранённым до этого, при обновлении один раз ставится иконка, подобранная по названию, как сейчас.</li>
+      <li><b>Иконка работы:</b> кнопка с текущей иконкой слева от поля «Название» на экране работы (в форме авто иконка не выбирается — у новых работ там гаечный ключ). Нажатие открывает окно с сеткой из 12 иконок без подписей (подписи — для экранного диктора); тап по иконке выбирает её и закрывает окно. У новой работы сразу стоит гаечный рожковый ключ — в том числе у работы из чипа пресета. Выбранная иконка хранится у работы и показывается на карточке работы на экране авто — плитка слева от названия. У работ, сохранённых до этого, иконки нет, и экран подбирает её по названию, как раньше, пока пользователь не выберет свою.</li>
       <li><b>Номер в тёмной теме</b> — тёмная пластина со светлыми символами и рамкой; синяя полоса европейского номера и флаг российского остаются цветными.</li>
     </ol>
     <div class="locked-light" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery" id="gallery8bLight"></div></div>
@@ -1366,8 +1368,9 @@
         '<div class="v-between"><div class="v-remaining" style="color:' + color + '">' + Math.round(toUnit(Math.abs(st.remaining))).toLocaleString('ru-RU') +
         '<small>' + unitWord() + ' ' + (st.remaining <= 0 ? 'просрочено' : 'осталось') + '</small></div>' +
         '<span class="task-status-chip" style="background:' + color + ';color:var(--on-tier)">' + tierLabel(st.status) + '</span></div>' +
-        '<div class="v-name" style="margin-top:4px">' + t.name + '</div>' +
-        '<div class="v-meta">' + meta + '</div>' +
+        '<div class="v-task-head"><div class="task-icon">' + icon(t.icon || 'wrench', 15) + '</div><div class="v-main">' +
+        '<div class="v-name">' + t.name + '</div>' +
+        '<div class="v-meta">' + meta + '</div></div></div>' +
         '<div class="v-progress-row"><div class="task-track"><div class="task-fill" style="width:' + Math.round(st.frac * 100) + '%;background:' + color + '"></div></div>' + doneBtn + '</div>' +
         '</div>';
     }).join('');

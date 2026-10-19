@@ -427,7 +427,7 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 
 ### Иконка работы
 
-`MaintenanceTask.icon: TaskIcon?` и `NewMaintenanceTask.icon: TaskIcon`. `TaskIcon` — `WRENCH`, `DROPLET`, `DISC`, `FILTER`, `ZAP`, `BATTERY`, `THERMOMETER`, `TIRE`, `WIND`, `GEAR`, `GAUGE`, `CAR`. Новая работа — `WRENCH`, в том числе из пресета. `null` — работа сохранена до этапа 8б: экран подбирает иконку по названию, как раньше.
+`MaintenanceTask.icon: TaskIcon?` и `NewMaintenanceTask.icon: TaskIcon?` (по умолчанию `WRENCH`). `TaskIcon` — `WRENCH`, `DROPLET`, `DISC`, `FILTER`, `ZAP`, `BATTERY`, `THERMOMETER`, `TIRE`, `WIND`, `GEAR`, `GAUGE`, `CAR`. Новая работа — `WRENCH`, в том числе из пресета. `null` — работа сохранена до этапа 8б: экран подбирает иконку по названию, как раньше; правка такой работы без выбора иконки оставляет `null` (`UpdateTaskUseCase` передаёт иконку как есть). Неизвестное имя в базе читается как `null`.
 
 ## Единицы расстояния
 
@@ -439,11 +439,10 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 ## Открытые вопросы
 
 - Машину с пробегом 0 добавить нельзя (так в макете). Для нового авто это может быть неудобно.
-- Откуда берётся иконка работы: в модели её нет, экран подбирает её по названию. Выбор иконки пользователем — этап 8б в `dev_plan.md`.
 - Где подставляется работа по умолчанию при пустом списке работ: название локализуется, поэтому в domain его нет.
 - Сброс ссылок в настройках (`ForgetCarInSettingsUseCase`) идёт после удаления машины, отдельной транзакцией. Сбой между ними оставит ссылку на удалённую машину; читающие use case-ы это переживают — проверяют, что машина есть.
 
 ## Что ещё не реализовано
 
 - Юнит-тесты на `AddCarUseCase`, `UpdateCarUseCase`, `UpdateMileageUseCase`, задачи и `SyncRemindersUseCase`. Покрыты: `CalculateTaskStatusUseCase`, `NormalizeTaskUseCase`, `PlanRemindersUseCase`, `DoneMarksUseCase`, `UnmarkTaskDoneUseCase`, `UpdateHistoryEntryUseCase`, use case-ы запуска (`LaunchCarUseCasesTest`), `ForgetCarInSettingsUseCase`, удаление машины и общая история (`CarRemovalAndHistoryTest`).
-- Доработки этапа 8б: добавление записей истории вручную, выбор иконки работы.
+- Доработки этапа 8б: добавление записей истории вручную.
