@@ -88,7 +88,7 @@ class CarsViewModelTest {
     }
 
     private fun TestScope.loaded(viewModel: CarsViewModel): CarsUiState {
-        backgroundScope.launch { viewModel.state.collect {} }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect {} }
         return viewModel.state.value
     }
 
