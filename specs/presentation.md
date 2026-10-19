@@ -264,14 +264,18 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 | `surface3` | `#CCD5DE` | `#242E3D` | подложка кольца, выключенный переключатель |
 | `ink` | `#10151D` | `#E9EDF3` | основной текст |
 | `inkMuted` | `#5C6774` | `#8D99A8` | вторичный текст, иконки |
-| `inkFaint` | `#97A2AE` | `#566072` | подписи, плейсхолдеры |
-| `rule` | `#DBE1E8` | `#1E2733` | рамки и разделители |
+| `inkFaint` | `#97A2AE` | `#657185` | подписи, плейсхолдеры |
+| `rule` | `#DBE1E8` | `#263140` | рамки и разделители |
 | `accent` | `#0EA5B7` | то же | акцент |
 | `onAccent` | `#FFFFFF` | то же | текст и иконки на акценте |
 | `tierOk` | `#1FAB8C` | то же | статус «в норме» |
 | `tierSoon` | `#E2922E` | то же | статус «пора менять» |
 | `tierDue` | `#E34B3F` | то же | статус «просрочено», опасные действия |
 | `onTier` | `#FFFFFF` | то же | текст на цвете статуса |
+
+`inkFaint` и `rule` тёмной темы подобраны по контрасту: `inkFaint` — не ниже 3 : 1 к `surface` и `surface2` и заметно бледнее `inkMuted`, `rule` — видимая рамка на `surface`, как в светлой теме.
+
+**Системные части экрана** следуют теме приложения, а не системы (`SystemAppearance(themeMode, darkTheme)`, `ui/theme/SystemAppearance.kt`, `expect`; вызывается из `App`): на Android — светлые или тёмные значки статус-бара и панели навигации (`WindowCompat.getInsetsController`), на iOS — `overrideUserInterfaceStyle` у окон приложения, от него зависят статус-бар, клавиатура и системные элементы; при `SYSTEM` стиль не навязывается. Клавиатура Android следует теме системы.
 
 Типографика (`ItsTime4ServiceTypography`, `Type.kt`) — три роли; экраны берут роль и подстраивают размер через `copy(...)`:
 
@@ -408,4 +412,4 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 
 - Анимации индикаторов и остальная полировка этапа 9; сейчас анимированы ползунок `AppSwitch` и прокрутка списка работ.
 - Переключатель языка в приложении.
-- Юнит-тесты на ViewModel-и, кроме `CarsViewModel`, и тесты Composable-компонентов.
+- Юнит-тесты на ViewModel-и, кроме `CarsViewModel`, и тесты Composable-компонентов. Из `ui/format` покрыт перевод км и миль с `keepKm` (`DistanceConversionTest`); `TaskFields` и ввод дат зависят от `Locale.current` и не покрыты.
