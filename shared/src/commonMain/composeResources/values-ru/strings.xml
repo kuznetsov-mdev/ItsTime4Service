@@ -208,4 +208,10 @@
     <string name="field_task">Работа</string>
     <string name="action_more_entry_fields">+ Ещё: сервис, стоимость, комментарий</string>
     <string name="action_add">Добавить</string>
+    <string name="settings_about">О приложении</string>
+    <string name="settings_licenses">Лицензии открытого ПО</string>
+    <string name="settings_licenses_subtitle">Библиотеки, на которых собрано приложение</string>
+    <string name="licenses_subtitle">Приложение собрано на этих компонентах с открытым кодом</string>
+    <string name="action_show_license">Показать текст лицензии</string>
+    <string name="action_hide_license">Скрыть текст лицензии</string>
 </resources>

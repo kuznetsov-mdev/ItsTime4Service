@@ -38,6 +38,7 @@ import ru.kuznetsov.itstime4service.features.cardetail.CarDetailScreen
 import ru.kuznetsov.itstime4service.features.carform.CarFormScreen
 import ru.kuznetsov.itstime4service.features.cars.CarsScreen
 import ru.kuznetsov.itstime4service.features.history.HistoryScreen
+import ru.kuznetsov.itstime4service.features.licenses.LicensesScreen
 import ru.kuznetsov.itstime4service.features.settings.SettingsScreen
 import ru.kuznetsov.itstime4service.features.taskform.TaskFormScreen
 import ru.kuznetsov.itstime4service.ui.components.buttons.TabBarItem
@@ -124,7 +125,10 @@ fun ItsTime4ServiceNavGraph(launchCarId: String?, modifier: Modifier = Modifier)
                 HistoryScreen(initialCarId = entry.arguments?.read { getStringOrNull(Destination.ARG_CAR_ID) })
             }
             composable(Destination.Settings.route) {
-                SettingsScreen()
+                SettingsScreen(onOpenLicenses = { navController.navigate(Destination.Licenses.route) })
+            }
+            composable(Destination.Licenses.route) {
+                LicensesScreen(onBack = { navController.popBackStack() })
             }
         }
         LaunchedEffect(Unit) {

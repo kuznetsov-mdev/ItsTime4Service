@@ -48,9 +48,12 @@ import itstime4service.shared.generated.resources.notification_sample_full
 import itstime4service.shared.generated.resources.notification_time_now
 import itstime4service.shared.generated.resources.reminder_time_dialog_text
 import itstime4service.shared.generated.resources.screen_settings
+import itstime4service.shared.generated.resources.settings_about
 import itstime4service.shared.generated.resources.settings_delete_cars
 import itstime4service.shared.generated.resources.settings_delete_note
 import itstime4service.shared.generated.resources.settings_launch
+import itstime4service.shared.generated.resources.settings_licenses
+import itstime4service.shared.generated.resources.settings_licenses_subtitle
 import itstime4service.shared.generated.resources.settings_notifications
 import itstime4service.shared.generated.resources.settings_open_default
 import itstime4service.shared.generated.resources.settings_open_default_off
@@ -92,6 +95,7 @@ private val distanceUnits = listOf(DistanceUnit.KILOMETERS, DistanceUnit.MILES)
 
 @Composable
 fun SettingsScreen(
+    onOpenLicenses: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
@@ -110,6 +114,7 @@ fun SettingsScreen(
         onPurgeRequest = viewModel::onPurgeRequest,
         onPurgeDismiss = viewModel::onPurgeDismiss,
         onPurgeConfirm = viewModel::onPurgeConfirm,
+        onOpenLicenses = onOpenLicenses,
         modifier = modifier,
     )
 }
@@ -129,6 +134,7 @@ internal fun SettingsContent(
     onPurgeRequest: (carId: String) -> Unit,
     onPurgeDismiss: () -> Unit,
     onPurgeConfirm: () -> Unit,
+    onOpenLicenses: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val purgeCar = state.purgeCar
@@ -262,6 +268,21 @@ internal fun SettingsContent(
                             PurgeRow(car = car, distanceUnit = settings.distanceUnit, onDelete = { onPurgeRequest(car.id) })
                         }
                     }
+                }
+            }
+            SettingsGroup(stringResource(Res.string.settings_about)) {
+                SettingRow(
+                    icon = ItsTime4ServiceIcons.ScrollText,
+                    title = stringResource(Res.string.settings_licenses),
+                    subtitle = stringResource(Res.string.settings_licenses_subtitle),
+                    onClick = onOpenLicenses,
+                ) {
+                    Icon(
+                        ItsTime4ServiceIcons.ChevronRight,
+                        contentDescription = null,
+                        tint = ItsTime4ServiceTheme.colors.inkFaint,
+                        modifier = Modifier.size(16.dp),
+                    )
                 }
             }
         }
@@ -443,6 +464,7 @@ private fun SettingsPreviewContent() {
         onPurgeRequest = {},
         onPurgeDismiss = {},
         onPurgeConfirm = {},
+        onOpenLicenses = {},
     )
 }
 

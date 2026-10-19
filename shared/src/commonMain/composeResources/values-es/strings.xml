@@ -206,4 +206,10 @@
     <string name="field_task">Tarea</string>
     <string name="action_more_entry_fields">+ Más: taller, coste, comentario</string>
     <string name="action_add">Añadir</string>
+    <string name="settings_about">Acerca de</string>
+    <string name="settings_licenses">Licencias de código abierto</string>
+    <string name="settings_licenses_subtitle">Bibliotecas con las que está hecha la app</string>
+    <string name="licenses_subtitle">La app está hecha con estos componentes de código abierto</string>
+    <string name="action_show_license">Mostrar texto de la licencia</string>
+    <string name="action_hide_license">Ocultar texto de la licencia</string>
 </resources>

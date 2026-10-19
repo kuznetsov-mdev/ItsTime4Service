@@ -7,6 +7,7 @@ import com.composables.icons.lucide.Car
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.ChevronDown
 import com.composables.icons.lucide.ChevronLeft
+import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.CircleDot
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Disc
@@ -21,6 +22,7 @@ import com.composables.icons.lucide.Moon
 import com.composables.icons.lucide.PanelTop
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.ScrollText
 import com.composables.icons.lucide.Settings
 import com.composables.icons.lucide.Sun
 import com.composables.icons.lucide.Thermometer
@@ -46,6 +48,7 @@ object ItsTime4ServiceIcons {
     val Clock: ImageVector get() = Lucide.Clock
     val Check: ImageVector get() = Lucide.Check
     val ChevronLeft: ImageVector get() = Lucide.ChevronLeft
+    val ChevronRight: ImageVector get() = Lucide.ChevronRight
     val ChevronDown: ImageVector get() = Lucide.ChevronDown
     val Pencil: ImageVector get() = Lucide.Pencil
     val Trash: ImageVector get() = Lucide.Trash2
@@ -62,4 +65,5 @@ object ItsTime4ServiceIcons {
     val Thermometer: ImageVector get() = Lucide.Thermometer
     val Tire: ImageVector get() = Lucide.CircleDot
     val Wind: ImageVector get() = Lucide.Wind
+    val ScrollText: ImageVector get() = Lucide.ScrollText
 }

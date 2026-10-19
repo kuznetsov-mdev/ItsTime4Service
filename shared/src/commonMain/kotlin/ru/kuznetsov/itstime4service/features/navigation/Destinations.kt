@@ -22,6 +22,8 @@ sealed class Destination(val route: String) {
 
     data object Settings : Destination("settings")
 
+    data object Licenses : Destination("settings/licenses")
+
     companion object {
         const val ARG_CAR_ID = "carId"
         const val ARG_TASK_ID = "taskId"
