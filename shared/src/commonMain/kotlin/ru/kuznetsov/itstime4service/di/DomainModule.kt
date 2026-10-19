@@ -3,6 +3,7 @@ package ru.kuznetsov.itstime4service.di
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 import ru.kuznetsov.itstime4service.domain.usecase.AddCarUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.AddHistoryEntryUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.AddTaskUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.CalculateTaskStatusUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.CarAlertsUseCase
@@ -65,6 +66,7 @@ val domainModule = module {
     factoryOf(::UpdateTaskUseCase)
     factoryOf(::DeleteTaskUseCase)
     factoryOf(::UpdateHistoryEntryUseCase)
+    factoryOf(::AddHistoryEntryUseCase)
     factoryOf(::GetNowUseCase)
     factoryOf(::PlanRemindersUseCase)
     factoryOf(::SyncRemindersUseCase)

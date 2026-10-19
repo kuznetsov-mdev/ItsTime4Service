@@ -82,10 +82,11 @@ internal class FakeCarRepository(
 
 /**
  * [ServiceHistoryRepository] for use case tests: serves fixed records and records every edit it was given
- * together with the task mileage passed along.
+ * together with the task mileage passed along, and every record added by hand.
  */
 internal class FakeHistoryRepository(private val entries: List<ServiceHistoryEntry>) : ServiceHistoryRepository {
     val updated = mutableListOf<Pair<ServiceHistoryEntry, Int?>>()
+    val added = mutableListOf<ServiceHistoryEntry>()
 
     override fun observeHistory(carId: String): Flow<List<ServiceHistoryEntry>> =
         flowOf(entries.filter { it.carId == carId })
@@ -95,6 +96,18 @@ internal class FakeHistoryRepository(private val entries: List<ServiceHistoryEnt
     }
 
     override fun observeAllHistory(): Flow<List<ServiceHistoryEntry>> = flowOf(entries)
+
+    override suspend fun addEntry(
+        carId: String,
+        taskName: String,
+        date: LocalDate,
+        mileageKm: Int,
+        serviceName: String?,
+        costRub: Int?,
+        comment: String?,
+    ) {
+        added += ServiceHistoryEntry("added-${added.size}", carId, taskName, date, mileageKm, costRub, serviceName, comment)
+    }
 }
 
 /**
