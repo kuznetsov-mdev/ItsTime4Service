@@ -31,7 +31,8 @@ ServiceHistoryEntry          TaskStat ──▶ TaskStatus
 ServiceHistoryEntry ──(taskId, prev*)──▶ MaintenanceTask   (запись, созданная отметкой, — для отката)
 HistoryRecord = ServiceHistoryEntry + CarSummary владельца (в том числе проданного)
 
-Settings ──▶ ThemeMode, DistanceUnit; lastOpenedCarId, defaultCarId ──▶ Car
+Settings ──▶ ThemeMode, DistanceUnit, CarsView; lastOpenedCarId, defaultCarId ──▶ Car
+MaintenanceTask ──▶ TaskIcon?            Car.plate ──(DetectPlateStyleUseCase)──▶ PlateStyle
 ```
 
 ### Хранимые
@@ -47,6 +48,7 @@ Settings ──▶ ThemeMode, DistanceUnit; lastOpenedCarId, defaultCarId ──
 | `mileageKm` | `Int` | текущий пробег |
 | `vin` | `String?` | VIN; `null`, если не указан (прочерк подставляет UI) |
 | `tasks` | `List<MaintenanceTask>` | регламентные работы этой машины |
+| `plate` | `String?` | госномер как ввели: верхний регистр, пробелы внутри схлопнуты до одного, по краям обрезаны, до 12 символов; `null`, если не указан |
 
 `Car` — всегда действующая машина: проданные в списки машин и на экран машины не попадают.
 
@@ -63,8 +65,11 @@ Settings ──▶ ThemeMode, DistanceUnit; lastOpenedCarId, defaultCarId ──
 | `reminderWindowKm` | `Int` | за сколько км до срока статус становится `SOON` |
 | `intervalMonths` | `Int?` | интервал по времени |
 | `lastDoneDate` | `LocalDate?` | дата последнего выполнения |
+| `icon` | `TaskIcon?` | выбранная иконка; `null` — иконку не выбирали |
 
 Срок по времени учитывается, только когда заданы и `intervalMonths`, и `lastDoneDate`.
+
+`TaskIcon` — `WRENCH`, `DROPLET`, `DISC`, `FILTER`, `ZAP`, `BATTERY`, `THERMOMETER`, `TIRE`, `WIND`, `GEAR`, `GAUGE`, `CAR`. Новая работа получает `WRENCH`, в том числе из пресета. `null` — у работ, сохранённых до этапа 8б: экран подбирает иконку по названию; правка такой работы без выбора иконки оставляет `null`.
 
 #### `ServiceHistoryEntry`
 
@@ -84,7 +89,7 @@ Settings ──▶ ThemeMode, DistanceUnit; lastOpenedCarId, defaultCarId ──
 | `prevLastDoneKm` | `Int?` | `lastDoneKm` работы до отметки — для отката |
 | `prevLastDoneDate` | `LocalDate?` | `lastDoneDate` работы до отметки — для отката |
 
-`taskName` хранится текстом, поэтому запись переживает переименование и удаление работы. Записи создаются только отметкой о выполнении: у них заполнены `taskId` и `prevLastDoneKm`. У записей, созданных до этапа 8а, эти три поля пустые, и снять отметку по ним нельзя.
+`taskName` хранится текстом, поэтому запись переживает переименование и удаление работы. Записи создаются отметкой о выполнении — у них заполнены `taskId` и `prevLastDoneKm` — или вручную на вкладке «История» (`AddHistoryEntryUseCase`) — у них эти три поля пустые, они не связаны с работой и отметкой не считаются. У записей, созданных до этапа 8а, эти поля тоже пустые, и снять отметку по ним нельзя.
 
 #### `Settings`
 
@@ -100,6 +105,7 @@ Settings ──▶ ThemeMode, DistanceUnit; lastOpenedCarId, defaultCarId ──
 | `lastOpenedCarId` | `String?` | машина, экран которой открывали последним |
 | `openDefaultCar` | `Boolean` | включён ли пункт «Открывать по умолчанию» |
 | `defaultCarId` | `String?` | машина, выбранная для открытия при запуске |
+| `carsView` | `CarsView` | вид списка авто: `LIST` (строки), `TASKS` (карточки с работами), `TASKS_AND_HISTORY` (карточки с работами и историей); по умолчанию `LIST` |
 
 Данные всегда хранятся в километрах; `distanceUnit` влияет только на показ и ввод. Ссылки на машины могут указывать на удалённую машину, если сброс по какой-то причине не произошёл: читающие их use case-ы проверяют, что машина есть.
 
@@ -114,9 +120,9 @@ Settings ──▶ ThemeMode, DistanceUnit; lastOpenedCarId, defaultCarId ──
 | Модель | Отличие от хранимой |
 |---|---|
 | `NewCar` | нет `id`; `tasks` — список `NewMaintenanceTask` |
-| `NewMaintenanceTask` | нет `id`; `reminderWindowKm` может быть `null` — «взять долю интервала по умолчанию» |
+| `NewMaintenanceTask` | нет `id`; `reminderWindowKm` может быть `null` — «взять долю интервала по умолчанию»; `icon` по умолчанию `WRENCH`, `null` — оставить работу без иконки |
 
-Черновика записи истории нет: запись создаёт сам `CarRepository.markTaskDone`.
+Черновика записи истории нет: запись отметкой создаёт сам `CarRepository.markTaskDone`, ручную — `ServiceHistoryRepository.addEntry` по полям, переданным по отдельности.
 
 ### Вычисляемые
 
@@ -160,6 +166,10 @@ Settings ──▶ ThemeMode, DistanceUnit; lastOpenedCarId, defaultCarId ──
 
 Одно запланированное уведомление о скорой или просроченной работе: `carId`, `taskId`, `carBrand`, `taskName`, `status`, `remainingKm`, `remainingMonths`, `fireAt: LocalDateTime` (в часовом поясе устройства). Состояние работы — на день показа при пробеге, известном на момент планирования.
 
+#### `PlateStyle`
+
+Вид номерного знака, который определяет `DetectPlateStyleUseCase`: `Russian(series, region)`, `European(countryCode)`, `American`, `Universal`. Правила — в «Расчётных» use case-ах.
+
 #### `ReminderRecord`
 
 След запланированного уведомления в хранилище: `taskId` и `fireAt`. Запись с `fireAt` в прошлом считается уже показанным уведомлением. Единственная из «напоминательных» моделей, которая сохраняется в базу.
@@ -181,7 +191,7 @@ Settings ──▶ ThemeMode, DistanceUnit; lastOpenedCarId, defaultCarId ──
 | `updateMileage(carId, mileageKm)` | меняет текущий пробег |
 | `markTaskDone(carId, taskId, date, serviceName, costRub, comment): Boolean` | ставит работе `lastDoneKm` = текущий пробег машины и, если у неё есть интервал по времени, `lastDoneDate` = `date`; добавляет запись истории с `taskId`, переданными значениями и прежними `lastDoneKm`/`lastDoneDate` работы. `false` и ничего не меняет, если нет машины или работы |
 | `unmarkTaskDone(carId, taskId, entryId): Boolean` | возвращает работе `prevLastDoneKm`/`prevLastDoneDate` из записи `entryId` и удаляет запись. `false` и ничего не меняет, если запись создана не отметкой этой работы |
-| `updateCar(carId, brand, vin)` | меняет марку и VIN |
+| `updateCar(carId, brand, vin, plate)` | меняет марку, VIN и госномер |
 | `addTask(carId, task: NewMaintenanceTask)` | добавляет работу существующей машине |
 | `updateTask(carId, task: MaintenanceTask)` | заменяет работу с тем же `id` |
 | `deleteTask(carId, taskId)` | удаляет работу |
@@ -195,8 +205,9 @@ Settings ──▶ ThemeMode, DistanceUnit; lastOpenedCarId, defaultCarId ──
 | `observeHistory(carId): Flow<List<ServiceHistoryEntry>>` | записи одной машины в порядке добавления |
 | `observeAllHistory(): Flow<List<ServiceHistoryEntry>>` | записи всех машин, в том числе проданных, в порядке добавления |
 | `updateEntry(entry, taskLastDoneKm: Int? = null)` | заменяет запись с тем же `id`; с `taskLastDoneKm` той же транзакцией ставит его работе записи как «последний раз, км» |
+| `addEntry(carId, taskName, date, mileageKm, serviceName, costRub, comment)` | добавляет ручную запись без `taskId` и данных отката, присваивает ей `id` |
 
-Записи появляются и исчезают только через `CarRepository`: отметка, её снятие, полное удаление машины.
+Кроме `addEntry`, записи появляются и исчезают только через `CarRepository`: отметка, её снятие, полное удаление машины.
 
 ### `SettingsRepository`
 
@@ -224,7 +235,7 @@ Settings ──▶ ThemeMode, DistanceUnit; lastOpenedCarId, defaultCarId ──
 
 ## Use case-ы
 
-Всего 31.
+Всего 33.
 
 ### Расчётные
 
@@ -238,10 +249,23 @@ Settings ──▶ ThemeMode, DistanceUnit; lastOpenedCarId, defaultCarId ──
 | `GetTodayUseCase` | — | `LocalDate` |
 | `GetNowUseCase` | — | `LocalDateTime` |
 | `PlanRemindersUseCase` | `cars`, `settings`, `now`, `lastShown` | `List<PlannedReminder>` |
+| `DetectPlateStyleUseCase` | `plate`, `deviceRegion` | `PlateStyle` |
 
 `SortedTaskStatsUseCase` и `CarAlertsUseCase` своих правил статуса не содержат: оба вызывают `CalculateTaskStatusUseCase` для каждой работы.
 
 `GetTodayUseCase` возвращает сегодняшнюю дату, `GetNowUseCase` — текущие дату и время в часовом поясе устройства. Это единственные места, где domain читает системные часы.
+
+#### Вид номера (`DetectPlateStyleUseCase`)
+
+**Мягкая валидация.** Номер никогда не отклоняется: по его формату только выбирается вид номерного знака. `deviceRegion` — ISO-код страны устройства (`deviceRegion()` в `ui/format`).
+
+| `PlateStyle` | Когда | Что показывается |
+|---|---|---|
+| `Russian(series, region)` | без пробелов и дефисов совпадает с «буква, 3 цифры, 2 буквы, 2–3 цифры региона»; буквы — `АВЕКМНОРСТУХ` (латинские двойники `ABEKMHOPCTYX` переводятся в кириллицу) | серия «А 123 ВС» и регион с «RUS» и флагом |
+| `European(countryCode)` | испанский формат «4 цифры + 3 согласные» → `E`; немецкий «1–3 буквы, пробел или дефис, 1–2 буквы, 1–4 цифры, E/H» → `D`; «2 буквы, 3 цифры, 2 буквы» → `I`, если регион устройства — Италия, иначе `F` | номер с синей полосой и кодом страны |
+| по региону устройства | формат не распознан: регион США → `American`; страна ЕС → `European` с кодом этой страны; иначе `Universal` | американский, европейский или универсальный |
+
+Коды стран ЕС на полосе: A, B, BG, HR, CY, CZ, DK, EST, FIN, F, D, GR, H, IRL, I, LV, LT, L, M, NL, PL, P, RO, SK, SLO, E, S. Американские номера фиксированного формата не имеют, поэтому американский вид выбирается только по региону.
 
 #### Правила планирования уведомлений (`PlanRemindersUseCase`)
 
@@ -301,7 +325,7 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 | `UnmarkTaskDoneUseCase` | `carId`, `taskId` | `Boolean` | см. ниже |
 | `DoneMarksUseCase` | `car`, `history` | `Map<taskId, ServiceHistoryEntry>` | правило «работа отмечена», см. ниже |
 | `NormalizeTaskUseCase` | `task: NewMaintenanceTask` | `NewMaintenanceTask?` | см. ниже |
-| `UpdateCarUseCase` | `carId`, `brand`, `vin` | `Boolean` | марка обрезается по краям; пустая → `false`, ничего не меняется; пустой VIN сохраняется как `null` |
+| `UpdateCarUseCase` | `carId`, `brand`, `vin`, `plate` | `Boolean` | марка обрезается по краям; пустая → `false`, ничего не меняется; пустые VIN и номер сохраняются как `null`; номер приводится к виду, описанному у `Car.plate` |
 | `AddTaskUseCase` | `carId`, `task: NewMaintenanceTask` | `Boolean` | работа проходит `NormalizeTaskUseCase`; отклонённая → `false`, ничего не сохраняется |
 | `UpdateTaskUseCase` | `carId`, `taskId`, `task: NewMaintenanceTask` | `Boolean` | те же правила; заменяет все поля работы `taskId`, включая «последний раз» по пробегу и дате |
 | `DeleteTaskUseCase` | `carId`, `taskId` | — | удаляет работу; записи истории по ней сохраняются |
@@ -311,7 +335,7 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 #### `AddCarUseCase`
 
 - Возвращает `null` и ничего не сохраняет, если марка пустая или пробег не положительный.
-- Марка обрезается по краям; пустой VIN сохраняется как `null`.
+- Марка обрезается по краям; пустые VIN и номер сохраняются как `null`; номер приводится к виду, описанному у `Car.plate`.
 - Работы проходят `NormalizeTaskUseCase`; отклонённые отбрасываются.
 - Работу по умолчанию use case не подставляет: её подставляет форма авто, если блоков работ нет, — с «последний раз» = текущий пробег. Сам use case сохраняет машину без работ, если список пуст.
 
@@ -349,6 +373,7 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 | `ObserveHistoryUseCase` | `carId` | `Flow<List<ServiceHistoryEntry>>` | записи одной машины, от новых к старым по `date` |
 | `ObserveAllHistoryUseCase` | — | `Flow<List<HistoryRecord>>` | записи всех машин, в том числе проданных, с владельцем, от новых к старым по `date`; записи без машины отбрасываются |
 | `UpdateHistoryEntryUseCase` | `entry` | `Boolean` | см. ниже |
+| `AddHistoryEntryUseCase` | `carId`, `taskName`, `date`, `mileageKm`, `serviceName?`, `costRub?`, `comment?` | `Boolean` | см. ниже |
 
 Фильтр истории (период, поиск по названию работы, диапазон пробега) и группировка по годам и месяцам — в `HistoryViewModel`, см. `specs/presentation.md`. Поиск — по вхождению подстроки без учёта регистра: «масл» находит «Замена масла», «масло» — нет.
 
@@ -360,12 +385,18 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 - После смены пробега запись перестаёт удовлетворять правилу «работа отмечена»: отметка пропадает без отката. Смена только даты, сервиса, стоимости или комментария на отметку не влияет.
 - Работает и для записей проданной машины.
 
+#### `AddHistoryEntryUseCase`
+
+- Ручная запись — работа, сделанная раньше, например до установки приложения. Сохраняется без `taskId` и данных отката: работы не меняются, отметкой запись не считается.
+- Только для действующей машины; машины нет или она продана — `false`. Пустое название или пробег `≤ 0` — тоже `false`, ничего не сохраняется.
+- Название обрезается по краям; пустые строки сервиса и комментария и неположительная стоимость сохраняются как `null`.
+
 ### Настройки и запуск
 
 | Use case | Вход | Выход | Правила |
 |---|---|---|---|
 | `ObserveSettingsUseCase` | — | `Flow<Settings>` | проброс `observeSettings()` |
-| `UpdateSettingsUseCase` | `change: (Settings) -> Settings` | — | применяет `change` к сохранённым настройкам; `defaultReminderWindowKm` результата приводится к диапазону степпера — 1–9 тыс. выбранных единиц: 1 000..9 000 км в километрах, 1 609..14 484 км в милях; при смене единиц значение подтягивается к новому диапазону |
+| `UpdateSettingsUseCase` | `change: (Settings) -> Settings` | — | применяет `change` к сохранённым настройкам (так же меняется и вид списка авто `carsView`); `defaultReminderWindowKm` результата приводится к диапазону степпера — 1–9 тыс. выбранных единиц: 1 000..9 000 км в километрах, 1 609..14 484 км в милях; при смене единиц значение подтягивается к новому диапазону |
 | `RecordCarOpenedUseCase` | `carId` | — | запоминает `lastOpenedCarId`; ничего не пишет, если это уже он |
 | `GetLaunchCarUseCase` | — | `String?` | при включённом `openDefaultCar` — `defaultCarId`, иначе — `lastOpenedCarId`; `null` (открыть список), если такой действующей машины нет |
 | `SetDefaultCarUseCase` | `enabled`, `carId?` | — | см. ниже |
@@ -399,36 +430,6 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 - Вызывается из `AppViewModel` при запуске приложения и после каждого изменения машин или настроек.
 - Показанным считается всё, что было запланировано и чьё время прошло; доставило ли уведомление система (например, при отозванном разрешении), domain не знает.
 
-## Согласованные изменения (этап 8б)
-
-Согласовано в макете (раздел «Этап 8б»); в коде появляется по частям, отметки — в `dev_plan.md`.
-
-### Госномер
-
-- `Car` и `NewCar` получают `plate: String?`. Номер хранится как ввели: верхний регистр, без лишних пробелов по краям; пустой — `null`. До 12 символов.
-- `UpdateCarUseCase(carId, brand, vin, plate)` — номер правится на месте вместе с остальными полями шапки.
-- **Мягкая валидация.** Номер никогда не отклоняется. Вид номерного знака определяет чистая функция `DetectPlateStyleUseCase(plate, deviceRegion): PlateStyle` по формату введённого номера:
-
-| `PlateStyle` | Когда | Что показывается |
-|---|---|---|
-| `Russian(series, region)` | без пробелов и дефисов совпадает с «буква, 3 цифры, 2 буквы, 2–3 цифры региона»; буквы — `АВЕКМНОРСТУХ` (латинские двойники `ABEKMHOPCTYX` переводятся в кириллицу) | серия «А 123 ВС» и регион с «RUS» и флагом |
-| `European(countryCode)` | испанский формат «4 цифры + 3 согласные» → `E`; немецкий «1–3 буквы, пробел или дефис, 1–2 буквы, 1–4 цифры, E/H» → `D`; «2 буквы, 3 цифры, 2 буквы» → `I`, если регион устройства — Италия, иначе `F` | номер с синей полосой и кодом страны |
-| по региону устройства | формат не распознан: регион США → `American`; страна ЕС → `European` с кодом этой страны; иначе `Universal` | американский, европейский или универсальный |
-
-Коды стран ЕС на полосе: A, B, BG, HR, CY, CZ, DK, EST, FIN, F, D, GR, H, IRL, I, LV, LT, L, M, NL, PL, P, RO, SK, SLO, E, S. Американские номера фиксированного формата не имеют, поэтому американский вид выбирается только по региону.
-
-### Виды списка авто
-
-`Settings.carsView: CarsView` — `LIST`, `TASKS`, `TASKS_AND_HISTORY`; по умолчанию `LIST`, неизвестное сохранённое имя тоже читается как `LIST`; меняется через `UpdateSettingsUseCase`. Для карточек нужны ближайшие работы (`SortedTaskStatsUseCase`, первые 4) и последние записи истории (`ObserveAllHistoryUseCase`, сгруппированные по авто, первые 4).
-
-### Ручные записи истории
-
-`AddHistoryEntryUseCase(carId, taskName, date, mileageKm, serviceName?, costRub?, comment?): Boolean` — запись без `taskId` и данных отката: не меняет работы и не считается отметкой. Только для действующего авто; пустое название, пробег `≤ 0` — `false`. Пустые строки и неположительная стоимость — `null`.
-
-### Иконка работы
-
-`MaintenanceTask.icon: TaskIcon?` и `NewMaintenanceTask.icon: TaskIcon?` (по умолчанию `WRENCH`). `TaskIcon` — `WRENCH`, `DROPLET`, `DISC`, `FILTER`, `ZAP`, `BATTERY`, `THERMOMETER`, `TIRE`, `WIND`, `GEAR`, `GAUGE`, `CAR`. Новая работа — `WRENCH`, в том числе из пресета. `null` — работа сохранена до этапа 8б: экран подбирает иконку по названию, как раньше; правка такой работы без выбора иконки оставляет `null` (`UpdateTaskUseCase` передаёт иконку как есть). Неизвестное имя в базе читается как `null`.
-
 ## Единицы расстояния
 
 - Все расстояния в моделях и в базе — в километрах.
@@ -444,4 +445,4 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 
 ## Что ещё не реализовано
 
-- Юнит-тесты на `AddCarUseCase`, `UpdateCarUseCase`, `UpdateMileageUseCase`, задачи и `SyncRemindersUseCase`. Покрыты: `CalculateTaskStatusUseCase`, `NormalizeTaskUseCase`, `PlanRemindersUseCase`, `DoneMarksUseCase`, `UnmarkTaskDoneUseCase`, `UpdateHistoryEntryUseCase`, use case-ы запуска (`LaunchCarUseCasesTest`), `ForgetCarInSettingsUseCase`, удаление машины и общая история (`CarRemovalAndHistoryTest`).
+- Юнит-тесты на `AddCarUseCase`, `UpdateCarUseCase`, `UpdateMileageUseCase`, задачи и `SyncRemindersUseCase`. Покрыты: `CalculateTaskStatusUseCase`, `NormalizeTaskUseCase`, `PlanRemindersUseCase`, `DoneMarksUseCase`, `UnmarkTaskDoneUseCase`, `UpdateHistoryEntryUseCase`, use case-ы запуска (`LaunchCarUseCasesTest`), `ForgetCarInSettingsUseCase`, удаление машины и общая история (`CarRemovalAndHistoryTest`), `DetectPlateStyleUseCase`, `AddHistoryEntryUseCase`, иконка работы в `AddTaskUseCase` и `UpdateTaskUseCase` (`TaskIconStorageTest`).
