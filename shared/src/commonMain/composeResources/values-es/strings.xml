@@ -177,4 +177,11 @@
     <string name="action_edit_plate">Editar matrícula</string>
     <string name="field_plate">Matrícula</string>
     <string name="plate_placeholder">Ej. 1234 BCD</string>
+    <string name="cars_view_list">Lista</string>
+    <string name="cars_view_tasks">Tarjetas con tareas</string>
+    <string name="cars_view_tasks_history">Tarjetas con tareas e historial</string>
+    <string name="car_card_upcoming">Próximas tareas</string>
+    <string name="car_card_recent">Trabajos recientes</string>
+    <string name="car_card_no_tasks">Sin tareas</string>
+    <string name="car_card_no_history">Aún no hay registros</string>
 </resources>

@@ -175,4 +175,11 @@
     <string name="action_edit_plate">Edit licence plate</string>
     <string name="field_plate">Licence plate</string>
     <string name="plate_placeholder">E.g. 7ABC123</string>
+    <string name="cars_view_list">List</string>
+    <string name="cars_view_tasks">Cards with tasks</string>
+    <string name="cars_view_tasks_history">Cards with tasks and history</string>
+    <string name="car_card_upcoming">Upcoming tasks</string>
+    <string name="car_card_recent">Recent work</string>
+    <string name="car_card_no_tasks">No tasks</string>
+    <string name="car_card_no_history">No records yet</string>
 </resources>

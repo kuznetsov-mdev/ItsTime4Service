@@ -179,4 +179,11 @@
     <string name="action_edit_plate">Изменить госномер</string>
     <string name="field_plate">Госномер</string>
     <string name="plate_placeholder">Например, А 123 ВС 77</string>
+    <string name="cars_view_list">Список</string>
+    <string name="cars_view_tasks">Карточки с работами</string>
+    <string name="cars_view_tasks_history">Карточки с работами и историей</string>
+    <string name="car_card_upcoming">Ближайшие работы</string>
+    <string name="car_card_recent">Последние работы</string>
+    <string name="car_card_no_tasks">Работ нет</string>
+    <string name="car_card_no_history">Записей пока нет</string>
 </resources>

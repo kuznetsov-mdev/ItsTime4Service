@@ -75,6 +75,12 @@ fun ItsTime4ServiceNavGraph(launchCarId: String?, modifier: Modifier = Modifier)
             composable(Destination.Cars.route) {
                 CarsScreen(
                     onOpenCar = { carId -> navController.navigate(Destination.CarDetail.createRoute(carId)) },
+                    onOpenHistory = { carId ->
+                        navController.navigate(Destination.History.createRoute(carId)) {
+                            popUpTo(Destination.Cars.route)
+                            launchSingleTop = true
+                        }
+                    },
                     onAddCar = { navController.navigate(Destination.AddCar.route) },
                 )
             }
