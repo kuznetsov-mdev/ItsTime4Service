@@ -13,7 +13,8 @@ features/
 ├── cardetail/            # экран машины: пробег, работы, отметки
 ├── taskform/             # экран одной работы: новая и правка
 ├── history/              # общая история ТО
-└── settings/             # настройки
+├── settings/             # настройки
+└── licenses/             # лицензии открытого ПО
 ui/
 ├── theme/                # цвета, типографика, размеры, ItsTime4ServiceTheme
 ├── components/           # ui-kit: buttons, fields, steppers, indicators, cards, dialogs, screen
@@ -45,6 +46,7 @@ ui/
 | `EditTask` | `cars/{carId}/tasks/{taskId}` | `TaskFormScreen` с `taskId` | нет |
 | `History` | `history?carId={carId}`, `carId` необязателен | `HistoryScreen` | да |
 | `Settings` | `settings` | `SettingsScreen` | да |
+| `Licenses` | `settings/licenses` | `LicensesScreen` | нет |
 
 ### Переходы
 
@@ -58,6 +60,8 @@ ui/
 | `CarDetail` | часы | вкладка «История» с выбранной машиной: `navigate(History.createRoute(carId)) { popUpTo(Cars.route); launchSingleTop = true }` |
 | `CarDetail` | FAB / тап по карточке работы | `NewTask` / `EditTask` |
 | `NewTask`, `EditTask` | «назад», сохранение, удаление, работы или машины нет | `popBackStack()` |
+| `Settings` | «Лицензии открытого ПО» | `Licenses` |
+| `Licenses` | «назад» | `popBackStack()` |
 | таб-бар | «Авто» | `navigate(Cars) { popUpTo(Cars); launchSingleTop = true }` — список, а не сохранённое состояние вкладки |
 | таб-бар | «История», «Настройки» | `navigate(route) { popUpTo(Cars) { saveState = true }; launchSingleTop = true; restoreState = true }` |
 
@@ -230,7 +234,18 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 - **Уведомления:** push (`AppSwitch`), `NotificationPreviewCard` (статичный пример), «Напоминать заранее» — `Stepper` в тысячах выбранных единиц, 1–9; «Время напоминаний» — `TimePickerDialog`.
 - **Удаление авто** (последний раздел; без машин раздела нет): пояснение — машина удаляется полностью, с работами и всей историей. Список всех машин: действующие (марка, пробег), затем проданные (марка серым, подпись «продано»), у каждой корзина → `ConfirmDialog` «Удалить {марка} полностью?» → `PurgeCarUseCase`.
 
+- **О приложении** (самый последний раздел, есть всегда): строка «Лицензии открытого ПО» (`ScrollText`, справа `ChevronRight`) открывает `Licenses`.
+
 `SettingsUiState`: `settings`, `isPickingReminderTime`, `cars` (действующие), `openDefault`, `defaultCarId` (если выбранной машины нет — первая), `purgeCars` (все, проданные в конце), `purgeCar`; вычисляемое `reminderSteps`.
+
+### `licenses` — лицензии открытого ПО
+
+Статичный экран без ViewModel: `LicensesScreen(onBack)`. Нужен, чтобы выполнять условия лицензий библиотек, которые входят в приложение (Apache 2.0, ISC, MIT); список совпадает с `THIRD_PARTY_NOTICES.md` в корне репозитория.
+
+- `ScreenTopBar` с «назад», заголовок «Лицензии открытого ПО» и подпись.
+- Список `openSourceLibraries` (`OpenSourceLibraries.kt`): у каждой библиотеки название, лицензия и адрес проекта. Тап раскрывает полный текст лицензии под карточкой, повторный тап сворачивает; раскрытость хранится в `rememberSaveable`.
+- Тексты лицензий лежат в `composeResources/files/licenses/` (`apache-2.0.txt`, `lucide-isc.txt`, `compose-icons-mit.txt`) и читаются `Res.readBytes` при раскрытии. Названия библиотек и лицензий не переводятся.
+- При добавлении библиотеки в приложение её нужно внести в `openSourceLibraries`, в `THIRD_PARTY_NOTICES.md` и, если лицензия новая, положить её текст в ресурсы.
 
 ## Общий UI
 
@@ -337,7 +352,7 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 
 ### Иконки
 
-`ui/icons/ItsTime4ServiceIcons.kt` — объект-обёртка над набором Lucide; экраны и компоненты обращаются только к нему. 26 иконок: `Car`, `Gauge`, `Droplet`, `Disc`, `Filter`, `Wrench`, `Gear` (`Lucide.Settings`), `Clock`, `Check`, `ChevronLeft`, `ChevronDown`, `Pencil`, `Trash` (`Lucide.Trash2`), `Bell`, `Plus`, `Minus`, `Sun`, `MoonToggle` (`Lucide.Moon`); виды списка авто — `List`, `PanelTop`, `LayoutPanelTop`; иконки работ — `Zap`, `Battery`, `Thermometer`, `Tire` (`Lucide.CircleDot`), `Wind`.
+`ui/icons/ItsTime4ServiceIcons.kt` — объект-обёртка над набором Lucide; экраны и компоненты обращаются только к нему. 28 иконок: `Car`, `Gauge`, `Droplet`, `Disc`, `Filter`, `Wrench`, `Gear` (`Lucide.Settings`), `Clock`, `Check`, `ChevronLeft`, `ChevronRight`, `ChevronDown`, `Pencil`, `Trash` (`Lucide.Trash2`), `Bell`, `Plus`, `Minus`, `Sun`, `MoonToggle` (`Lucide.Moon`); виды списка авто — `List`, `PanelTop`, `LayoutPanelTop`; иконки работ — `Zap`, `Battery`, `Thermometer`, `Tire` (`Lucide.CircleDot`), `Wind`; лицензии — `ScrollText`.
 
 Иконка работы (`ui/icons/TaskIcons.kt`, `taskIcon(icon, name)`) — выбранная пользователем, а у работы без неё (`icon == null`, сохранена до этапа 8б) подбирается по подстроке названия без учёта регистра: `масл`/`oil`/`aceite` → `DROPLET`; `колод`/`тормоз`/`brake`/`pad`/`freno`/`pastilla` → `DISC`; `фильтр`/`filter`/`filtro` → `FILTER`; остальное → `WRENCH`. `TaskIcon.vector` даёт картинку из `ItsTime4ServiceIcons`, `TaskIcon.label` — подпись для экранного диктора.
 
