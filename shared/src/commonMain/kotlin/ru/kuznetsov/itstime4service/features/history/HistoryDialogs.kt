@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -68,6 +69,7 @@ import itstime4service.shared.generated.resources.history_sold_car
 import itstime4service.shared.generated.resources.search_task_placeholder
 import itstime4service.shared.generated.resources.task_name_placeholder
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
+import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
 import ru.kuznetsov.itstime4service.ui.components.buttons.PresetChip
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogButton
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogCard
@@ -468,4 +470,47 @@ private fun CarPickerField(
             }
         }
     }
+}
+
+private val previewCars = listOf(HistoryCar("c1", "Kia Rio"), HistoryCar("c2", "Toyota Camry"), HistoryCar("s1", "Lada Granta", isSold = true))
+
+@Composable
+private fun HistoryDialogsPreviewContent() {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        HistoryFilterCard(
+            filter = HistoryFilter(query = "масл", mileageFrom = "60000"),
+            distanceUnit = DistanceUnit.KILOMETERS,
+            onChange = {},
+            onApply = {},
+            onReset = {},
+        )
+        HistoryEntryCard(
+            form = HistoryEntryForm("h1", "Замена масла и фильтра", previewCars[0], "14092026", "82000", "Kia Center", "4200"),
+            distanceUnit = DistanceUnit.KILOMETERS,
+            onChange = {},
+            onSave = {},
+            onDismiss = {},
+        )
+        NewHistoryEntryCard(
+            form = NewHistoryEntryForm(carId = "c1", mileage = "61500", isExpanded = true),
+            cars = previewCars.filterNot { it.isSold },
+            suggestions = listOf("Замена масла и фильтра", "Тормозные колодки"),
+            distanceUnit = DistanceUnit.KILOMETERS,
+            onChange = {},
+            onSave = {},
+            onDismiss = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HistoryDialogsLightPreview() = ComponentPreview(darkTheme = false) {
+    HistoryDialogsPreviewContent()
+}
+
+@Preview
+@Composable
+private fun HistoryDialogsDarkPreview() = ComponentPreview(darkTheme = true) {
+    HistoryDialogsPreviewContent()
 }

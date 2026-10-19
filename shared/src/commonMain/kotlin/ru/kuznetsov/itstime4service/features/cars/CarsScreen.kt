@@ -190,4 +190,17 @@ private fun CarsCardsLightPreview() = ScreenPreview(darkTheme = false) {
     )
 }
 
+
+@Preview
+@Composable
+private fun CarsCardsDarkPreview() = ScreenPreview(darkTheme = true) {
+    CarsContent(
+        state = previewState.copy(view = CarsView.TASKS_AND_HISTORY),
+        onViewSelect = {},
+        onOpenCar = {},
+        onOpenHistory = {},
+        onAddCar = {},
+    )
+}
+
 private const val ADD_CAR_KEY = "add_car"
