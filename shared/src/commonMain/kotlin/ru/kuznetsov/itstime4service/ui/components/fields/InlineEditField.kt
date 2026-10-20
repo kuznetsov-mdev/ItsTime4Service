@@ -67,6 +67,7 @@ fun InlineEditField(
             focusRequester = focusRequester,
             imeAction = ImeAction.Done,
             onImeAction = { if (canSave(text)) onSave(text) },
+            showDoneButton = false,
         )
         Box(
             modifier = Modifier
