@@ -50,6 +50,8 @@ MaintenanceTask ──▶ TaskIcon?            Car.plate ──(DetectPlateStyle
 | `vin` | `String?` | VIN; `null`, если не указан (прочерк подставляет UI) |
 | `tasks` | `List<MaintenanceTask>` | регламентные работы этой машины |
 | `plate` | `String?` | госномер как ввели: верхний регистр, пробелы внутри схлопнуты до одного, по краям обрезаны, до 12 символов; `null`, если не указан |
+| `plateHidden` | `Boolean` | номер скрыт: в списке и на экране машины вместо него оборот с заглушками; по умолчанию `false` |
+| `vinHidden` | `Boolean` | VIN скрыт: на экране машины вместо него «x» той же длины; по умолчанию `false` |
 
 `Car` — всегда действующая машина: проданные в списки машин и на экран машины не попадают.
 
@@ -194,6 +196,7 @@ MaintenanceTask ──▶ TaskIcon?            Car.plate ──(DetectPlateStyle
 | `updateMileage(carId, mileageKm)` | меняет текущий пробег |
 | `updateCar(carId, brand, vin, plate)` | меняет марку, VIN и госномер |
 | `deleteTask(carId, taskId)` | удаляет работу; её записи истории остаются |
+| `setPlateHidden(carId, hidden)`, `setVinHidden(carId, hidden)` | запоминает у машины, скрыт ли номер или VIN |
 
 ### `ServiceHistoryRepository`
 
@@ -336,6 +339,7 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 | `UnmarkTaskDoneUseCase` | `carId`, `taskId` | `Boolean` | см. ниже |
 | `DoneMarksUseCase` | `car`, `history` | `Map<taskId, ServiceHistoryEntry>` | правило «работа отмечена», см. ниже |
 | `NormalizeTaskUseCase` | `task: NewMaintenanceTask` | `NewMaintenanceTask?` | см. ниже |
+| `SetPlateHiddenUseCase`, `SetVinHiddenUseCase` | `carId`, `hidden` | — | скрывает номер или VIN и показывает снова; хранится у машины, поэтому одинаково на всех экранах и после перезапуска |
 | `UpdateCarUseCase` | `carId`, `brand`, `vin`, `plate` | `Boolean` | марка обрезается по краям; пустая → `false`, ничего не меняется; пустые VIN и номер сохраняются как `null`; номер приводится к виду, описанному у `Car.plate` |
 | `AddTaskUseCase` | `carId`, `task: NewMaintenanceTask` | `Boolean` | работа проходит `NormalizeTaskUseCase`; отклонённая → `false`, ничего не сохраняется |
 | `UpdateTaskUseCase` | `carId`, `taskId`, `task: NewMaintenanceTask` | `Boolean` | те же правила; заменяет все поля работы `taskId`, включая «последний раз» по пробегу и дате. Вызывает `TaskHistoryRepository.updateTask` с датой, введённой до `NormalizeTaskUseCase`: внутри транзакции связанная запись получает новый пробег (если он `> 0`) и эту дату — она доходит до записи и у работы без интервала по времени |
@@ -464,4 +468,4 @@ Toyota Camry, пробег 152 000 км, сегодня 08.10.2026.
 
 ## Что ещё не реализовано
 
-- Юнит-тесты на содержимое плана в `SyncRemindersUseCase` и use case-ы наблюдения (когда план пересобирается — покрыто в `KeepRemindersInSyncUseCaseTest`); для них нужно управляемое время в `GetNowUseCase`/`GetTodayUseCase`. Покрыты: `AddCarUseCase`, `UpdateCarUseCase`, `UpdateMileageUseCase`, `DeleteTaskUseCase` (`CarUseCasesTest`), `UpdateSettingsUseCase`, `CarAlertsUseCase` и `SortedTaskStatsUseCase` (`TaskStatsUseCasesTest`), отказы `AddTaskUseCase` и `UpdateTaskUseCase`, `CalculateTaskStatusUseCase`, `NormalizeTaskUseCase`, `PlanRemindersUseCase`, `DoneMarksUseCase`, `UnmarkTaskDoneUseCase`, `UpdateHistoryEntryUseCase`, правила `TaskHistoryRules` (`TaskHistoryRulesTest`), use case-ы запуска (`LaunchCarUseCasesTest`), `ForgetCarInSettingsUseCase`, удаление машины и общая история (`CarRemovalAndHistoryTest`), `DetectPlateStyleUseCase`, `AddHistoryEntryUseCase`, иконка работы в `AddTaskUseCase` и `UpdateTaskUseCase` (`TaskIconStorageTest`), запись при новой работе и передача введённой даты (`TaskEditUseCasesTest`); синхронизация связанной записи, в том числе при совпадении пробега и даты, — в `TaskHistoryRulesTest`. Транзакции `TaskHistoryRepositoryImpl` тестами не покрыты: нужен тестовый драйвер SQLDelight.
+- Юнит-тесты на содержимое плана в `SyncRemindersUseCase` и use case-ы наблюдения (когда план пересобирается — покрыто в `KeepRemindersInSyncUseCaseTest`); для них нужно управляемое время в `GetNowUseCase`/`GetTodayUseCase`. Покрыты: `SetPlateHiddenUseCase`, `SetVinHiddenUseCase` (`CarSecretsUseCasesTest`), `AddCarUseCase`, `UpdateCarUseCase`, `UpdateMileageUseCase`, `DeleteTaskUseCase` (`CarUseCasesTest`), `UpdateSettingsUseCase`, `CarAlertsUseCase` и `SortedTaskStatsUseCase` (`TaskStatsUseCasesTest`), отказы `AddTaskUseCase` и `UpdateTaskUseCase`, `CalculateTaskStatusUseCase`, `NormalizeTaskUseCase`, `PlanRemindersUseCase`, `DoneMarksUseCase`, `UnmarkTaskDoneUseCase`, `UpdateHistoryEntryUseCase`, правила `TaskHistoryRules` (`TaskHistoryRulesTest`), use case-ы запуска (`LaunchCarUseCasesTest`), `ForgetCarInSettingsUseCase`, удаление машины и общая история (`CarRemovalAndHistoryTest`), `DetectPlateStyleUseCase`, `AddHistoryEntryUseCase`, иконка работы в `AddTaskUseCase` и `UpdateTaskUseCase` (`TaskIconStorageTest`), запись при новой работе и передача введённой даты (`TaskEditUseCasesTest`); синхронизация связанной записи, в том числе при совпадении пробега и даты, — в `TaskHistoryRulesTest`. Транзакции `TaskHistoryRepositoryImpl` тестами не покрыты: нужен тестовый драйвер SQLDelight.

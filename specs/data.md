@@ -58,6 +58,8 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 | `vin` | `TEXT` | да | VIN |
 | `is_sold` | `INTEGER AS kotlin.Boolean` | нет, по умолчанию 0 | машина удалена с её экрана, история сохранена |
 | `plate` | `TEXT` | да | госномер как ввели |
+| `plate_hidden` | `INTEGER AS kotlin.Boolean` | нет, по умолчанию 0 | номер скрыт на всех экранах |
+| `vin_hidden` | `INTEGER AS kotlin.Boolean` | нет, по умолчанию 0 | VIN скрыт на экране машины |
 
 | Запрос | SQL |
 |---|---|
@@ -67,6 +69,8 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 | `insert` | `INSERT INTO cars (id, brand, mileage_km, vin, plate) VALUES (?, ?, ?, ?, ?)` |
 | `updateMileage` | `UPDATE cars SET mileage_km = ? WHERE id = ?` |
 | `updateDetails` | `UPDATE cars SET brand = ?, vin = ?, plate = ? WHERE id = ?` |
+| `setPlateHidden` | `UPDATE cars SET plate_hidden = ? WHERE id = ?` |
+| `setVinHidden` | `UPDATE cars SET vin_hidden = ? WHERE id = ?` |
 | `markSold` | `UPDATE cars SET is_sold = 1 WHERE id = ?` |
 | `deleteById` | `DELETE FROM cars WHERE id = ?` |
 
@@ -173,13 +177,14 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 
 ### Версия схемы и миграция
 
-Версия схемы — 4 (`ItsTime4ServiceDatabase.Schema.version`). Миграции:
+Версия схемы — 5 (`ItsTime4ServiceDatabase.Schema.version`). Миграции:
 
 - `migrations/1.sqm` — с версии 1 на 2: создаёт таблицу `planned_reminders`.
 - `migrations/2.sqm` — с версии 2 на 3: добавляет колонки `task_id`, `comment`, `prev_last_done_km`, `prev_last_done_date` в `service_history`; `last_opened_car_id`, `open_default_car`, `default_car_id` в `settings`; `is_sold` в `cars`. У старых записей истории новые колонки пустые — снять отметку по ним нельзя.
 - `migrations/3.sqm` — с версии 3 на 4: `plate` в `cars`, `icon` в `maintenance_tasks`, `cars_view TEXT NOT NULL DEFAULT 'LIST'` в `settings`. У старых машин номера нет, у старых работ — иконки.
+- `migrations/4.sqm` — с версии 4 на 5: `plate_hidden` и `vin_hidden` (`INTEGER NOT NULL DEFAULT 0`) в `cars`. У старых машин ничего не скрыто.
 
-Новая установка: драйвер создаёт все пять таблиц из `.sq`-файлов сразу в версии 4. Обновление: драйвер выполняет нужные миграции по порядку. Создание и миграцию запускают сами драйверы при открытии базы по переданной `ItsTime4ServiceDatabase.Schema`; своего кода миграции в проекте нет.
+Новая установка: драйвер создаёт все пять таблиц из `.sq`-файлов сразу в версии 5. Обновление: драйвер выполняет нужные миграции по порядку. Создание и миграцию запускают сами драйверы при открытии базы по переданной `ItsTime4ServiceDatabase.Schema`; своего кода миграции в проекте нет.
 
 ## Мапперы
 
@@ -187,7 +192,7 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 
 | Функция | Из | В | Преобразования |
 |---|---|---|---|
-| `Cars.toDomain(tasks)` | `Cars` + список `Maintenance_tasks` | `Car` | `mileage_km` → `Int`; работы — через `Maintenance_tasks.toDomain()`; `plate` — как есть; `is_sold` в модель не попадает |
+| `Cars.toDomain(tasks)` | `Cars` + список `Maintenance_tasks` | `Car` | `mileage_km` → `Int`; работы — через `Maintenance_tasks.toDomain()`; `plate` — как есть; `plate_hidden` и `vin_hidden` → `plateHidden`, `vinHidden`; `is_sold` в модель не попадает |
 | `Cars.toSummary()` | `Cars` | `CarSummary` | `mileage_km` → `Int`, `is_sold` → `isSold` |
 | `Maintenance_tasks.toDomain()` | `Maintenance_tasks` | `MaintenanceTask` | числа → `Int`; `last_done_date` → `LocalDate.parse`, `null` остаётся `null`; `icon` — константа `TaskIcon` с этим именем, неизвестное имя или `NULL` → `null`; `car_id` в модель не попадает |
 | `Service_history.toDomain()` | `Service_history` | `ServiceHistoryEntry` | `date`, `prev_last_done_date` → `LocalDate.parse`; `mileage_km`, `cost_rub`, `prev_last_done_km` → `Int` |
@@ -211,6 +216,7 @@ SQLDelight, база `ItsTime4ServiceDatabase`, пакет сгенериров�
 | `updateMileage(carId, mileageKm)` | `cars.updateMileage` |
 | `updateCar(carId, brand, vin, plate)` | `cars.updateDetails` |
 | `deleteTask(carId, taskId)` | `maintenance_tasks.deleteById` по `id` + `car_id` |
+| `setPlateHidden(carId, hidden)`, `setVinHidden(carId, hidden)` | `cars.setPlateHidden` / `cars.setVinHidden` |
 
 - Порядок машин и работ — порядок добавления (`rowid`).
 - Потоки строятся из двух независимых запросов: изменение любой из двух таблиц даёт новое значение. Запись, затронувшая обе таблицы (например, `addCar`), может дать два значения подряд.
