@@ -190,6 +190,8 @@
   @keyframes fill-in { from { width: 0; } }
   .entering .gauge, .entering .status-donut { animation: ring-in 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .entering .task-fill { animation: fill-in 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+  /* после смены вкладки индикаторы ждут конца сдвига экрана (0,4 с) и до этого пусты */
+  .entering.after-slide .gauge, .entering.after-slide .status-donut, .entering.after-slide .task-fill { animation-delay: 0.4s; animation-fill-mode: backwards; }
   .gauge-inner {
     width: 38px; height: 38px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center;
     font-family: var(--display); font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums;
@@ -263,7 +265,7 @@
   .history-row:last-child { border-bottom: none; }
   .history-row[data-open-entry] { cursor: pointer; }
   .history-bar { position: relative; display: flex; align-items: center; gap: 8px; padding: 6px 18px 10px; flex-shrink: 0; }
-  .car-select { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 10px; padding: 11px 13px; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer; font-family: inherit; text-align: left; }
+  .car-select { flex: 1; min-width: 0; dсisplay: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 10px; padding: 11px 13px; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer; font-family: inherit; text-align: left; }
   .car-select .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .car-select .chev { display: flex; color: var(--ink-faint); transform: rotate(-90deg); flex-shrink: 0; }
   .car-select.open .chev { transform: rotate(90deg); }
@@ -762,9 +764,9 @@
       <li><b>Российский номер</b> — в пропорциях 520 × 112 мм по образцам: толстая рамка без «болтов», буквы серии меньше цифр и стоят на общей линии, секция региона вмещает три цифры в полную высоту (37).</li>
       <li><b>Клавиша «готово» (Enter)</b> в любом поле делает то же, что главная кнопка: «Сохранить» формы, «Сохранить» / «Добавить» / «Применить» окна, галочка правки на месте.</li>
       <li><b>Лицензии открытого ПО:</b> раздел «О приложении» в конце «Настроек» (35) открывает список библиотек с их лицензиями; тап по библиотеке раскрывает текст лицензии (36).</li>
-      <li><b>Анимация индикаторов:</b> полосы прогресса, кольца в списке авто и на экране авто заполняются от нуля при появлении и плавно (0,4 с) переходят к новому значению при изменении — сменили пробег, отметили работу; цвет статуса меняется плавно. С системным «уменьшить движение» всё сразу на месте. В интерактивном макете видно только заполнение при входе на экран: он перерисовывает экран на каждое действие.</li>
+      <li><b>Анимация индикаторов:</b> полосы прогресса, кольца в списке авто и на экране авто заполняются от нуля, когда экран встал на место после перехода, и плавно (0,4 с) переходят к новому значению при изменении — сменили пробег, отметили работу; цвет статуса меняется плавно. С системным «уменьшить движение» всё сразу на месте. В интерактивном макете видно только заполнение при входе на экран: он перерисовывает экран на каждое действие.</li>
       <li><b>Таб-бар:</b> выбранный пункт обведён скруглённой рамкой цвета значка.</li>
-      <li><b>Смена вкладки:</b> при переходе вправо по меню («История» → «Авто» → «Настройки») текущий экран уезжает влево за край, а новый выезжает справа; при переходе влево — наоборот. Таб-бар остаётся на месте, рамка выбранного пункта плавно переезжает к новому пункту. 0,32 с; с «уменьшить движение» — без анимации. Переходы на вложенные экраны не меняются.</li>
+      <li><b>Смена вкладки:</b> при переходе вправо по меню («История» → «Авто» → «Настройки») текущий экран уезжает влево за край, а новый выезжает справа; при переходе влево — наоборот. Таб-бар остаётся на месте, рамка выбранного пункта плавно переезжает к новому пункту. 0,4 с; кольца и полосы заполняются только после того, как экран встал на место. С «уменьшить движение» — без анимации. Переходы на вложенные экраны не меняются.</li>
       <li><b>Прелоадер:</b> пока грузятся данные — круг с бегущей акцентной дугой, внутри мчится машинка с линиями скорости, под кругом «Загрузка…» (40). В интерактивном макете — при «Перезапустить приложение». С «уменьшить движение» — без движения.</li>
       <li><b>Скрыть номер и VIN:</b> тап по номеру на карточке в списке авто переворачивает его вокруг горизонтальной оси за 0,5 с; на обороте — тот же знак, но вместо символов размытые заглушки, рамка, «RUS» и флаг чёткие (38). Повторный тап возвращает номер. На экране авто рядом с номером и VIN (если они есть) — кнопка-глаз «скрыть / показать» (39): номер переворачивается так же, VIN заменяется символами «x» той же длины. Скрытие хранится у авто: скрыли на одном экране — скрыто и на другом, и после перезапуска. Скрытое не правится — тап по нему ничего не делает, пока не нажали «показать». С «уменьшить движение» номер меняется без поворота.</li>
     </ol>
@@ -2445,6 +2447,7 @@
   var SCROLLABLE = '.form-body, .task-list, .history-list, .car-list, .car-t-list';
   /* вкладки слева направо: «История» → «Авто» → «Настройки»; переход вправо по меню — экраны едут влево, и наоборот */
   var TAB_ORDER = ['history', 'cars', 'settings'];
+  var TAB_SLIDE_MS = 400;
   function tabSlideFor(prevView, screen) {
     if (!prevView) return 0;
     var from = TAB_ORDER.indexOf(prevView.getAttribute('data-view')), to = TAB_ORDER.indexOf(screen);
@@ -2453,7 +2456,7 @@
     return to > from ? 1 : -1;
   }
   function playTabSlide(root, view, snapshot, prevFrameRect, dir) {
-    var timing = { duration: 320, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' };
+    var timing = { duration: TAB_SLIDE_MS, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' };
     snapshot.classList.remove('active');
     snapshot.classList.add('tab-snapshot');
     var oldBar = snapshot.querySelector('.tabbar');
@@ -2493,6 +2496,7 @@
     /* индикаторы анимируются только при входе на экран, а не на каждое действие */
     root.classList.toggle('entering', !prevView || prevView.getAttribute('data-view') !== istate.screen);
     var tabSlide = tabSlideFor(prevView, istate.screen);
+    root.classList.toggle('after-slide', !!tabSlide);
     var tabSnapshot = tabSlide ? prevView.cloneNode(true) : null;
     var prevFrame = tabSlide ? prevView.querySelector('.tabbar button.active .tab-frame') : null;
     var prevFrameRect = prevFrame ? prevFrame.getBoundingClientRect() : null;

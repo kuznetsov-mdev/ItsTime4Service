@@ -1,6 +1,7 @@
 package ru.kuznetsov.itstime4service.features.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -26,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -43,7 +45,9 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -66,6 +70,7 @@ import ru.kuznetsov.itstime4service.features.licenses.LicensesScreen
 import ru.kuznetsov.itstime4service.features.settings.SettingsScreen
 import ru.kuznetsov.itstime4service.features.taskform.TaskFormScreen
 import ru.kuznetsov.itstime4service.ui.components.buttons.TabBarItem
+import ru.kuznetsov.itstime4service.ui.components.indicators.LocalScreenSettled
 import ru.kuznetsov.itstime4service.ui.components.indicators.ReduceMotion
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
@@ -103,7 +108,7 @@ fun ItsTime4ServiceNavGraph(launchCarId: String?, modifier: Modifier = Modifier)
             popEnterTransition = { tabEnter(still) ?: fadeIn(tween(DEFAULT_FADE_MS)) },
             popExitTransition = { tabExit(still) ?: fadeOut(tween(DEFAULT_FADE_MS)) },
         ) {
-            composable(Destination.Cars.route) {
+            screen(Destination.Cars.route) {
                 CarsScreen(
                     onOpenCar = { carId -> navController.navigate(Destination.CarDetail.createRoute(carId)) },
                     onOpenHistory = { carId ->
@@ -115,10 +120,10 @@ fun ItsTime4ServiceNavGraph(launchCarId: String?, modifier: Modifier = Modifier)
                     onAddCar = { navController.navigate(Destination.AddCar.route) },
                 )
             }
-            composable(Destination.AddCar.route) {
+            screen(Destination.AddCar.route) {
                 CarFormScreen(onBack = { navController.popBackStack() })
             }
-            composable(Destination.CarDetail.route, arguments = carIdArgument) { entry ->
+            screen(Destination.CarDetail.route, arguments = carIdArgument) { entry ->
                 val carId = entry.carId
                 CarDetailScreen(
                     carId = carId,
@@ -133,16 +138,16 @@ fun ItsTime4ServiceNavGraph(launchCarId: String?, modifier: Modifier = Modifier)
                     onOpenTask = { taskId -> navController.navigate(Destination.EditTask.createRoute(carId, taskId)) },
                 )
             }
-            composable(Destination.NewTask.route, arguments = carIdArgument) { entry ->
+            screen(Destination.NewTask.route, arguments = carIdArgument) { entry ->
                 TaskFormScreen(carId = entry.carId, taskId = null, onBack = { navController.popBackStack() })
             }
-            composable(
+            screen(
                 Destination.EditTask.route,
                 arguments = carIdArgument + navArgument(Destination.ARG_TASK_ID) { type = NavType.StringType },
             ) { entry ->
                 TaskFormScreen(carId = entry.carId, taskId = entry.taskId, onBack = { navController.popBackStack() })
             }
-            composable(
+            screen(
                 Destination.History.route,
                 arguments = listOf(
                     navArgument(Destination.ARG_CAR_ID) {
@@ -154,10 +159,10 @@ fun ItsTime4ServiceNavGraph(launchCarId: String?, modifier: Modifier = Modifier)
             ) { entry ->
                 HistoryScreen(initialCarId = entry.arguments?.read { getStringOrNull(Destination.ARG_CAR_ID) })
             }
-            composable(Destination.Settings.route) {
+            screen(Destination.Settings.route) {
                 SettingsScreen(onOpenLicenses = { navController.navigate(Destination.Licenses.route) })
             }
-            composable(Destination.Licenses.route) {
+            screen(Destination.Licenses.route) {
                 LicensesScreen(onBack = { navController.popBackStack() })
             }
         }
@@ -245,10 +250,19 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.tabEnter(still: Bo
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.tabExit(still: Boolean): ExitTransition? =
     tabDirection()?.let { if (still) ExitTransition.None else slideOutOfContainer(it, tween(TAB_SLIDE_MS, easing = FastOutSlowInEasing)) }
 
-private const val TAB_SLIDE_MS = 320
+private const val TAB_SLIDE_MS = 400
 private const val DEFAULT_FADE_MS = 700
 
 private val tabRoutes = tabs.map { it.route }.toSet()
+
+private fun NavGraphBuilder.screen(
+    route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    content: @Composable (NavBackStackEntry) -> Unit,
+) = composable(route, arguments) { entry ->
+    val settled = transition.currentState == EnterExitState.Visible && transition.targetState == EnterExitState.Visible
+    CompositionLocalProvider(LocalScreenSettled provides settled) { content(entry) }
+}
 
 private fun NavHostController.navigateToTab(route: String) {
     if (route == Destination.Cars.route) {
