@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.number
 import ru.kuznetsov.itstime4service.domain.model.CarSummary
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.domain.usecase.AddHistoryEntryUseCase
@@ -29,7 +28,8 @@ import ru.kuznetsov.itstime4service.ui.format.kmIn
  * Drives the service history screen: the records of every car in one list, a car picker,
  * a filter by date range, task name and mileage range, and a window for one record.
  * [initialCarId] pre-selects a car when the screen is opened from that car's screen.
- * The task name is searched as a substring, ignoring case. Mileage is filtered and edited in the unit chosen
+ * Which records are shown, how they are grouped and which task names are offered is decided by [HistoryRows]; the
+ * view model reads the filter fields into [HistoryCriteria]. Mileage is filtered and edited in the unit chosen
  * in settings; a mileage left as it was keeps its stored kilometers.
  * A filter with a date that cannot be read is not applied: its window stays open and marks the date.
  * The record window saves the date, the mileage, the cost, the service name and the comment; an invalid date
@@ -66,7 +66,6 @@ class HistoryViewModel(
     ) { cars, rows, settings, activeCars, view ->
         val owners = cars.map { it.toHistoryCar() }
         val selectedCarId = view.selectedCarId?.takeIf { id -> owners.any { it.id == id } }
-        val ofCar = rows.filter { selectedCarId == null || it.car.id == selectedCarId }
         HistoryUiState(
             isLoading = false,
             cars = owners,
@@ -74,17 +73,11 @@ class HistoryViewModel(
             isCarMenuOpen = view.isCarMenuOpen,
             filter = view.filter,
             filterDraft = view.filterDraft,
-            years = ofCar.filter { view.filter.matches(it, settings.distanceUnit) }.grouped(),
-            hasEntries = ofCar.isNotEmpty(),
+            years = HistoryRows.grouped(HistoryRows.matching(rows, view.filter.toCriteria(selectedCarId, settings.distanceUnit))),
+            hasEntries = HistoryRows.ofCar(rows, selectedCarId).isNotEmpty(),
             entryForm = view.entryForm,
             newEntry = view.newEntry,
-            newEntrySuggestions = view.newEntry
-                ?.let { form -> activeCars.firstOrNull { it.id == form.carId } }
-                ?.tasks
-                ?.map { it.name }
-                ?.distinct()
-                ?.take(SUGGESTION_COUNT)
-                .orEmpty(),
+            newEntrySuggestions = HistoryRows.suggestions(view.newEntry?.let { form -> activeCars.firstOrNull { it.id == form.carId } }),
             distanceUnit = settings.distanceUnit,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HistoryUiState())
@@ -221,27 +214,15 @@ class HistoryViewModel(
 
     fun onNewEntryDismiss() = view.update { it.copy(newEntry = null) }
 
-    private fun HistoryFilter.matches(row: HistoryRow, unit: DistanceUnit): Boolean {
-        val entry = row.entry
-        val from = DateInputFormat.current.parse(dateFrom)
-        val to = DateInputFormat.current.parse(dateTo)
-        val minKm = mileageFrom.toIntOrNull()
-        val maxKm = mileageTo.toIntOrNull()
-        val text = query.trim()
-        return (from == null || entry.date >= from) &&
-            (to == null || entry.date <= to) &&
-            (text.isEmpty() || entry.taskName.contains(text, ignoreCase = true)) &&
-            (minKm == null || entry.mileageKm.kmIn(unit) >= minKm) &&
-            (maxKm == null || entry.mileageKm.kmIn(unit) <= maxKm)
-    }
-
-    private fun List<HistoryRow>.grouped(): List<HistoryYear> =
-        groupBy { it.entry.date.year }.map { (year, ofYear) ->
-            HistoryYear(
-                year = year,
-                months = ofYear.groupBy { it.entry.date.month.number }.map { (month, ofMonth) -> HistoryMonth(month, ofMonth) },
-            )
-        }
+    private fun HistoryFilter.toCriteria(carId: String?, unit: DistanceUnit) = HistoryCriteria(
+        carId = carId,
+        from = DateInputFormat.current.parse(dateFrom),
+        to = DateInputFormat.current.parse(dateTo),
+        query = query,
+        minMileage = mileageFrom.toIntOrNull(),
+        maxMileage = mileageTo.toIntOrNull(),
+        distanceUnit = unit,
+    )
 
     private fun CarSummary.toHistoryCar() = HistoryCar(id = id, brand = brand, isSold = isSold)
 
@@ -262,6 +243,5 @@ class HistoryViewModel(
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
         const val MAX_NUMBER_LENGTH = 7
-        const val SUGGESTION_COUNT = 3
     }
 }

@@ -226,6 +226,8 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 
 `HistoryUiState`: `isLoading`, `cars: List<HistoryCar>` (`id`, `brand`, `isSold`), `selectedCarId`, `isCarMenuOpen`, `filter`, `filterDraft` (открыто окно фильтра), `years: List<HistoryYear>` → `months: List<HistoryMonth>` → `rows: List<HistoryRow>` (`entry`, `car`), `hasEntries`, `entryForm: HistoryEntryForm?`, `newEntry: NewHistoryEntryForm?` (`carId`, `taskName`, `date`, `mileage`, `serviceName`, `cost`, `comment`, `isExpanded`, `isCarMenuOpen`, `showErrors`), `newEntrySuggestions`, `distanceUnit`; вычисляемое `activeCars` — машины без проданных. Источники — `ObserveCarSummariesUseCase`, `ObserveAllHistoryUseCase`, `ObserveSettingsUseCase` и `ObserveCarsUseCase` (названия работ для чипов).
 
+Чистая логика списка — в `HistoryRows.kt` (`internal object HistoryRows`): `ofCar` (записи выбранной машины), `matching(rows, criteria)` (машина и фильтр; границы включительно, пробег сравнивается в выбранных единицах), `grouped` (годы и месяцы в порядке записей — от новых к старым) и `suggestions(car)` (первые три разных названия работ машины). `HistoryViewModel` разбирает поля фильтра в `HistoryCriteria` (даты — через `DateInputFormat`) и держит состояние экрана целиком; сам на части не делится. Логика покрыта `HistoryRowsTest`.
+
 ### `settings` — настройки
 
 Каждое изменение сохраняется сразу; кнопки «Сохранить» нет. Изменения идут через `UpdateSettingsUseCase` с функцией изменения — каждое применяется к сохранённым на этот момент настройкам.
@@ -412,4 +414,4 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 
 - Анимации индикаторов и остальная полировка этапа 9; сейчас анимированы ползунок `AppSwitch` и прокрутка списка работ.
 - Переключатель языка в приложении.
-- Юнит-тесты на ViewModel-и, кроме `CarsViewModel`, и тесты Composable-компонентов. Из `ui/format` покрыт перевод км и миль с `keepKm` (`DistanceConversionTest`); `TaskFields` и ввод дат зависят от `Locale.current` и не покрыты.
+- Юнит-тесты на ViewModel-и, кроме `CarsViewModel` (у `HistoryViewModel` покрыта вынесенная логика списка, `HistoryRowsTest`), и тесты Composable-компонентов. Из `ui/format` покрыт перевод км и миль с `keepKm` (`DistanceConversionTest`); `TaskFields` и ввод дат зависят от `Locale.current` и не покрыты.
