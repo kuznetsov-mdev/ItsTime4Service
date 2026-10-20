@@ -54,6 +54,7 @@ fun CarsScreen(
     CarsContent(
         state = state,
         onViewSelect = viewModel::onViewSelect,
+        onPlateToggle = viewModel::onPlateToggle,
         onOpenCar = onOpenCar,
         onOpenHistory = onOpenHistory,
         onAddCar = onAddCar,
@@ -65,6 +66,7 @@ fun CarsScreen(
 internal fun CarsContent(
     state: CarsUiState,
     onViewSelect: (CarsView) -> Unit,
+    onPlateToggle: (carId: String) -> Unit,
     onOpenCar: (carId: String) -> Unit,
     onOpenHistory: (carId: String) -> Unit,
     onAddCar: () -> Unit,
@@ -118,6 +120,7 @@ internal fun CarsContent(
                             distanceUnit = state.distanceUnit,
                             onOpenCar = { onOpenCar(car.id) },
                             onOpenHistory = { onOpenHistory(car.id) },
+                            onPlateToggle = { onPlateToggle(car.id) },
                         )
                     }
                 }
@@ -169,13 +172,13 @@ private val previewState = CarsUiState(
 @Preview
 @Composable
 private fun CarsContentLightPreview() = ScreenPreview(darkTheme = false) {
-    CarsContent(state = previewState, onViewSelect = {}, onOpenCar = {}, onOpenHistory = {}, onAddCar = {})
+    CarsContent(state = previewState, onViewSelect = {}, onPlateToggle = {}, onOpenCar = {}, onOpenHistory = {}, onAddCar = {})
 }
 
 @Preview
 @Composable
 private fun CarsContentDarkPreview() = ScreenPreview(darkTheme = true) {
-    CarsContent(state = previewState, onViewSelect = {}, onOpenCar = {}, onOpenHistory = {}, onAddCar = {})
+    CarsContent(state = previewState, onViewSelect = {}, onPlateToggle = {}, onOpenCar = {}, onOpenHistory = {}, onAddCar = {})
 }
 
 @Preview
@@ -184,6 +187,7 @@ private fun CarsCardsLightPreview() = ScreenPreview(darkTheme = false) {
     CarsContent(
         state = previewState.copy(view = CarsView.TASKS_AND_HISTORY),
         onViewSelect = {},
+        onPlateToggle = {},
         onOpenCar = {},
         onOpenHistory = {},
         onAddCar = {},
@@ -197,6 +201,7 @@ private fun CarsCardsDarkPreview() = ScreenPreview(darkTheme = true) {
     CarsContent(
         state = previewState.copy(view = CarsView.TASKS_AND_HISTORY),
         onViewSelect = {},
+        onPlateToggle = {},
         onOpenCar = {},
         onOpenHistory = {},
         onAddCar = {},

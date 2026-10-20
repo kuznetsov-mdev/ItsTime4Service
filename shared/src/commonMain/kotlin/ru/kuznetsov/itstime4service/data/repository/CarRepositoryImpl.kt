@@ -53,4 +53,12 @@ class CarRepositoryImpl(database: ItsTime4ServiceDatabase) : CarRepository {
     override suspend fun deleteTask(carId: String, taskId: String): Unit = withContext(dispatcher) {
         taskQueries.deleteById(taskId, carId)
     }
+
+    override suspend fun setPlateHidden(carId: String, hidden: Boolean): Unit = withContext(dispatcher) {
+        carQueries.setPlateHidden(hidden, carId)
+    }
+
+    override suspend fun setVinHidden(carId: String, hidden: Boolean): Unit = withContext(dispatcher) {
+        carQueries.setVinHidden(hidden, carId)
+    }
 }

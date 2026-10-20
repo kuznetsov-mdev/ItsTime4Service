@@ -10,6 +10,7 @@ import ru.kuznetsov.itstime4service.domain.model.CarSummary
  * [observeCars] and [observeCarById] see only cars that are not sold; [observeCarById] emits `null` when there
  * is no such car. [observeCarSummaries] lists every car, sold ones last.
  * [deleteTask] removes a task and keeps its history records.
+ * [setPlateHidden] and [setVinHidden] store whether the plate or the VIN is kept out of sight.
  */
 interface CarRepository {
     fun observeCars(): Flow<List<Car>>
@@ -23,4 +24,8 @@ interface CarRepository {
     suspend fun updateCar(carId: String, brand: String, vin: String?, plate: String?)
 
     suspend fun deleteTask(carId: String, taskId: String)
+
+    suspend fun setPlateHidden(carId: String, hidden: Boolean)
+
+    suspend fun setVinHidden(carId: String, hidden: Boolean)
 }

@@ -28,6 +28,8 @@ import ru.kuznetsov.itstime4service.domain.usecase.PlanRemindersUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.PurgeCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.RecordCarOpenedUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SetDefaultCarUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.SetPlateHiddenUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.SetVinHiddenUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SortedTaskStatsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SyncRemindersUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UnmarkTaskDoneUseCase
@@ -63,6 +65,8 @@ val domainModule = module {
     factoryOf(::ObserveSettingsUseCase)
     factoryOf(::UpdateSettingsUseCase)
     factoryOf(::UpdateCarUseCase)
+    factoryOf(::SetPlateHiddenUseCase)
+    factoryOf(::SetVinHiddenUseCase)
     factoryOf(::AddTaskUseCase)
     factoryOf(::UpdateTaskUseCase)
     factoryOf(::DeleteTaskUseCase)

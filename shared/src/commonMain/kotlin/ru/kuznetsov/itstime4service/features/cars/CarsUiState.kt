@@ -38,6 +38,7 @@ data class CarItem(
     val upcomingTasks: List<UpcomingTask> = emptyList(),
     val recentRecords: List<RecentRecord> = emptyList(),
     val plateLook: PlateLook? = null,
+    val plateHidden: Boolean = false,
 )
 
 /**

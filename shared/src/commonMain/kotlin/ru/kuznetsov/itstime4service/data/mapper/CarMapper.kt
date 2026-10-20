@@ -15,6 +15,8 @@ internal fun Cars.toDomain(tasks: List<Maintenance_tasks>) = Car(
     vin = vin,
     tasks = tasks.map { it.toDomain() },
     plate = plate,
+    plateHidden = plate_hidden,
+    vinHidden = vin_hidden,
 )
 
 internal fun Cars.toSummary() = CarSummary(

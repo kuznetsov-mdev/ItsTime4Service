@@ -46,6 +46,8 @@ data class CarDetails(
     val vin: String?,
     val plate: String?,
     val plateLook: PlateLook?,
+    val plateHidden: Boolean = false,
+    val vinHidden: Boolean = false,
     val mileageKm: Int,
     val dueCount: Int,
     val soonCount: Int,

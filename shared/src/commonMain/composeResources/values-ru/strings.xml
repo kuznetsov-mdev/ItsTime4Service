@@ -215,4 +215,10 @@
     <string name="action_show_license">Показать текст лицензии</string>
     <string name="action_hide_license">Скрыть текст лицензии</string>
     <string name="task_create_record">Создать запись в истории</string>
+    <string name="action_hide_plate">Скрыть госномер</string>
+    <string name="action_show_plate">Показать госномер</string>
+    <string name="action_hide_vin">Скрыть VIN</string>
+    <string name="action_show_vin">Показать VIN</string>
+    <string name="plate_hidden">Госномер скрыт</string>
+    <string name="vin_hidden">VIN скрыт</string>
 </resources>

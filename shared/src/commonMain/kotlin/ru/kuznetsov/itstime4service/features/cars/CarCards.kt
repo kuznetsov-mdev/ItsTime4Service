@@ -38,8 +38,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import kotlin.math.abs
+import kotlinx.datetime.number
+import org.jetbrains.compose.resources.stringResource
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_add_car
+import itstime4service.shared.generated.resources.action_hide_plate
+import itstime4service.shared.generated.resources.action_show_plate
 import itstime4service.shared.generated.resources.alert_count_due
 import itstime4service.shared.generated.resources.car_card_no_history
 import itstime4service.shared.generated.resources.car_card_no_tasks
@@ -48,12 +53,9 @@ import itstime4service.shared.generated.resources.car_card_upcoming
 import itstime4service.shared.generated.resources.cars_view_list
 import itstime4service.shared.generated.resources.cars_view_tasks
 import itstime4service.shared.generated.resources.cars_view_tasks_history
-import kotlin.math.abs
-import kotlinx.datetime.number
-import org.jetbrains.compose.resources.stringResource
 import ru.kuznetsov.itstime4service.domain.model.CarsView
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
-import ru.kuznetsov.itstime4service.ui.components.indicators.LicensePlate
+import ru.kuznetsov.itstime4service.ui.components.indicators.FlippablePlate
 import ru.kuznetsov.itstime4service.ui.components.indicators.StatusDonut
 import ru.kuznetsov.itstime4service.ui.components.indicators.color
 import ru.kuznetsov.itstime4service.ui.format.grouped
@@ -140,6 +142,7 @@ internal fun CarCard(
     distanceUnit: DistanceUnit,
     onOpenCar: () -> Unit,
     onOpenHistory: () -> Unit,
+    onPlateToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = ItsTime4ServiceTheme.colors
@@ -226,7 +229,16 @@ internal fun CarCard(
         }
         if (car.plateLook != null) {
             PlateSection(withDivider = withHistory) {
-                LicensePlate(look = car.plateLook, compact = true)
+                FlippablePlate(
+                    look = car.plateLook,
+                    hidden = car.plateHidden,
+                    compact = true,
+                    modifier = Modifier.clickable(
+                        role = Role.Button,
+                        onClickLabel = stringResource(if (car.plateHidden) Res.string.action_show_plate else Res.string.action_hide_plate),
+                        onClick = onPlateToggle,
+                    ),
+                )
             }
         }
     }

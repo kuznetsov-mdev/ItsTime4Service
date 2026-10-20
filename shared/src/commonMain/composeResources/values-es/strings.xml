@@ -213,4 +213,10 @@
     <string name="action_show_license">Mostrar texto de la licencia</string>
     <string name="action_hide_license">Ocultar texto de la licencia</string>
     <string name="task_create_record">Crear un registro en el historial</string>
+    <string name="action_hide_plate">Ocultar la matrícula</string>
+    <string name="action_show_plate">Mostrar la matrícula</string>
+    <string name="action_hide_vin">Ocultar el VIN</string>
+    <string name="action_show_vin">Mostrar el VIN</string>
+    <string name="plate_hidden">Matrícula oculta</string>
+    <string name="vin_hidden">VIN oculto</string>
 </resources>

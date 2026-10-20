@@ -25,6 +25,7 @@ import ru.kuznetsov.itstime4service.domain.usecase.GetTodayUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveAllHistoryUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.SetPlateHiddenUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SortedTaskStatsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.defaultTestSettings
@@ -72,8 +73,8 @@ class CarsViewModelTest {
         cars: List<Car>,
         history: List<ServiceHistoryEntry> = emptyList(),
         settings: FakeSettingsRepository = FakeSettingsRepository(),
+        carRepository: FakeCarRepository = FakeCarRepository(cars),
     ): CarsViewModel {
-        val carRepository = FakeCarRepository(cars)
         val calculateTaskStatus = CalculateTaskStatusUseCase()
         return CarsViewModel(
             observeCars = ObserveCarsUseCase(carRepository),
@@ -84,6 +85,7 @@ class CarsViewModelTest {
             sortedTaskStats = SortedTaskStatsUseCase(calculateTaskStatus),
             detectPlateStyle = DetectPlateStyleUseCase(),
             getToday = GetTodayUseCase(),
+            setPlateHidden = SetPlateHiddenUseCase(carRepository),
         )
     }
 
@@ -223,6 +225,28 @@ class CarsViewModelTest {
 
         assertEquals(CarsView.TASKS, settings.settings.carsView)
         assertEquals(1, settings.writes)
+    }
+
+    @Test
+    fun hiddenPlateComesFromCar() = runTest {
+        val state = loaded(viewModel(cars = listOf(car("kia", plate = "А123ВС77").copy(plateHidden = true), car("camry"))))
+
+        assertTrue(state.car("kia").plateHidden)
+        assertEquals(false, state.car("camry").plateHidden)
+    }
+
+    @Test
+    fun tapOnPlateHidesItAndShowsItAgain() = runTest {
+        val repository = FakeCarRepository(listOf(car("kia", plate = "А123ВС77")))
+        val viewModel = viewModel(cars = repository.cars, carRepository = repository)
+        loaded(viewModel)
+
+        viewModel.onPlateToggle("kia")
+        assertTrue(repository.cars.single().plateHidden)
+        assertTrue(viewModel.state.value.car("kia").plateHidden)
+
+        viewModel.onPlateToggle("kia")
+        assertEquals(false, repository.cars.single().plateHidden)
     }
 
     private companion object {

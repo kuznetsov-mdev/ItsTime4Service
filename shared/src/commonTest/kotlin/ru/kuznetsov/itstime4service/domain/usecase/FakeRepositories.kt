@@ -26,7 +26,8 @@ import ru.kuznetsov.itstime4service.domain.repository.TaskHistoryRepository
 
 /**
  * [CarRepository] for use case tests: serves active [cars], which a test may replace to emit a change, and [sold]
- * cars, and records the edits of a car, the mileage it was given and the tasks it was asked to delete.
+ * cars, and records the edits of a car, the mileage it was given and the tasks it was asked to delete. Hiding the plate
+ * or the VIN changes the served car, so observers see it.
  */
 internal class FakeCarRepository(
     cars: List<Car>,
@@ -62,6 +63,14 @@ internal class FakeCarRepository(
 
     override suspend fun deleteTask(carId: String, taskId: String) {
         deletedTasks += carId to taskId
+    }
+
+    override suspend fun setPlateHidden(carId: String, hidden: Boolean) {
+        cars = cars.map { if (it.id == carId) it.copy(plateHidden = hidden) else it }
+    }
+
+    override suspend fun setVinHidden(carId: String, hidden: Boolean) {
+        cars = cars.map { if (it.id == carId) it.copy(vinHidden = hidden) else it }
     }
 }
 

@@ -17,6 +17,7 @@ import ru.kuznetsov.itstime4service.domain.usecase.GetTodayUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveAllHistoryUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.SetPlateHiddenUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SortedTaskStatsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateSettingsUseCase
 import ru.kuznetsov.itstime4service.ui.format.deviceRegion
@@ -26,7 +27,8 @@ import ru.kuznetsov.itstime4service.ui.format.toLook
  * Drives the "My cars" screen in one of three views (see [CarsView]); the chosen view is stored in settings.
  * A row shows the gauge summarizing a car's soon and due tasks; a car with nothing to attend to still gets
  * a thin sliver of the ring, so the gauge never looks empty. A card shows the status ring, the four most urgent
- * tasks, the four latest history records and the licence plate.
+ * tasks, the four latest history records and the licence plate. A tap on the plate hides it or shows it again; the choice
+ * is stored with the car (see [SetPlateHiddenUseCase]).
  */
 class CarsViewModel(
     observeCars: ObserveCarsUseCase,
@@ -37,6 +39,7 @@ class CarsViewModel(
     private val sortedTaskStats: SortedTaskStatsUseCase,
     private val detectPlateStyle: DetectPlateStyleUseCase,
     private val getToday: GetTodayUseCase,
+    private val setPlateHidden: SetPlateHiddenUseCase,
 ) : ViewModel() {
 
     val state: StateFlow<CarsUiState> = combine(observeCars(), observeAllHistory(), observeSettings()) { cars, history, settings ->
@@ -52,6 +55,11 @@ class CarsViewModel(
 
     fun onViewSelect(view: CarsView) {
         viewModelScope.launch { updateSettings { it.copy(carsView = view) } }
+    }
+
+    fun onPlateToggle(carId: String) {
+        val car = state.value.cars.firstOrNull { it.id == carId } ?: return
+        viewModelScope.launch { setPlateHidden(carId, !car.plateHidden) }
     }
 
     private fun Car.toItem(today: LocalDate, history: List<HistoryRecord>): CarItem {
@@ -75,6 +83,7 @@ class CarsViewModel(
             },
             recentRecords = history.take(CARD_LINES).map { RecentRecord(taskName = it.entry.taskName, date = it.entry.date) },
             plateLook = plate?.let { detectPlateStyle(it, deviceRegion()).toLook(it) },
+            plateHidden = plateHidden,
         )
     }
 

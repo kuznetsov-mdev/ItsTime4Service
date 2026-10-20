@@ -1,9 +1,13 @@
 package ru.kuznetsov.itstime4service.ui.components.indicators
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -29,10 +33,11 @@ import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
  * The gaps are measured between the glyph boxes, which already carry the font's side bearings.
  * A series that is not "letter digits letters" is drawn as one line in the digit size. The region section is wide
  * enough for three digits, as on the sample `docs/X999AM199.png`; a line that still does not fit its section is
- * narrowed, keeping its height.
+ * narrowed, keeping its height. [blurGlyphs] blurs the series and the region only — for a hidden plate, which draws
+ * placeholders instead of its characters; the frame, "RUS" and the flag stay sharp.
  */
 @Composable
-internal fun RussianPlate(look: PlateLook.Russian, compact: Boolean, modifier: Modifier = Modifier) {
+internal fun RussianPlate(look: PlateLook.Russian, compact: Boolean, modifier: Modifier = Modifier, blurGlyphs: Boolean = false) {
     val colors = ItsTime4ServiceTheme.colors
     val height = if (compact) 22.dp else 30.dp
     val density = LocalDensity.current
@@ -42,55 +47,62 @@ internal fun RussianPlate(look: PlateLook.Russian, compact: Boolean, modifier: M
         textGeometricTransform = TextGeometricTransform(scaleX = CONDENSE),
     )
     val ink = colors.plateInk
-    Canvas(modifier.size(width = height * WIDTH, height = height)) {
-        val h = size.height
-        fun style(glyphHeight: Float) = baseStyle.copy(fontSize = (glyphHeight / CAP_HEIGHT / density.density / density.fontScale).sp)
-        val stroke = h * FRAME
-        val inset = stroke / 2
-        drawRoundRect(colors.plateBg, cornerRadius = CornerRadius(h * CORNER))
-        drawRoundRect(
-            ink,
-            topLeft = Offset(inset, inset),
-            size = Size(size.width - stroke, h - stroke),
-            cornerRadius = CornerRadius(h * CORNER - inset),
-            style = Stroke(stroke),
-        )
-        val innerLeft = stroke
-        val innerRight = size.width - stroke
-        val innerTop = stroke
-        val innerBottom = h - stroke
-        val dividerX = innerLeft + (innerRight - innerLeft) * MAIN_SHARE
-        drawRect(ink, topLeft = Offset(dividerX, innerTop), size = Size(stroke, innerBottom - innerTop))
-
-        val parts = look.series.split(' ').filter { it.isNotEmpty() }
-        val seriesBaseline = innerBottom - h * SERIES_BOTTOM
-        val seriesLeft = innerLeft + h * SERIES_SIDE
-        val seriesRight = dividerX - h * SERIES_SIDE
-        val pieces = if (parts.size == 3 && parts[1].all(Char::isDigit)) {
-            val letters = style(h * LETTER_HEIGHT)
-            val digits = style(h * DIGIT_HEIGHT)
-            glyphs(measurer, parts[0], letters, h * LETTER_GAP) +
-                Gap(h * GROUP_GAP) +
-                glyphs(measurer, parts[1], digits, h * DIGIT_GAP) +
-                Gap(h * GROUP_GAP) +
-                glyphs(measurer, parts[2], letters, h * LETTER_GAP)
-        } else {
-            glyphs(measurer, parts.joinToString(""), style(h * DIGIT_HEIGHT), h * DIGIT_GAP)
+    fun style(glyphHeight: Float) = baseStyle.copy(fontSize = (glyphHeight / CAP_HEIGHT / density.density / density.fontScale).sp)
+    Box(modifier.size(width = height * WIDTH, height = height)) {
+        Canvas(Modifier.fillMaxSize()) {
+            val box = PlateBox(size)
+            val h = size.height
+            drawRoundRect(colors.plateBg, cornerRadius = CornerRadius(h * CORNER))
+            drawRoundRect(
+                ink,
+                topLeft = Offset(box.stroke / 2, box.stroke / 2),
+                size = Size(size.width - box.stroke, h - box.stroke),
+                cornerRadius = CornerRadius(h * CORNER - box.stroke / 2),
+                style = Stroke(box.stroke),
+            )
+            drawRect(ink, topLeft = Offset(box.dividerX, box.innerTop), size = Size(box.stroke, box.innerBottom - box.innerTop))
+            val rus = listOf(
+                Glyph(measurer.measure("RUS", style(h * RUS_HEIGHT))),
+                Gap(h * FLAG_GAP),
+                Flag(h * FLAG_WIDTH, h * FLAG_HEIGHT),
+            )
+            drawLine(rus, box.regionLeft, box.regionRight, box.innerBottom - h * RUS_BOTTOM, ink)
         }
-        drawLine(pieces, seriesLeft, seriesRight, seriesBaseline, ink)
-
-        val regionLeft = dividerX + stroke + h * REGION_PADDING
-        val regionRight = innerRight - h * REGION_PADDING
-        val regionBaseline = innerTop + h * (REGION_TOP + REGION_HEIGHT)
-        drawLine(glyphs(measurer, look.region, style(h * REGION_HEIGHT), h * DIGIT_GAP), regionLeft, regionRight, regionBaseline, ink)
-
-        val rus = listOf(
-            Glyph(measurer.measure("RUS", style(h * RUS_HEIGHT))),
-            Gap(h * FLAG_GAP),
-            Flag(h * FLAG_WIDTH, h * FLAG_HEIGHT),
-        )
-        drawLine(rus, regionLeft, regionRight, innerBottom - h * RUS_BOTTOM, ink)
+        Canvas(
+            Modifier
+                .fillMaxSize()
+                .then(if (blurGlyphs) Modifier.blur(height * GLYPH_BLUR, BlurredEdgeTreatment.Unbounded) else Modifier),
+        ) {
+            val box = PlateBox(size)
+            val h = size.height
+            val parts = look.series.split(' ').filter { it.isNotEmpty() }
+            val pieces = if (parts.size == 3 && parts[1].all(Char::isDigit)) {
+                val letters = style(h * LETTER_HEIGHT)
+                val digits = style(h * DIGIT_HEIGHT)
+                glyphs(measurer, parts[0], letters, h * LETTER_GAP) +
+                    Gap(h * GROUP_GAP) +
+                    glyphs(measurer, parts[1], digits, h * DIGIT_GAP) +
+                    Gap(h * GROUP_GAP) +
+                    glyphs(measurer, parts[2], letters, h * LETTER_GAP)
+            } else {
+                glyphs(measurer, parts.joinToString(""), style(h * DIGIT_HEIGHT), h * DIGIT_GAP)
+            }
+            drawLine(pieces, box.innerLeft + h * SERIES_SIDE, box.dividerX - h * SERIES_SIDE, box.innerBottom - h * SERIES_BOTTOM, ink)
+            val regionBaseline = box.innerTop + h * (REGION_TOP + REGION_HEIGHT)
+            drawLine(glyphs(measurer, look.region, style(h * REGION_HEIGHT), h * DIGIT_GAP), box.regionLeft, box.regionRight, regionBaseline, ink)
+        }
     }
+}
+
+private class PlateBox(size: Size) {
+    val stroke = size.height * FRAME
+    val innerLeft = stroke
+    val innerRight = size.width - stroke
+    val innerTop = stroke
+    val innerBottom = size.height - stroke
+    val dividerX = innerLeft + (innerRight - innerLeft) * MAIN_SHARE
+    val regionLeft = dividerX + stroke + size.height * REGION_PADDING
+    val regionRight = innerRight - size.height * REGION_PADDING
 }
 
 private sealed interface Piece {
@@ -160,6 +172,7 @@ private const val RUS_BOTTOM = 0.11f
 private const val FLAG_WIDTH = 0.34f
 private const val FLAG_HEIGHT = 0.18f
 private const val FLAG_GAP = 0.05f
+private const val GLYPH_BLUR = 0.12f
 
 private val FlagBlue = Color(0xFF1C57A5)
 private val FlagRed = Color(0xFFD52B1E)

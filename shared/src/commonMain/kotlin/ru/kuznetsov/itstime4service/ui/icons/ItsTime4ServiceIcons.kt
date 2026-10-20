@@ -12,6 +12,8 @@ import com.composables.icons.lucide.CircleDot
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Disc
 import com.composables.icons.lucide.Droplet
+import com.composables.icons.lucide.Eye
+import com.composables.icons.lucide.EyeOff
 import com.composables.icons.lucide.Filter
 import com.composables.icons.lucide.Gauge
 import com.composables.icons.lucide.LayoutPanelTop
@@ -66,4 +68,6 @@ object ItsTime4ServiceIcons {
     val Tire: ImageVector get() = Lucide.CircleDot
     val Wind: ImageVector get() = Lucide.Wind
     val ScrollText: ImageVector get() = Lucide.ScrollText
+    val Eye: ImageVector get() = Lucide.Eye
+    val EyeOff: ImageVector get() = Lucide.EyeOff
 }

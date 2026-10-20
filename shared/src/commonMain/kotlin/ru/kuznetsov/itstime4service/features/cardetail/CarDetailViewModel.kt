@@ -23,6 +23,8 @@ import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarByIdUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveHistoryUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.RecordCarOpenedUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.SetPlateHiddenUseCase
+import ru.kuznetsov.itstime4service.domain.usecase.SetVinHiddenUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SortedTaskStatsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UnmarkTaskDoneUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateCarUseCase
@@ -47,6 +49,7 @@ import ru.kuznetsov.itstime4service.ui.icons.taskIcon
  * the mark after a confirmation rolls the task back and deletes the record.
  * Opening the screen remembers the car as the last opened one, which the app may start on next time.
  * The licence plate is drawn after its format, with the device region as a tie-breaker (see [DetectPlateStyleUseCase]).
+ * The plate and the VIN can be hidden and shown again; the choice is stored with the car, and a hidden one is not edited.
  */
 class CarDetailViewModel(
     private val carId: String,
@@ -64,6 +67,8 @@ class CarDetailViewModel(
     recordCarOpened: RecordCarOpenedUseCase,
     private val detectPlateStyle: DetectPlateStyleUseCase,
     private val deleteCar: DeleteCarUseCase,
+    private val setPlateHidden: SetPlateHiddenUseCase,
+    private val setVinHidden: SetVinHiddenUseCase,
 ) : ViewModel() {
 
     private val overlay = MutableStateFlow(Overlay())
@@ -92,7 +97,23 @@ class CarDetailViewModel(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), CarDetailUiState())
 
-    fun onEdit(field: EditableField) = overlay.update { it.copy(editingField = field) }
+    fun onEdit(field: EditableField) {
+        val car = state.value.car ?: return
+        val hidden = (field == EditableField.PLATE && car.plateHidden) || (field == EditableField.VIN && car.vinHidden)
+        if (!hidden) overlay.update { it.copy(editingField = field) }
+    }
+
+    fun onPlateHiddenToggle() {
+        val car = state.value.car ?: return
+        onCancelEdit()
+        viewModelScope.launch { setPlateHidden(carId, !car.plateHidden) }
+    }
+
+    fun onVinHiddenToggle() {
+        val car = state.value.car ?: return
+        onCancelEdit()
+        viewModelScope.launch { setVinHidden(carId, !car.vinHidden) }
+    }
 
     fun onCancelEdit() = overlay.update { it.copy(editingField = null) }
 
@@ -184,6 +205,8 @@ class CarDetailViewModel(
             vin = vin,
             plate = plate,
             plateLook = plate?.let { detectPlateStyle(it, deviceRegion()).toLook(it) },
+            plateHidden = plateHidden,
+            vinHidden = vinHidden,
             mileageKm = mileageKm,
             dueCount = alerts.due,
             soonCount = alerts.soon,

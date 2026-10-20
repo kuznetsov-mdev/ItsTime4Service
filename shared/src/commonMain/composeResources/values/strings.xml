@@ -211,4 +211,10 @@
     <string name="action_show_license">Show license text</string>
     <string name="action_hide_license">Hide license text</string>
     <string name="task_create_record">Create a history record</string>
+    <string name="action_hide_plate">Hide the licence plate</string>
+    <string name="action_show_plate">Show the licence plate</string>
+    <string name="action_hide_vin">Hide the VIN</string>
+    <string name="action_show_vin">Show the VIN</string>
+    <string name="plate_hidden">Licence plate hidden</string>
+    <string name="vin_hidden">VIN hidden</string>
 </resources>

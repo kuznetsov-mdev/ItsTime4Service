@@ -4,7 +4,9 @@ CREATE TABLE cars (
     mileage_km INTEGER NOT NULL,
     vin TEXT,
     is_sold INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
-    plate TEXT
+    plate TEXT,
+    plate_hidden INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
+    vin_hidden INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0
 );
 
 selectAll:
@@ -24,6 +26,12 @@ UPDATE cars SET mileage_km = ? WHERE id = ?;
 
 updateDetails:
 UPDATE cars SET brand = ?, vin = ?, plate = ? WHERE id = ?;
+
+setPlateHidden:
+UPDATE cars SET plate_hidden = ? WHERE id = ?;
+
+setVinHidden:
+UPDATE cars SET vin_hidden = ? WHERE id = ?;
 
 markSold:
 UPDATE cars SET is_sold = 1 WHERE id = ?;
