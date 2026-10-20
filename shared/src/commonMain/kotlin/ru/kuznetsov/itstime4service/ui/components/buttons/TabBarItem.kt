@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -30,6 +32,8 @@ import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
  * One entry of the bottom tab bar — icon + label stacked, accent when selected.
  * The selected entry is outlined by a rounded frame in the icon's color; the others keep the same frame invisible,
  * so switching tabs moves nothing. The whole cell is tappable and reads as a selected or unselected tab.
+ * A tab bar that draws one moving frame for all its entries passes `showFrame = false` and gets the place of each
+ * entry's frame from [onFramePositioned].
  */
 @Composable
 fun TabBarItem(
@@ -38,6 +42,8 @@ fun TabBarItem(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    showFrame: Boolean = true,
+    onFramePositioned: ((LayoutCoordinates) -> Unit)? = null,
 ) {
     val colors = ItsTime4ServiceTheme.colors
     val color = if (selected) colors.accent else colors.inkFaint
@@ -50,7 +56,8 @@ fun TabBarItem(
     ) {
         Column(
             modifier = Modifier
-                .border(1.5.dp, if (selected) color else Color.Transparent, shape)
+                .then(if (onFramePositioned != null) Modifier.onGloballyPositioned(onFramePositioned) else Modifier)
+                .border(1.5.dp, if (selected && showFrame) color else Color.Transparent, shape)
                 .padding(horizontal = 16.dp, vertical = 5.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(3.dp),
