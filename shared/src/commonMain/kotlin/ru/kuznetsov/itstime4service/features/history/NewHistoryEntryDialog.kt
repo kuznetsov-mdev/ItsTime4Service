@@ -48,12 +48,8 @@ import androidx.compose.ui.window.Dialog
 import org.jetbrains.compose.resources.stringResource
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_add
-import itstime4service.shared.generated.resources.action_apply
 import itstime4service.shared.generated.resources.action_cancel
-import itstime4service.shared.generated.resources.action_filter
 import itstime4service.shared.generated.resources.action_more_entry_fields
-import itstime4service.shared.generated.resources.action_reset
-import itstime4service.shared.generated.resources.action_save
 import itstime4service.shared.generated.resources.action_select_car
 import itstime4service.shared.generated.resources.date_placeholder
 import itstime4service.shared.generated.resources.dialog_new_entry_text
@@ -61,12 +57,7 @@ import itstime4service.shared.generated.resources.dialog_new_entry_title
 import itstime4service.shared.generated.resources.field_car
 import itstime4service.shared.generated.resources.field_date
 import itstime4service.shared.generated.resources.field_mileage
-import itstime4service.shared.generated.resources.field_mileage_range
-import itstime4service.shared.generated.resources.field_period
-import itstime4service.shared.generated.resources.field_search_task
 import itstime4service.shared.generated.resources.field_task
-import itstime4service.shared.generated.resources.history_sold_car
-import itstime4service.shared.generated.resources.search_task_placeholder
 import itstime4service.shared.generated.resources.task_name_placeholder
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
@@ -79,186 +70,6 @@ import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
 import ru.kuznetsov.itstime4service.ui.format.unitLabel
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
-
-@Composable
-internal fun HistoryCar.label(): String = if (isSold) stringResource(Res.string.history_sold_car, brand) else brand
-
-@Composable
-internal fun HistoryFilterDialog(
-    filter: HistoryFilter,
-    distanceUnit: DistanceUnit,
-    onChange: (HistoryFilter) -> Unit,
-    onApply: () -> Unit,
-    onReset: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        HistoryFilterCard(filter = filter, distanceUnit = distanceUnit, onChange = onChange, onApply = onApply, onReset = onReset)
-    }
-}
-
-@Composable
-internal fun HistoryFilterCard(
-    filter: HistoryFilter,
-    distanceUnit: DistanceUnit,
-    onChange: (HistoryFilter) -> Unit,
-    onApply: () -> Unit,
-    onReset: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = ItsTime4ServiceTheme.colors
-    DialogCard(icon = ItsTime4ServiceIcons.Filter, title = stringResource(Res.string.action_filter), modifier = modifier) {
-        Spacer(Modifier.height(14.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-                LabeledMiniField(
-                    label = stringResource(Res.string.field_period),
-                    value = filter.dateFrom,
-                    onValueChange = { onChange(filter.copy(dateFrom = it)) },
-                    onDone = onApply,
-                    placeholder = stringResource(Res.string.date_placeholder),
-                    keyboardType = KeyboardType.Number,
-                    visualTransformation = DateInputFormat.current.visualTransformation,
-                    isError = filter.showErrors && filter.isDateFromInvalid,
-                    modifier = Modifier.weight(1f),
-                )
-                LabeledMiniField(
-                    label = "",
-                    value = filter.dateTo,
-                    onValueChange = { onChange(filter.copy(dateTo = it)) },
-                    onDone = onApply,
-                    placeholder = stringResource(Res.string.date_placeholder),
-                    keyboardType = KeyboardType.Number,
-                    visualTransformation = DateInputFormat.current.visualTransformation,
-                    isError = filter.showErrors && filter.isDateToInvalid,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            LabeledMiniField(
-                label = stringResource(Res.string.field_search_task),
-                value = filter.query,
-                onValueChange = { onChange(filter.copy(query = it)) },
-                onDone = onApply,
-                placeholder = stringResource(Res.string.search_task_placeholder),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-                LabeledMiniField(
-                    label = stringResource(Res.string.field_mileage_range, unitLabel(distanceUnit)),
-                    value = filter.mileageFrom,
-                    onValueChange = { onChange(filter.copy(mileageFrom = it)) },
-                    onDone = onApply,
-                    placeholder = "0",
-                    keyboardType = KeyboardType.Number,
-                    modifier = Modifier.weight(1f),
-                )
-                LabeledMiniField(
-                    label = "",
-                    value = filter.mileageTo,
-                    onValueChange = { onChange(filter.copy(mileageTo = it)) },
-                    onDone = onApply,
-                    placeholder = "100000",
-                    keyboardType = KeyboardType.Number,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-        Spacer(Modifier.height(18.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            DialogButton(
-                stringResource(Res.string.action_reset),
-                background = colors.surface2,
-                contentColor = colors.ink,
-                onClick = onReset,
-            )
-            DialogButton(
-                stringResource(Res.string.action_apply),
-                background = colors.accent,
-                contentColor = colors.onAccent,
-                onClick = onApply,
-            )
-        }
-    }
-}
-
-@Composable
-internal fun HistoryEntryDialog(
-    form: HistoryEntryForm,
-    distanceUnit: DistanceUnit,
-    onChange: (HistoryEntryForm) -> Unit,
-    onSave: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        HistoryEntryCard(form = form, distanceUnit = distanceUnit, onChange = onChange, onSave = onSave, onDismiss = onDismiss)
-    }
-}
-
-@Composable
-internal fun HistoryEntryCard(
-    form: HistoryEntryForm,
-    distanceUnit: DistanceUnit,
-    onChange: (HistoryEntryForm) -> Unit,
-    onSave: () -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = ItsTime4ServiceTheme.colors
-    DialogCard(icon = ItsTime4ServiceIcons.Wrench, title = form.taskName, text = form.car.label(), modifier = modifier) {
-        Spacer(Modifier.height(14.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-                LabeledMiniField(
-                    label = stringResource(Res.string.field_date),
-                    value = form.date,
-                    onValueChange = { onChange(form.copy(date = it)) },
-                    onDone = onSave,
-                    placeholder = stringResource(Res.string.date_placeholder),
-                    keyboardType = KeyboardType.Number,
-                    visualTransformation = DateInputFormat.current.visualTransformation,
-                    isError = form.showErrors && form.isDateInvalid,
-                    required = true,
-                    modifier = Modifier.weight(1f),
-                )
-                LabeledMiniField(
-                    label = stringResource(Res.string.field_mileage, unitLabel(distanceUnit)),
-                    value = form.mileage,
-                    onValueChange = { onChange(form.copy(mileage = it)) },
-                    onDone = onSave,
-                    placeholder = "78000",
-                    keyboardType = KeyboardType.Number,
-                    isError = form.showErrors && form.isMileageInvalid,
-                    required = true,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            ServiceRecordFields(
-                serviceName = form.serviceName,
-                cost = form.cost,
-                comment = form.comment,
-                onServiceNameChange = { onChange(form.copy(serviceName = it)) },
-                onCostChange = { onChange(form.copy(cost = it)) },
-                onCommentChange = { onChange(form.copy(comment = it)) },
-                onDone = onSave,
-            )
-        }
-        Spacer(Modifier.height(18.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            DialogButton(
-                stringResource(Res.string.action_cancel),
-                background = colors.surface2,
-                contentColor = colors.ink,
-                onClick = onDismiss,
-            )
-            DialogButton(
-                stringResource(Res.string.action_save),
-                background = colors.accent,
-                contentColor = colors.onAccent,
-                onClick = onSave,
-            )
-        }
-    }
-}
 
 @Composable
 internal fun NewHistoryEntryDialog(
@@ -472,45 +283,27 @@ private fun CarPickerField(
     }
 }
 
-private val previewCars = listOf(HistoryCar("c1", "Kia Rio"), HistoryCar("c2", "Toyota Camry"), HistoryCar("s1", "Lada Granta", isSold = true))
-
 @Composable
-private fun HistoryDialogsPreviewContent() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        HistoryFilterCard(
-            filter = HistoryFilter(query = "масл", mileageFrom = "60000"),
-            distanceUnit = DistanceUnit.KILOMETERS,
-            onChange = {},
-            onApply = {},
-            onReset = {},
-        )
-        HistoryEntryCard(
-            form = HistoryEntryForm("h1", "Замена масла и фильтра", previewCars[0], "14092026", "82000", "Kia Center", "4200"),
-            distanceUnit = DistanceUnit.KILOMETERS,
-            onChange = {},
-            onSave = {},
-            onDismiss = {},
-        )
-        NewHistoryEntryCard(
-            form = NewHistoryEntryForm(carId = "c1", mileage = "61500", isExpanded = true),
-            cars = previewCars.filterNot { it.isSold },
-            suggestions = listOf("Замена масла и фильтра", "Тормозные колодки"),
-            distanceUnit = DistanceUnit.KILOMETERS,
-            onChange = {},
-            onSave = {},
-            onDismiss = {},
-        )
-    }
+private fun NewHistoryEntryPreviewContent() {
+    NewHistoryEntryCard(
+        form = NewHistoryEntryForm(carId = "c1", mileage = "61500", isExpanded = true),
+        cars = listOf(HistoryCar("c1", "Kia Rio"), HistoryCar("c2", "Toyota Camry")),
+        suggestions = listOf("Замена масла и фильтра", "Тормозные колодки"),
+        distanceUnit = DistanceUnit.KILOMETERS,
+        onChange = {},
+        onSave = {},
+        onDismiss = {},
+    )
 }
 
 @Preview
 @Composable
-private fun HistoryDialogsLightPreview() = ComponentPreview(darkTheme = false) {
-    HistoryDialogsPreviewContent()
+private fun NewHistoryEntryLightPreview() = ComponentPreview(darkTheme = false) {
+    NewHistoryEntryPreviewContent()
 }
 
 @Preview
 @Composable
-private fun HistoryDialogsDarkPreview() = ComponentPreview(darkTheme = true) {
-    HistoryDialogsPreviewContent()
+private fun NewHistoryEntryDarkPreview() = ComponentPreview(darkTheme = true) {
+    NewHistoryEntryPreviewContent()
 }

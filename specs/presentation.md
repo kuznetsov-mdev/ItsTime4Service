@@ -25,7 +25,12 @@ ui/
 
 Правила слоя:
 
-- Каждая фича — `*Screen.kt`, `*UiState.kt`, `*ViewModel.kt`, иногда вынесенные части экрана (`CarDetailCards.kt`, `HistoryDialogs.kt`).
+- Каждая фича — `*Screen.kt`, `*UiState.kt`, `*ViewModel.kt` и вынесенные части экрана: самостоятельный компонент или окно — отдельный файл, `internal`, с собственными превью. Сейчас это:
+  - `cardetail`: `CarDetailHeader.kt` (шапка: марка, номер, VIN, правка на месте), `CarDetailCards.kt` (карточки пробега и работы);
+  - `cars`: `CarCards.kt`;
+  - `carform`: `CarFormTaskBlock.kt` (блок работы, свёрнутый и развёрнутый);
+  - `history`: `HistoryBar.kt` (выбор машины и кнопка фильтра), `HistoryList.kt` (год, рамка месяца, строка записи, пустое состояние), `HistoryFilterDialog.kt`, `HistoryEntryDialog.kt`, `NewHistoryEntryDialog.kt`, `HistoryCarLabel.kt` (подпись машины с пометкой «продано»), `HistoryRows.kt` (чистая логика списка);
+  - `settings`: `SettingsRows.kt` (группа, строка настройки, списки машин).
 - Экран — пара Composable-функций: `XxxScreen` получает ViewModel через `koinViewModel`, собирает состояние через `collectAsStateWithLifecycle()` и передаёт его в `internal XxxContent(state, колбэки…)`. `XxxContent` о ViewModel не знает; на нём же построены `@Preview` в светлой и тёмной теме.
 - ViewModel отдаёт один `StateFlow<XxxUiState>` и набор методов `onXxx(...)`. Отдельного канала разовых событий нет: «закрой экран» передаётся флагом в состоянии (`isMissing`, `isSaved`, `isClosed`), на который экран реагирует через `LaunchedEffect`.
 - ViewModel-ы зависят только от use case-ов domain-слоя (см. `specs/domain.md`); репозиториев и data-слоя не видят.
