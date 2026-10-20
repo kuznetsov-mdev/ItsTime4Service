@@ -24,6 +24,7 @@ import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
  * Ring of a car's tasks split by status: due, soon and ok arcs clockwise from the top, each as long as its share
  * of [total]; without tasks the ring is empty. The middle shows "soon and due of total" in the color of the worst
  * status present. [contentDescription] is read out instead of the numbers.
+ * The arcs grow and the color changes as described in [IndicatorAnimation].
  */
 @Composable
 fun StatusDonut(
@@ -37,24 +38,27 @@ fun StatusDonut(
     val dueColor = StatusTier.Due.color
     val soonColor = StatusTier.Soon.color
     val okColor = StatusTier.Ok.color
-    val worst = when {
-        due > 0 -> dueColor
-        soon > 0 -> soonColor
-        else -> okColor
-    }
+    val worst = IndicatorAnimation.color(
+        when {
+            due > 0 -> dueColor
+            soon > 0 -> soonColor
+            else -> okColor
+        },
+    )
+    val dueShare = IndicatorAnimation.fraction(if (total > 0) due.toFloat() / total else 0f)
+    val soonShare = IndicatorAnimation.fraction(if (total > 0) soon.toFloat() / total else 0f)
+    val okShare = IndicatorAnimation.fraction(if (total > 0) (total - due - soon).toFloat() / total else 0f)
     Box(
         modifier = modifier
             .size(48.dp)
             .semantics { this.contentDescription = contentDescription }
             .drawBehind {
                 drawCircle(colors.surface3)
-                if (total > 0) {
-                    var start = -90f
-                    listOf(due to dueColor, soon to soonColor, (total - due - soon) to okColor).forEach { (count, color) ->
-                        val sweep = 360f * count / total
-                        if (sweep > 0f) drawArc(color, startAngle = start, sweepAngle = sweep, useCenter = true)
-                        start += sweep
-                    }
+                var start = -90f
+                listOf(dueShare to dueColor, soonShare to soonColor, okShare to okColor).forEach { (share, color) ->
+                    val sweep = 360f * share
+                    if (sweep > 0f) drawArc(color, startAngle = start, sweepAngle = sweep, useCenter = true)
+                    start += sweep
                 }
             },
         contentAlignment = Alignment.Center,

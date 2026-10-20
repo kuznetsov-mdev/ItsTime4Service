@@ -21,6 +21,7 @@ import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
  * Thin fill track — share of the maintenance interval already used up, [value] in 0..1.
  * The fill color follows the value: up to 60% — ok, up to 90% — soon, above — due;
  * pass [tier] to color the fill by an already known status instead.
+ * The fill and its color move as described in [IndicatorAnimation].
  */
 @Composable
 fun ProgressBar(
@@ -44,10 +45,10 @@ fun ProgressBar(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(fraction)
+                .fillMaxWidth(IndicatorAnimation.fraction(fraction))
                 .fillMaxHeight()
                 .clip(shape)
-                .background(fillTier.color),
+                .background(IndicatorAnimation.color(fillTier.color)),
         )
     }
 }

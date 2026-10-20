@@ -19,7 +19,10 @@ import androidx.compose.ui.unit.sp
 import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 
-/** Ring on a car card — [value] (0..1) of the ring is filled with [color], [count] of soon/due tasks sits in the middle. */
+/**
+ * Ring on a car card — [value] (0..1) of the ring is filled with [color], [count] of soon/due tasks sits in the middle.
+ * The arc and the color move as described in [IndicatorAnimation].
+ */
 @Composable
 fun GaugeRing(
     value: Float,
@@ -28,12 +31,14 @@ fun GaugeRing(
     modifier: Modifier = Modifier,
 ) {
     val colors = ItsTime4ServiceTheme.colors
+    val fraction = IndicatorAnimation.fraction(value.coerceIn(0f, 1f))
+    val ringColor = IndicatorAnimation.color(color)
     Box(
         modifier = modifier
             .size(48.dp)
             .drawBehind {
                 drawCircle(colors.surface3)
-                drawArc(color, startAngle = -90f, sweepAngle = 360f * value.coerceIn(0f, 1f), useCenter = true)
+                drawArc(ringColor, startAngle = -90f, sweepAngle = 360f * fraction, useCenter = true)
             },
         contentAlignment = Alignment.Center,
     ) {
@@ -47,7 +52,7 @@ fun GaugeRing(
             Text(
                 count.toString(),
                 style = ItsTime4ServiceTheme.typography.display.copy(fontSize = 15.sp, lineHeight = 18.sp),
-                color = color,
+                color = ringColor,
             )
         }
     }

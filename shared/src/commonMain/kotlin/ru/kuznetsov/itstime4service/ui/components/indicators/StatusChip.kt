@@ -17,7 +17,10 @@ import androidx.compose.ui.unit.sp
 import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 
-/** Filled pill with the status name — shown next to each maintenance task. */
+/**
+ * Filled pill with the status name — shown next to each maintenance task.
+ * Its color changes smoothly when the status changes (see [IndicatorAnimation]).
+ */
 @Composable
 fun StatusChip(
     status: StatusTier,
@@ -26,7 +29,7 @@ fun StatusChip(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(50))
-            .background(status.color)
+            .background(IndicatorAnimation.color(status.color))
             .padding(horizontal = 9.dp, vertical = 3.dp),
     ) {
         Text(
