@@ -143,6 +143,10 @@
   .view { display: flex; flex-direction: column; height: 100%; }
   .interactive .view { position: absolute; inset: 0; display: none; }
   .interactive .view.active { display: flex; }
+  /* смена вкладки: снимок прежнего экрана уезжает поверх нового, таб-бар остаётся на месте */
+  .interactive .view.tab-snapshot { display: flex; pointer-events: none; }
+  .tabbar { position: relative; }
+  .tab-indicator { position: absolute; border: 1.5px solid var(--accent); border-radius: 10px; pointer-events: none; box-sizing: border-box; }
 
   .s-topbar { display: flex; align-items: center; justify-content: space-between; padding: 38px 18px 0; flex-shrink: 0; }
   .icon-btn {
@@ -760,6 +764,7 @@
       <li><b>Лицензии открытого ПО:</b> раздел «О приложении» в конце «Настроек» (35) открывает список библиотек с их лицензиями; тап по библиотеке раскрывает текст лицензии (36).</li>
       <li><b>Анимация индикаторов:</b> полосы прогресса, кольца в списке авто и на экране авто заполняются от нуля при появлении и плавно (0,4 с) переходят к новому значению при изменении — сменили пробег, отметили работу; цвет статуса меняется плавно. С системным «уменьшить движение» всё сразу на месте. В интерактивном макете видно только заполнение при входе на экран: он перерисовывает экран на каждое действие.</li>
       <li><b>Таб-бар:</b> выбранный пункт обведён скруглённой рамкой цвета значка.</li>
+      <li><b>Смена вкладки:</b> при переходе вправо по меню («История» → «Авто» → «Настройки») текущий экран уезжает влево за край, а новый выезжает справа; при переходе влево — наоборот. Таб-бар остаётся на месте, рамка выбранного пункта плавно переезжает к новому пункту. 0,32 с; с «уменьшить движение» — без анимации. Переходы на вложенные экраны не меняются.</li>
       <li><b>Прелоадер:</b> пока грузятся данные — круг с бегущей акцентной дугой, внутри мчится машинка с линиями скорости, под кругом «Загрузка…» (40). В интерактивном макете — при «Перезапустить приложение». С «уменьшить движение» — без движения.</li>
       <li><b>Скрыть номер и VIN:</b> тап по номеру на карточке в списке авто переворачивает его вокруг горизонтальной оси за 0,5 с; на обороте — тот же знак, но вместо символов размытые заглушки, рамка, «RUS» и флаг чёткие (38). Повторный тап возвращает номер. На экране авто рядом с номером и VIN (если они есть) — кнопка-глаз «скрыть / показать» (39): номер переворачивается так же, VIN заменяется символами «x» той же длины. Скрытие хранится у авто: скрыли на одном экране — скрыто и на другом, и после перезапуска. Скрытое не правится — тап по нему ничего не делает, пока не нажали «показать». С «уменьшить движение» номер меняется без поворота.</li>
     </ol>
@@ -2438,6 +2443,47 @@
 
   var routeNames = { cars: 'Мои авто', detail: 'Регламентные работы', history: 'История ТО', new: 'Добавление авто', settings: 'Настройки', licenses: 'Лицензии открытого ПО' };
   var SCROLLABLE = '.form-body, .task-list, .history-list, .car-list, .car-t-list';
+  /* вкладки слева направо: «История» → «Авто» → «Настройки»; переход вправо по меню — экраны едут влево, и наоборот */
+  var TAB_ORDER = ['history', 'cars', 'settings'];
+  function tabSlideFor(prevView, screen) {
+    if (!prevView) return 0;
+    var from = TAB_ORDER.indexOf(prevView.getAttribute('data-view')), to = TAB_ORDER.indexOf(screen);
+    if (from < 0 || to < 0 || from === to) return 0;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 0;
+    return to > from ? 1 : -1;
+  }
+  function playTabSlide(root, view, snapshot, prevFrameRect, dir) {
+    var timing = { duration: 320, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' };
+    snapshot.classList.remove('active');
+    snapshot.classList.add('tab-snapshot');
+    var oldBar = snapshot.querySelector('.tabbar');
+    if (oldBar) oldBar.style.visibility = 'hidden';
+    root.appendChild(snapshot);
+    /* снимок остаётся за краем до конца (fill: forwards) и убирается сразу по окончании — иначе на миг возвращается */
+    var out = { duration: timing.duration, easing: timing.easing, fill: 'forwards' };
+    var last = null;
+    [].forEach.call(snapshot.children, function (el) {
+      if (!el.classList.contains('tabbar')) last = el.animate([{ transform: 'none' }, { transform: 'translateX(' + (-dir * 100) + '%)' }], out);
+    });
+    if (last) last.onfinish = function () { snapshot.remove(); }; else snapshot.remove();
+    [].forEach.call(view.children, function (el) {
+      if (!el.classList.contains('tabbar')) el.animate([{ transform: 'translateX(' + (dir * 100) + '%)' }, { transform: 'none' }], timing);
+    });
+    /* рамка выбранного пункта переезжает от прежнего пункта к новому и меняет ширину */
+    var bar = view.querySelector('.tabbar'), frame = view.querySelector('.tabbar button.active .tab-frame');
+    if (!bar || !frame || !prevFrameRect) return;
+    var barRect = bar.getBoundingClientRect(), to = frame.getBoundingClientRect();
+    var indicator = document.createElement('span');
+    indicator.className = 'tab-indicator';
+    indicator.style.top = (to.top - barRect.top) + 'px';
+    indicator.style.height = to.height + 'px';
+    bar.appendChild(indicator);
+    frame.style.borderColor = 'transparent';
+    indicator.animate([
+      { left: (prevFrameRect.left - barRect.left) + 'px', width: prevFrameRect.width + 'px' },
+      { left: (to.left - barRect.left) + 'px', width: to.width + 'px' }
+    ], timing).onfinish = function () { frame.style.borderColor = ''; indicator.remove(); };
+  }
   function paintInteractive() {
     var root = document.getElementById('interactiveScreen');
     var detailCar = currentDetailCar();
@@ -2446,6 +2492,10 @@
     var prevView = root.querySelector('.view.active');
     /* индикаторы анимируются только при входе на экран, а не на каждое действие */
     root.classList.toggle('entering', !prevView || prevView.getAttribute('data-view') !== istate.screen);
+    var tabSlide = tabSlideFor(prevView, istate.screen);
+    var tabSnapshot = tabSlide ? prevView.cloneNode(true) : null;
+    var prevFrame = tabSlide ? prevView.querySelector('.tabbar button.active .tab-frame') : null;
+    var prevFrameRect = prevFrame ? prevFrame.getBoundingClientRect() : null;
     var prevScroller = prevView ? prevView.querySelector(SCROLLABLE) : null;
     var prevScroll = prevView ? { screen: prevView.getAttribute('data-view'), top: prevScroller ? prevScroller.scrollTop : 0 } : null;
     root.innerHTML =
@@ -2465,6 +2515,7 @@
       v.classList.toggle('active', v.getAttribute('data-view') === istate.screen);
     });
     var view = root.querySelector('.view.active');
+    if (tabSlide && view) playTabSlide(root, view, tabSnapshot, prevFrameRect, tabSlide);
     var scroller = view ? view.querySelector(SCROLLABLE) : null;
     if (scroller && prevScroll && prevScroll.screen === istate.screen && !istate.resetScroll) scroller.scrollTop = prevScroll.top;
     istate.resetScroll = false;
