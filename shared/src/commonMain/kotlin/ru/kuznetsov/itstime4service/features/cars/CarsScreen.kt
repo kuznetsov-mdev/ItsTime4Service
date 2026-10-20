@@ -32,13 +32,14 @@ import ru.kuznetsov.itstime4service.domain.model.CarsView
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.domain.model.TaskStatus
 import ru.kuznetsov.itstime4service.ui.components.ScreenPreview
+import ru.kuznetsov.itstime4service.ui.components.cards.ListRowCard
+import ru.kuznetsov.itstime4service.ui.components.indicators.GaugeRing
+import ru.kuznetsov.itstime4service.ui.components.indicators.Preloader
+import ru.kuznetsov.itstime4service.ui.components.indicators.color
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.format.distanceText
 import ru.kuznetsov.itstime4service.ui.format.toTier
-import ru.kuznetsov.itstime4service.ui.components.cards.ListRowCard
-import ru.kuznetsov.itstime4service.ui.components.indicators.GaugeRing
-import ru.kuznetsov.itstime4service.ui.components.indicators.color
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 
@@ -84,7 +85,9 @@ internal fun CarsContent(
             title = stringResource(Res.string.screen_cars),
             subtitle = if (isList) "$count · ${stringResource(Res.string.cars_gauge_hint)}" else null,
         )
-        if (state.cars.isEmpty() && !state.isLoading) {
+        if (state.isLoading) {
+            Preloader(Modifier.weight(1f).fillMaxWidth())
+        } else if (state.cars.isEmpty()) {
             EmptyCars(Modifier.weight(1f))
             AddCarRow(onClick = onAddCar, modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 14.dp))
         } else {

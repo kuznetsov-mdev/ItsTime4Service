@@ -221,4 +221,5 @@
     <string name="action_show_vin">Показать VIN</string>
     <string name="plate_hidden">Госномер скрыт</string>
     <string name="vin_hidden">VIN скрыт</string>
+    <string name="loading">Загрузка…</string>
 </resources>

@@ -64,6 +64,7 @@ import ru.kuznetsov.itstime4service.ui.components.fields.AppTextField
 import ru.kuznetsov.itstime4service.ui.components.fields.FieldLabel
 import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
 import ru.kuznetsov.itstime4service.ui.components.indicators.AppCheckbox
+import ru.kuznetsov.itstime4service.ui.components.indicators.Preloader
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTopBar
@@ -143,7 +144,10 @@ internal fun TaskFormContent(
             subtitle = state.carBrand,
             monoSubtitle = true,
         )
-        if (state.isLoading) return@Column
+        if (state.isLoading) {
+            Preloader(Modifier.weight(1f).fillMaxWidth())
+            return@Column
+        }
         key(state.formKey) {
             Column(
                 modifier = Modifier

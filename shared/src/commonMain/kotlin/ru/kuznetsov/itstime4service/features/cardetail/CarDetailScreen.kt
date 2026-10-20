@@ -52,6 +52,7 @@ import ru.kuznetsov.itstime4service.ui.components.buttons.Fab
 import ru.kuznetsov.itstime4service.ui.components.dialogs.ConfirmDialog
 import ru.kuznetsov.itstime4service.ui.components.dialogs.TaskDoneDialog
 import ru.kuznetsov.itstime4service.ui.components.indicators.PlateLook
+import ru.kuznetsov.itstime4service.ui.components.indicators.Preloader
 import ru.kuznetsov.itstime4service.ui.components.indicators.color
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTopBar
@@ -162,6 +163,7 @@ internal fun CarDetailContent(
                     contentDescription = stringResource(Res.string.action_delete_car),
                 )
             }
+            if (car == null && state.isLoading) Preloader(Modifier.weight(1f).fillMaxWidth())
             if (car != null) {
                 CarHeader(
                     car = car,

@@ -219,4 +219,5 @@
     <string name="action_show_vin">Mostrar el VIN</string>
     <string name="plate_hidden">Matrícula oculta</string>
     <string name="vin_hidden">VIN oculto</string>
+    <string name="loading">Cargando…</string>
 </resources>

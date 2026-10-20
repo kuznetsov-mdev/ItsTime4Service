@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,6 +30,7 @@ import itstime4service.shared.generated.resources.screen_history
 import ru.kuznetsov.itstime4service.domain.model.ServiceHistoryEntry
 import ru.kuznetsov.itstime4service.ui.components.ScreenPreview
 import ru.kuznetsov.itstime4service.ui.components.buttons.Fab
+import ru.kuznetsov.itstime4service.ui.components.indicators.Preloader
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 
@@ -94,15 +96,15 @@ internal fun HistoryContent(
                 onCarSelect = onCarSelect,
                 onFilterOpen = onFilterOpen,
             )
-            if (state.years.isEmpty()) {
-                if (!state.isLoading) {
-                    EmptyHistory(
-                        text = stringResource(
-                            if (state.hasEntries) Res.string.history_nothing_found else Res.string.history_empty,
-                        ),
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+            if (state.isLoading) {
+                Preloader(Modifier.weight(1f).fillMaxWidth())
+            } else if (state.years.isEmpty()) {
+                EmptyHistory(
+                    text = stringResource(
+                        if (state.hasEntries) Res.string.history_nothing_found else Res.string.history_empty,
+                    ),
+                    modifier = Modifier.weight(1f),
+                )
             } else {
                 LazyColumn(
                     modifier = Modifier.weight(1f),

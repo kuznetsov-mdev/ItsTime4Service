@@ -64,6 +64,7 @@ import ru.kuznetsov.itstime4service.ui.components.cards.NotificationPreviewCard
 import ru.kuznetsov.itstime4service.ui.components.dialogs.ConfirmDialog
 import ru.kuznetsov.itstime4service.ui.components.dialogs.TimePickerDialog
 import ru.kuznetsov.itstime4service.ui.components.indicators.AppSwitch
+import ru.kuznetsov.itstime4service.ui.components.indicators.Preloader
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.components.steppers.Stepper
@@ -143,7 +144,10 @@ internal fun SettingsContent(
     }
     Column(modifier.fillMaxSize()) {
         ScreenTitle(title = stringResource(Res.string.screen_settings), modifier = Modifier.padding(top = 12.dp))
-        if (settings == null) return@Column
+        if (settings == null) {
+            Preloader(Modifier.weight(1f).fillMaxWidth())
+            return@Column
+        }
         Column(
             modifier = Modifier
                 .weight(1f)
