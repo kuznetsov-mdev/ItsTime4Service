@@ -187,8 +187,11 @@
   .fab svg.i { width: 21px; height: 21px; stroke-width: 2.2; }
 
   .tabbar { display: flex; border-top: 1px solid var(--rule); background: var(--surface); flex-shrink: 0; }
-  .tabbar button { flex: 1; border: none; background: none; padding: 13px 0 15px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--ink-faint); font-size: 11px; cursor: pointer; }
+  .tabbar button { flex: 1; border: none; background: none; padding: 8px 0 10px; display: flex; justify-content: center; color: var(--ink-faint); font-size: 11px; cursor: pointer; }
+  /* выбранный пункт обведён скруглённой рамкой цвета значка; у остальных та же рамка прозрачная — ничего не сдвигается */
+  .tabbar button .tab-frame { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 16px; border: 1.5px solid transparent; border-radius: 10px; }
   .tabbar button.active { color: var(--accent); }
+  .tabbar button.active .tab-frame { border-color: currentColor; }
 
   /* ---------- Car detail ---------- */
   .detail-title { font-family: var(--display); font-weight: 800; font-size: 19px; padding: 7px 18px 0; flex-shrink: 0; }
@@ -1193,7 +1196,7 @@
   function tabbarHtml(active, opts) {
     var tabs = [['history', 'История', 'clock'], ['cars', 'Авто', 'carSide'], ['settings', 'Настройки', 'gear']];
     return '<nav class="tabbar">' + tabs.map(function (t) {
-      return '<button' + (t[0] === active ? ' class="active"' : '') + (opts.interactive ? ' data-tab="' + t[0] + '"' : '') + '>' + icon(t[2], 19) + t[1] + '</button>';
+      return '<button' + (t[0] === active ? ' class="active"' : '') + (opts.interactive ? ' data-tab="' + t[0] + '"' : '') + '><span class="tab-frame">' + icon(t[2], 19) + t[1] + '</span></button>';
     }).join('') + '</nav>';
   }
 

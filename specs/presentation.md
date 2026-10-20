@@ -320,7 +320,7 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 | `buttons` | `PrimaryButton` | основная акцентная кнопка |
 | `buttons` | `OutlineButton` | вторичное действие рядом с `PrimaryButton`: текст и рамка `accent`, фон `bg` |
 | `buttons` | `SegmentedControl` | взаимоисключающие варианты: тема, единицы, множитель шага |
-| `buttons` | `TabBarItem` | пункт таб-бара: иконка и подпись |
+| `buttons` | `TabBarItem` | пункт таб-бара: иконка и подпись; выбранный обведён скруглённой рамкой цвета иконки (1,5 dp, `radiusM`, отступы 16 × 5 dp), у остальных рамка прозрачная — переключение ничего не сдвигает; вся ячейка — `selectable` с ролью `Tab` |
 | `fields` | `FieldBox` | `internal`; общая «коробка» полей: заливка `surface2`, рамка `rule`, с `isError` — `tierDue` |
 | `fields` | `FieldLabel` | подпись поля капсом; у обязательного — красная звёздочка |
 | `fields` | `AppTextField`, `AppNumberField`, `LabeledMiniField` | текстовое, числовое и компактное поле с подписью; все с `isError` и `onDone` (клавиша «готово») |
