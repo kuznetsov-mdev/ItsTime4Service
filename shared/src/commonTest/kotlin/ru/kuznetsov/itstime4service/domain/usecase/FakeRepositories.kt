@@ -5,7 +5,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import ru.kuznetsov.itstime4service.domain.model.Car
 import ru.kuznetsov.itstime4service.domain.model.CarSummary
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
@@ -23,6 +26,8 @@ import ru.kuznetsov.itstime4service.domain.repository.ReminderScheduler
 import ru.kuznetsov.itstime4service.domain.repository.ServiceHistoryRepository
 import ru.kuznetsov.itstime4service.domain.repository.SettingsRepository
 import ru.kuznetsov.itstime4service.domain.repository.TaskHistoryRepository
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 /**
  * [CarRepository] for use case tests: serves active [cars], which a test may replace to emit a change, and [sold]
@@ -177,12 +182,13 @@ internal class FakeSettingsRepository(settings: Settings = defaultTestSettings) 
 }
 
 /**
- * [ReminderRepository] and [ReminderScheduler] for use case tests: keep the stored plan in memory and count how many
- * times a plan was handed to the system.
+ * [ReminderRepository] and [ReminderScheduler] for use case tests: keep the stored plan in memory, starting from
+ * [records], and remember the last plan handed to the system and how many times one was handed.
  */
-internal class FakeReminders : ReminderRepository, ReminderScheduler {
-    private var records = emptyList<ReminderRecord>()
+internal class FakeReminders(var records: List<ReminderRecord> = emptyList()) : ReminderRepository, ReminderScheduler {
     var schedules = 0
+    var scheduled: List<PlannedReminder> = emptyList()
+    var scheduledUnit: DistanceUnit? = null
 
     override suspend fun getRecords(): List<ReminderRecord> = records
 
@@ -192,8 +198,15 @@ internal class FakeReminders : ReminderRepository, ReminderScheduler {
 
     override suspend fun schedule(reminders: List<PlannedReminder>, distanceUnit: DistanceUnit) {
         schedules++
+        scheduled = reminders
+        scheduledUnit = distanceUnit
     }
 }
+
+internal fun fixedClock(at: LocalDateTime, timeZone: TimeZone = TimeZone.UTC): Clock =
+    object : Clock {
+        override fun now(): Instant = at.toInstant(timeZone)
+    }
 
 internal val defaultTestSettings = Settings(
     themeMode = ThemeMode.SYSTEM,

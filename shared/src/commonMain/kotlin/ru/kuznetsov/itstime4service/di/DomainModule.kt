@@ -43,7 +43,7 @@ val domainModule = module {
     factoryOf(::CalculateTaskStatusUseCase)
     factoryOf(::SortedTaskStatsUseCase)
     factoryOf(::CarAlertsUseCase)
-    factoryOf(::GetTodayUseCase)
+    factory { GetTodayUseCase() }
     factoryOf(::ObserveCarsUseCase)
     factoryOf(::ObserveCarByIdUseCase)
     factoryOf(::NormalizeTaskUseCase)
@@ -72,7 +72,7 @@ val domainModule = module {
     factoryOf(::DeleteTaskUseCase)
     factoryOf(::UpdateHistoryEntryUseCase)
     factoryOf(::AddHistoryEntryUseCase)
-    factoryOf(::GetNowUseCase)
+    factory { GetNowUseCase() }
     factoryOf(::PlanRemindersUseCase)
     factoryOf(::SyncRemindersUseCase)
     factoryOf(::KeepRemindersInSyncUseCase)
