@@ -10,7 +10,8 @@ import kotlin.test.assertTrue
 
 /**
  * Covers [CarAlertsUseCase] and [SortedTaskStatsUseCase]: counting soon and due tasks for the gauge and listing
- * tasks most urgent first. Tasks have no time interval, so only the mileage decides.
+ * tasks most urgent first. Most tasks have no time interval, so the mileage decides; a task due by time ranks as due
+ * and, among due tasks, by its remaining kilometres like any other.
  */
 class TaskStatsUseCasesTest {
 
@@ -71,6 +72,23 @@ class TaskStatsUseCasesTest {
         val sorted = sortedTaskStats(car(task("first", 2_000), task("second", 2_000)), today)
 
         assertEquals(listOf("first", "second"), sorted.map { it.task.id })
+    }
+
+    @Test
+    fun taskDueByTimeRanksAsDueAndCountsInAlerts() {
+        val byTime = task("by-time", 9_000).copy(intervalMonths = 12, lastDoneDate = LocalDate(2025, 9, 19))
+        val kia = car(task("soon", 400), byTime, task("ok", 3_000))
+
+        assertEquals(listOf("by-time", "soon", "ok"), sortedTaskStats(kia, today).map { it.task.id })
+        assertEquals(1, carAlerts(kia, today).due)
+    }
+
+    @Test
+    fun dueTasksAreOrderedByRemainingKmWhateverMadeThemDue() {
+        val byTime = task("by-time", 9_000).copy(intervalMonths = 12, lastDoneDate = LocalDate(2025, 9, 19))
+        val kia = car(byTime, task("by-km", -100))
+
+        assertEquals(listOf("by-km", "by-time"), sortedTaskStats(kia, today).map { it.task.id })
     }
 
     @Test

@@ -430,4 +430,4 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 ## Что ещё не реализовано
 
 - Переключатель языка в приложении.
-- Юнит-тесты на ViewModel-и, кроме `CarsViewModel` (у `HistoryViewModel` покрыта вынесенная логика списка, `HistoryRowsTest`), и тесты Composable-компонентов. Из `ui/format` покрыт перевод км и миль с `keepKm` (`DistanceConversionTest`); `TaskFields` и ввод дат зависят от `Locale.current` и не покрыты.
+- Юнит-тесты на ViewModel-и, кроме `CarsViewModel` (у `HistoryViewModel` покрыта вынесенная логика списка, `HistoryRowsTest`), и тесты Composable-компонентов. Из `ui/format` покрыт перевод км и миль с `keepKm` (`DistanceConversionTest`); ввод дат — по каждому формату (`DateInputFormatTest`: запись и чтение, несуществующие и неполные даты, разделители и курсор); не покрыты выбор формата по языку системы (`DateInputFormat.current`) и `TaskFields`, которые от него зависят.
