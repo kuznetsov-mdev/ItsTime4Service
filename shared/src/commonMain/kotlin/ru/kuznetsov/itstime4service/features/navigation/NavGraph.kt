@@ -250,7 +250,7 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.tabEnter(still: Bo
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.tabExit(still: Boolean): ExitTransition? =
     tabDirection()?.let { if (still) ExitTransition.None else slideOutOfContainer(it, tween(TAB_SLIDE_MS, easing = FastOutSlowInEasing)) }
 
-private const val TAB_SLIDE_MS = 400
+private const val TAB_SLIDE_MS = 500
 private const val DEFAULT_FADE_MS = 700
 
 private val tabRoutes = tabs.map { it.route }.toSet()
