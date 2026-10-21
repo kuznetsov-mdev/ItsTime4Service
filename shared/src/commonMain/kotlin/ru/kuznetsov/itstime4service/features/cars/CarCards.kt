@@ -267,7 +267,7 @@ private fun CardColumn(
             modifier = Modifier.padding(bottom = 3.dp),
         )
         if (emptyText != null) {
-            Text(emptyText, style = ItsTime4ServiceTheme.typography.sans.copy(fontSize = 11.sp, lineHeight = 15.sp), color = colors.inkFaint)
+            Text(emptyText, style = ItsTime4ServiceTheme.typography.sans.copy(fontSize = 13.sp, lineHeight = 18.sp), color = colors.inkFaint)
         } else {
             lines()
         }
@@ -280,7 +280,7 @@ private fun CardLine(text: String, value: String, valueColor: Color) {
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(
             text,
-            style = ItsTime4ServiceTheme.typography.sans.copy(fontSize = 11.sp, lineHeight = 15.sp),
+            style = ItsTime4ServiceTheme.typography.sans.copy(fontSize = 13.sp, lineHeight = 18.sp),
             color = colors.ink,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -288,7 +288,7 @@ private fun CardLine(text: String, value: String, valueColor: Color) {
         )
         Text(
             value,
-            style = ItsTime4ServiceTheme.typography.mono.copy(fontSize = 10.sp, lineHeight = 15.sp, fontWeight = FontWeight.Normal),
+            style = ItsTime4ServiceTheme.typography.mono.copy(fontSize = 12.sp, lineHeight = 18.sp, fontWeight = FontWeight.Normal),
             color = valueColor,
             maxLines = 1,
         )
