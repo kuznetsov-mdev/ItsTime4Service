@@ -1,5 +1,6 @@
 package ru.kuznetsov.itstime4service.features.cars
 
+import androidx.lifecycle.ViewModelStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -45,13 +46,19 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class CarsViewModelTest {
 
+    private lateinit var viewModels: ViewModelStore
+    private var nextViewModelKey = 0
+
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        viewModels = ViewModelStore()
+        nextViewModelKey = 0
     }
 
     @AfterTest
     fun tearDown() {
+        viewModels.clear()
         Dispatchers.resetMain()
     }
 
@@ -76,7 +83,7 @@ class CarsViewModelTest {
         carRepository: FakeCarRepository = FakeCarRepository(cars),
     ): CarsViewModel {
         val calculateTaskStatus = CalculateTaskStatusUseCase()
-        return CarsViewModel(
+        val viewModel = CarsViewModel(
             observeCars = ObserveCarsUseCase(carRepository),
             observeAllHistory = ObserveAllHistoryUseCase(FakeHistoryRepository(history), carRepository),
             observeSettings = ObserveSettingsUseCase(settings),
@@ -87,6 +94,8 @@ class CarsViewModelTest {
             getToday = GetTodayUseCase(),
             setPlateHidden = SetPlateHiddenUseCase(carRepository),
         )
+        viewModels.put("cars-view-model-${nextViewModelKey++}", viewModel)
+        return viewModel
     }
 
     private fun TestScope.loaded(viewModel: CarsViewModel): CarsUiState {

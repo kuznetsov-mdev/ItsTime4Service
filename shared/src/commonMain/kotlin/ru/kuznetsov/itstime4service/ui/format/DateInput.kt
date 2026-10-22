@@ -13,6 +13,7 @@ import kotlinx.datetime.number
  * Spanish `dd/MM/yyyy`, English (and any other language) `MM/dd/yyyy`.
  * A date field keeps only the typed digits, at most eight; [visualTransformation] shows them with the
  * separators already in place, so the user types digits only and never the separators.
+ * [current] follows the app language; tests replace [language] to fix it.
  */
 enum class DateInputFormat(val separator: Char, private val dayFirst: Boolean) {
     DAY_MONTH_DOT('.', dayFirst = true),
@@ -45,12 +46,16 @@ enum class DateInputFormat(val separator: Char, private val dayFirst: Boolean) {
     companion object {
         const val DIGITS = 8
 
+        internal var language: () -> String = { Locale.current.language }
+
         val current: DateInputFormat
-            get() = when (Locale.current.language) {
-                "ru" -> DAY_MONTH_DOT
-                "es" -> DAY_MONTH_SLASH
-                else -> MONTH_DAY_SLASH
-            }
+            get() = of(language())
+
+        fun of(language: String): DateInputFormat = when (language) {
+            "ru" -> DAY_MONTH_DOT
+            "es" -> DAY_MONTH_SLASH
+            else -> MONTH_DAY_SLASH
+        }
     }
 }
 

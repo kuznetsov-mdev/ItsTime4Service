@@ -441,7 +441,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
 
 ## Тесты на базе
 
-Репозитории проверяются на настоящей SQLite в памяти (`commonTest/.../data/repository`): `TestDatabase` создаёт пустую базу через `expect fun inMemoryDriver()` — в Android-тестах `JdbcSqliteDriver` (тестовая зависимость `app.cash.sqldelight:sqlite-driver`, `androidHostTest`), в iOS-тестах `NativeSqliteDriver` в памяти. Покрыты:
+Репозитории проверяются на настоящей SQLite (`commonTest/.../data/repository`): `TestDatabase` создаёт пустую базу через `expect fun testDriver()` — в Android-тестах `JdbcSqliteDriver` на временном файле (тестовая зависимость `app.cash.sqldelight:sqlite-driver`, `androidHostTest`), в iOS-тестах `NativeSqliteDriver` в памяти. Временный файл вместо базы в памяти — ближе к базе приложения: у каждого потока своё соединение, как у настоящего драйвера. Покрыты:
 
 - `TaskHistoryRepositoryImplTest` — каждая операция порта: машина с работами и записями, отметка и её снятие (в том числе после смены пробега), правка работы со связанной записью и выбор последней добавленной при равных датах, правка записи со сдвигом работы и без него, сохранение названия, `task_id` и данных отката, продажа и полное удаление;
 - `RepositoriesTest` — поля машин, работ, истории, настроек и плана уведомлений проходят запись и чтение, `NULL` остаётся `NULL`, порядок строк — порядок добавления, неизвестный `cars_view` читается как `LIST`, план заменяется целиком;

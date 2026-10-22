@@ -4,11 +4,12 @@ import app.cash.sqldelight.db.SqlDriver
 import ru.kuznetsov.itstime4service.data.local.ItsTime4ServiceDatabase
 
 /**
- * An empty SQLite database in memory for repository tests: [driver] has no tables yet; [create] builds the current
- * schema, [database] wraps the driver for the generated queries. Each instance is a separate database.
+ * An empty SQLite database for repository and view model tests: [driver] has no tables yet; [create] builds the current
+ * schema, [database] wraps the driver for the generated queries. Each instance is a separate database, safe to read
+ * and write from several threads at once, as the repositories do.
  */
 internal class TestDatabase {
-    val driver: SqlDriver = inMemoryDriver()
+    val driver: SqlDriver = testDriver()
 
     val database: ItsTime4ServiceDatabase by lazy { ItsTime4ServiceDatabase(driver) }
 
@@ -22,4 +23,4 @@ internal class TestDatabase {
     }
 }
 
-internal expect fun inMemoryDriver(): SqlDriver
+internal expect fun testDriver(): SqlDriver

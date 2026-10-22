@@ -2,16 +2,36 @@ package ru.kuznetsov.itstime4service.ui.format
 
 import androidx.compose.ui.text.AnnotatedString
 import kotlinx.datetime.LocalDate
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /**
  * Covers [DateInputFormat] for each language's format: a date is typed as eight digits, read back only when it exists,
- * and shown with the separators in place. The format of the device language ([DateInputFormat.current]) is not tested
- * here — it depends on the system locale.
+ * and shown with the separators in place, and the choice of the format by the app language.
  */
 class DateInputFormatTest {
+
+    @AfterTest
+    fun tearDown() {
+        DateInputFormat.language = systemLanguage
+    }
+
+    @Test
+    fun formatFollowsTheLanguage() {
+        assertEquals(DateInputFormat.DAY_MONTH_DOT, DateInputFormat.of("ru"))
+        assertEquals(DateInputFormat.DAY_MONTH_SLASH, DateInputFormat.of("es"))
+        assertEquals(DateInputFormat.MONTH_DAY_SLASH, DateInputFormat.of("en"))
+        assertEquals(DateInputFormat.MONTH_DAY_SLASH, DateInputFormat.of("de"))
+    }
+
+    @Test
+    fun currentFormatIsTheOneOfTheAppLanguage() {
+        DateInputFormat.language = { "es" }
+
+        assertEquals(DateInputFormat.DAY_MONTH_SLASH, DateInputFormat.current)
+    }
 
     @Test
     fun digitsOfDateFollowTheFormat() {
@@ -76,5 +96,9 @@ class DateInputFormatTest {
         assertEquals(10, mapping.originalToTransformed(8))
         assertEquals(3, mapping.transformedToOriginal(4))
         assertEquals(8, mapping.transformedToOriginal(10))
+    }
+
+    private companion object {
+        val systemLanguage = DateInputFormat.language
     }
 }

@@ -26,6 +26,7 @@ import ru.kuznetsov.itstime4service.domain.repository.ReminderScheduler
 import ru.kuznetsov.itstime4service.domain.repository.ServiceHistoryRepository
 import ru.kuznetsov.itstime4service.domain.repository.SettingsRepository
 import ru.kuznetsov.itstime4service.domain.repository.TaskHistoryRepository
+import kotlin.concurrent.Volatile
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -186,8 +187,13 @@ internal class FakeSettingsRepository(settings: Settings = defaultTestSettings) 
  * [records], and remember the last plan handed to the system and how many times one was handed.
  */
 internal class FakeReminders(var records: List<ReminderRecord> = emptyList()) : ReminderRepository, ReminderScheduler {
+    @Volatile
     var schedules = 0
+
+    @Volatile
     var scheduled: List<PlannedReminder> = emptyList()
+
+    @Volatile
     var scheduledUnit: DistanceUnit? = null
 
     override suspend fun getRecords(): List<ReminderRecord> = records
