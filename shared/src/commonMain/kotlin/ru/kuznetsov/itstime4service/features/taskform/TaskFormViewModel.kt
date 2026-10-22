@@ -111,8 +111,10 @@ class TaskFormViewModel(
         isSaving = true
         viewModelScope.launch {
             val saved = if (taskId != null) updateTask(carId, taskId, task) else addTask(carId, task)
-            isSaving = false
-            if (!saved) return@launch
+            if (!saved) {
+                isSaving = false
+                return@launch
+            }
             _state.update {
                 if (addAnother) {
                     it.copy(fields = TaskFields(), showErrors = false, formKey = it.formKey + 1)
@@ -120,6 +122,7 @@ class TaskFormViewModel(
                     it.copy(isClosed = true)
                 }
             }
+            if (addAnother) isSaving = false
         }
     }
 }
