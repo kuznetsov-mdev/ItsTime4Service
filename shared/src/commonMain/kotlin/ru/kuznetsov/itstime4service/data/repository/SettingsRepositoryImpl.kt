@@ -2,7 +2,7 @@ package ru.kuznetsov.itstime4service.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrNull
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -20,10 +20,12 @@ import ru.kuznetsov.itstime4service.domain.repository.SettingsRepository
  * [updateSettings] reads the stored row (or the defaults) and writes the changed one in a single transaction,
  * so concurrent changes of different fields do not overwrite each other.
  */
-class SettingsRepositoryImpl(database: ItsTime4ServiceDatabase) : SettingsRepository {
+class SettingsRepositoryImpl(
+    database: ItsTime4ServiceDatabase,
+    private val dispatcher: CoroutineDispatcher = databaseDispatcher,
+) : SettingsRepository {
 
     private val queries = database.settingsQueries
-    private val dispatcher = Dispatchers.Default
 
     private val defaultSettings = Settings(
         themeMode = ThemeMode.SYSTEM,

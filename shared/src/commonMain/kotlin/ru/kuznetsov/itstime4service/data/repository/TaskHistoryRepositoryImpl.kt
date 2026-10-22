@@ -2,7 +2,7 @@ package ru.kuznetsov.itstime4service.data.repository
 
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import ru.kuznetsov.itstime4service.data.local.ItsTime4ServiceDatabase
@@ -21,12 +21,14 @@ import ru.kuznetsov.itstime4service.domain.rule.TaskHistoryRules
  * New cars, tasks and records get random ids; the car's history is read in the order the records were added.
  */
 @OptIn(ExperimentalUuidApi::class)
-class TaskHistoryRepositoryImpl(database: ItsTime4ServiceDatabase) : TaskHistoryRepository {
+class TaskHistoryRepositoryImpl(
+    database: ItsTime4ServiceDatabase,
+    private val dispatcher: CoroutineDispatcher = databaseDispatcher,
+) : TaskHistoryRepository {
 
     private val carQueries = database.carQueries
     private val taskQueries = database.maintenanceTaskQueries
     private val historyQueries = database.serviceHistoryQueries
-    private val dispatcher = Dispatchers.Default
 
     override suspend fun addCar(car: NewCar): String = withContext(dispatcher) {
         val carId = Uuid.random().toString()

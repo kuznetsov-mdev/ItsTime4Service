@@ -3,7 +3,7 @@ package ru.kuznetsov.itstime4service.data.repository
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -20,11 +20,13 @@ import ru.kuznetsov.itstime4service.domain.repository.CarRepository
  * Cars and tasks keep the order they were added in. A sold car stays in `cars` with `is_sold` set and is skipped
  * by the queries for active cars.
  */
-class CarRepositoryImpl(database: ItsTime4ServiceDatabase) : CarRepository {
+class CarRepositoryImpl(
+    database: ItsTime4ServiceDatabase,
+    private val dispatcher: CoroutineDispatcher = databaseDispatcher,
+) : CarRepository {
 
     private val carQueries = database.carQueries
     private val taskQueries = database.maintenanceTaskQueries
-    private val dispatcher = Dispatchers.Default
 
     override fun observeCars(): Flow<List<Car>> = combine(
         carQueries.selectAll().asFlow().mapToList(dispatcher),

@@ -21,7 +21,7 @@ sqldelight/
 
 - Наружу видны только интерфейсы domain-слоя; presentation о классах `data` не знает. Связывает их Koin (`dataModule`, `platformModule`).
 - Чтение — `Flow` поверх запросов SQLDelight, он переизлучает результат при каждом изменении затронутых таблиц. Запись — `suspend`-методы.
-- Вся работа с базой идёт на `Dispatchers.Default`: записи — через `withContext(dispatcher)`, чтение потоков — через `mapToList(dispatcher)` / `mapToOneOrNull(dispatcher)`.
+- Вся работа с базой идёт на одном общем `databaseDispatcher` (`data/repository/DatabaseDispatcher.kt`) — `Dispatchers.Default.limitedParallelism(1)`: записи — через `withContext(dispatcher)`, чтение потоков — через `mapToList(dispatcher)` / `mapToOneOrNull(dispatcher)`. Запросы и транзакции разных репозиториев никогда не идут одновременно. Диспетчер — параметр конструктора репозитория (по умолчанию общий), в Koin он зарегистрирован как `CoroutineDispatcher`.
 - Идентификаторы машин, работ и записей истории создаёт репозиторий: `Uuid.random().toString()` (`kotlin.uuid`, `@OptIn(ExperimentalUuidApi::class)`).
 - Бизнес-правил в слое нет: проверка и нормализация данных — в use case-ах.
 
@@ -425,7 +425,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
 - **Data зависит от UI.** `ReminderSchedulerImpl` импортирует `ru.kuznetsov.itstime4service.ui.format.grouped` и `kmIn` (`ReminderSchedulerImpl.kt:15-16`) и повторяет у себя логику `distanceText` из `ui/format/Formatting.kt` — тот вариант `@Composable` и из data недоступен. Форматирование расстояний живёт в двух местах.
 - **Нет внешних ключей.** Связанные строки удаляются вручную в транзакциях `sellCar` и `purgeCar`. В `planned_reminders` записи удалённых работ остаются до следующей пересборки плана.
 - **`planned_reminders` без первичного ключа**: ничто не мешает одинаковым строкам.
-- **Ввод-вывод на `Dispatchers.Default`**, а не на `Dispatchers.IO` — во всех четырёх репозиториях.
+- **Ввод-вывод на `Dispatchers.Default`** (`databaseDispatcher` — его вид с параллелизмом 1), а не на `Dispatchers.IO`, — во всех пяти репозиториях.
 - **Окно напоминания `null` записывается как `0`** (`CarRepositoryImpl.kt:107`). Репозиторий полагается на то, что `NormalizeTaskUseCase` уже подставил значение; работа, дошедшая сюда без окна, по пробегу никогда не станет `SOON`.
 - **Перечисления хранятся именами** и читаются через `valueOf` (`SettingsMapper.kt:10-11`): переименование константы `ThemeMode` или `DistanceUnit` уронит чтение настроек у тех, у кого старое имя уже сохранено. `CarsView` и `TaskIcon` читаются без исключения: неизвестное имя даёт значение по умолчанию. То же с форматом дат: `LocalDate.parse` / `LocalTime.parse` / `LocalDateTime.parse` бросают исключение на строке другого формата.
 - **Проверки миграций нет**: снимков схемы прежних версий в репозитории нет, `verifyMigrations` в `shared/build.gradle.kts` не включён.

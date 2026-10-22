@@ -4,7 +4,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -20,10 +20,12 @@ import ru.kuznetsov.itstime4service.domain.repository.ServiceHistoryRepository
  * A record added by hand gets a new random id and no task or rollback data.
  */
 @OptIn(ExperimentalUuidApi::class)
-class ServiceHistoryRepositoryImpl(database: ItsTime4ServiceDatabase) : ServiceHistoryRepository {
+class ServiceHistoryRepositoryImpl(
+    database: ItsTime4ServiceDatabase,
+    private val dispatcher: CoroutineDispatcher = databaseDispatcher,
+) : ServiceHistoryRepository {
 
     private val queries = database.serviceHistoryQueries
-    private val dispatcher = Dispatchers.Default
 
     override fun observeHistory(carId: String): Flow<List<ServiceHistoryEntry>> =
         queries.selectByCar(carId).asFlow().mapToList(dispatcher).map { rows -> rows.map { it.toDomain() } }
