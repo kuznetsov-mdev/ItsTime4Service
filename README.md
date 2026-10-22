@@ -35,4 +35,4 @@
 Kotlin Multiplatform · Compose Multiplatform (shared UI) · SQLDelight (local DB) · Koin (DI) — targeting Android and iOS from a single codebase.
 
 ## Status
-In active development. See the [design mockup](https://kuznetsov-mdev.github.io/PitStop/) and development plan for the full roadmap.
+In active development. See the [design mockup](https://kuznetsov-mdev.github.io/ItsTime4Service/) and development plan for the full roadmap.

@@ -41,4 +41,4 @@ Kotlin Multiplatform · Compose Multiplatform (общий UI) · SQLDelight (л�
 
 ## Статус
 
-В активной разработке. Полный план этапов — в [дизайн-макете](https://kuznetsov-mdev.github.io/PitStop/) и плане разработки проекта.
+В активной разработке. Полный план этапов — в [дизайн-макете](https://kuznetsov-mdev.github.io/ItsTime4Service/) и плане разработки проекта.
