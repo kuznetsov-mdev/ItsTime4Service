@@ -25,8 +25,8 @@ object ItsTime4ServiceTheme {
 }
 
 /**
- * Root theme wrapper. Follows the system theme by default; a `darkTheme` override will be
- * wired to the Settings screen's theme picker once it exists (step 6).
+ * Root theme wrapper. Follows the system theme by default; the app passes `darkTheme` from the theme chosen
+ * in settings.
  */
 @Composable
 fun ItsTime4ServiceTheme(
