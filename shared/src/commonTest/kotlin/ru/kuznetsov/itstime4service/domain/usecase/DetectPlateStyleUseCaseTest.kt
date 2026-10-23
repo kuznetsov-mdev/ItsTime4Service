@@ -66,4 +66,33 @@ class DetectPlateStyleUseCaseTest {
     fun unknownFormatWithoutRegionIsUniversal() {
         assertEquals(PlateStyle.Universal, detect("XYZ", null))
     }
+
+    @Test
+    fun hyphensAndExtraSpacesDoNotHideARussianNumber() {
+        assertEquals(PlateStyle.Russian("А 123 ВС", "77"), detect("  А-123-ВС-77 ", null))
+        assertEquals(PlateStyle.Russian("А 123 ВС", "77"), detect("А  123\tВС  77", null))
+    }
+
+    @Test
+    fun lowerCaseFrenchFormatWithHyphensIsRecognized() {
+        assertEquals(PlateStyle.European("F"), detect("ab-123-cd", null))
+        assertEquals(PlateStyle.European("I"), detect("AB 123 CD", "it"))
+    }
+
+    @Test
+    fun lettersOutsideTheRussianSetAreNotARussianNumber() {
+        assertEquals(PlateStyle.Universal, detect("Б123ВГ77", null))
+        assertEquals(PlateStyle.Universal, detect("А1234ВС77", null))
+    }
+
+    @Test
+    fun spanishFormatWithAVowelIsNotSpanish() {
+        assertEquals(PlateStyle.Universal, detect("1234 BCA", null))
+    }
+
+    @Test
+    fun emptyNumberIsUniversal() {
+        assertEquals(PlateStyle.Universal, detect("", null))
+        assertEquals(PlateStyle.Universal, detect("   ", ""))
+    }
 }

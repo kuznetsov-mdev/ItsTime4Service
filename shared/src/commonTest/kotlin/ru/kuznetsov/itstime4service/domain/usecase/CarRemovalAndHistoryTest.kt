@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 
 /**
  * Covers deleting a car from its screen ([DeleteCarUseCase]), deleting it completely ([PurgeCarUseCase]) and
- * the history of every car with sold ones ([ObserveAllHistoryUseCase]).
+ * the history of every car with sold ones ([ObserveAllHistoryUseCase]) and of one car ([ObserveHistoryUseCase]).
  */
 class CarRemovalAndHistoryTest {
 
@@ -69,5 +69,19 @@ class CarRemovalAndHistoryTest {
         val history = FakeHistoryRepository(listOf(entry("orphan", "gone", LocalDate(2026, 1, 1))))
 
         assertTrue(ObserveAllHistoryUseCase(history, FakeCarRepository(listOf(testCar("kia"))))().first().isEmpty())
+    }
+
+    @Test
+    fun historyOfOneCarIsNewestFirstKeepingOrderOfAddingOnSameDate() = runTest {
+        val history = FakeHistoryRepository(
+            listOf(
+                entry("old", "kia", LocalDate(2024, 5, 1)),
+                entry("first", "kia", LocalDate(2026, 9, 1)),
+                entry("other", "lada", LocalDate(2026, 10, 1)),
+                entry("second", "kia", LocalDate(2026, 9, 1)),
+            ),
+        )
+
+        assertEquals(listOf("first", "second", "old"), ObserveHistoryUseCase(history)("kia").first().map { it.id })
     }
 }

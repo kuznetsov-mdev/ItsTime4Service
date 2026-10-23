@@ -3,9 +3,11 @@ package ru.kuznetsov.itstime4service.data.repository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import ru.kuznetsov.itstime4service.data.local.ItsTime4ServiceDatabase
 import ru.kuznetsov.itstime4service.domain.model.CarsView
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
+import ru.kuznetsov.itstime4service.domain.model.ReminderRecord
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -13,8 +15,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Covers the database migrations: a database of the first version with real data and a database of the previous
- * version are brought to the current one, keep every stored value and read the added columns with their defaults.
+ * Covers the database migrations: a database of every earlier version with real data is brought to the current one,
+ * keeps every stored value and reads the added columns with their defaults.
  * The old schemas are the current tables without the columns and the table the migrations added.
  */
 class MigrationTest {
@@ -87,6 +89,59 @@ class MigrationTest {
 
         assertTrue(ReminderRepositoryImpl(db.database).getRecords().isEmpty())
         assertTrue(CarRepositoryImpl(db.database).observeCarSummaries().first().none { it.isSold })
+    }
+
+    @Test
+    fun secondVersionKeepsItsReminderPlan() = runTest {
+        val db = TestDatabase()
+        versionOne(db)
+        schema.migrate(db.driver, 1, 2)
+        db.execute("INSERT INTO planned_reminders (task_id, fire_at) VALUES ('oil', '2026-10-24T20:30')")
+
+        schema.migrate(db.driver, 2, schema.version)
+
+        assertEquals(
+            listOf(ReminderRecord("oil", LocalDateTime(2026, 10, 24, 20, 30))),
+            ReminderRepositoryImpl(db.database).getRecords(),
+        )
+        val entry = ServiceHistoryRepositoryImpl(db.database).observeHistory("kia").first().single()
+        assertNull(entry.taskId)
+        assertNull(entry.prevLastDoneDate)
+        assertFalse(SettingsRepositoryImpl(db.database).observeSettings().first().openDefaultCar)
+    }
+
+    @Test
+    fun thirdVersionKeepsLinkedRecordsSoldCarsAndLaunchChoice() = runTest {
+        val db = TestDatabase()
+        versionOne(db)
+        schema.migrate(db.driver, 1, 3)
+        db.execute(
+            "UPDATE service_history SET task_id = 'oil', comment = 'Synthetic', prev_last_done_km = 70000, " +
+                "prev_last_done_date = '2025-03-01' WHERE id = 'h1'",
+        )
+        db.execute("UPDATE cars SET is_sold = 1 WHERE id = 'camry'")
+        db.execute("UPDATE settings SET last_opened_car_id = 'kia', open_default_car = 1, default_car_id = 'kia'")
+
+        schema.migrate(db.driver, 3, schema.version)
+
+        val entry = ServiceHistoryRepositoryImpl(db.database).observeHistory("kia").first().single()
+        assertEquals("oil", entry.taskId)
+        assertEquals("Synthetic", entry.comment)
+        assertEquals(70_000, entry.prevLastDoneKm)
+        assertEquals(LocalDate(2025, 3, 1), entry.prevLastDoneDate)
+
+        val cars = CarRepositoryImpl(db.database)
+        assertEquals(listOf("kia"), cars.observeCars().first().map { it.id })
+        assertEquals(listOf(false, true), cars.observeCarSummaries().first().map { it.isSold })
+        val kia = cars.observeCarById("kia").first()!!
+        assertNull(kia.plate)
+        assertNull(kia.tasks.first().icon)
+
+        val settings = SettingsRepositoryImpl(db.database).observeSettings().first()
+        assertEquals("kia", settings.lastOpenedCarId)
+        assertTrue(settings.openDefaultCar)
+        assertEquals("kia", settings.defaultCarId)
+        assertEquals(CarsView.LIST, settings.carsView)
     }
 
     @Test

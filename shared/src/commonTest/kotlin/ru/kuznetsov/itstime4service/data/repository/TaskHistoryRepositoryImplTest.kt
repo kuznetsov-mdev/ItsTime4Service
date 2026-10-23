@@ -10,6 +10,7 @@ import ru.kuznetsov.itstime4service.domain.model.NewTaskRecord
 import ru.kuznetsov.itstime4service.domain.model.ServiceHistoryEntry
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -17,7 +18,7 @@ import kotlin.test.assertTrue
 /**
  * Covers [TaskHistoryRepositoryImpl] on a real SQLite database: what each operation writes to the tasks and the
  * history together, and what it decides inside its transaction — the linked record, the done mark, whether a car
- * has history.
+ * has history. A trigger that aborts one of the writes checks that a failed operation leaves nothing half done.
  */
 class TaskHistoryRepositoryImplTest {
 
@@ -226,5 +227,78 @@ class TaskHistoryRepositoryImplTest {
         assertTrue(records(id).isEmpty())
         assertEquals(1, records(other).size)
         assertEquals(1, car(other).tasks.size)
+    }
+
+    private fun failBefore(event: String, table: String) {
+        db.execute("CREATE TRIGGER fail_${event.lowercase()}_$table BEFORE $event ON $table BEGIN SELECT RAISE(ABORT, 'test failure'); END")
+    }
+
+    @Test
+    fun failedRecordLeavesNoNewCar() = runTest {
+        failBefore("INSERT", "service_history")
+
+        assertFails { addKia(oil(record = NewTaskRecord(doneDate))) }
+
+        assertTrue(cars.observeCarSummaries().first().isEmpty())
+    }
+
+    @Test
+    fun failedRecordLeavesTaskUnmarked() = runTest {
+        val id = addKia(oil())
+        val taskId = car(id).tasks.single().id
+        failBefore("INSERT", "service_history")
+
+        assertFails { taskHistory.markTaskDone(id, taskId, LocalDate(2026, 10, 20), null, null, null) }
+
+        val task = car(id).tasks.single()
+        assertEquals(80_000, task.lastDoneKm)
+        assertEquals(doneDate, task.lastDoneDate)
+        assertTrue(records(id).isEmpty())
+    }
+
+    @Test
+    fun failedRecordDeletionKeepsTheMark() = runTest {
+        val id = addKia(oil())
+        val taskId = car(id).tasks.single().id
+        taskHistory.markTaskDone(id, taskId, LocalDate(2026, 10, 20), null, null, null)
+        failBefore("DELETE", "service_history")
+
+        assertFails { taskHistory.unmarkTaskDone(id, taskId) }
+
+        assertEquals(84_300, car(id).tasks.single().lastDoneKm)
+        assertEquals(1, records(id).size)
+    }
+
+    @Test
+    fun failedTaskMoveKeepsTheRecordAsItWas() = runTest {
+        val id = addKia(oil(record = NewTaskRecord(doneDate)))
+        val record = records(id).single()
+        failBefore("UPDATE", "maintenance_tasks")
+
+        assertFails { taskHistory.updateEntry(record.copy(mileageKm = 79_800, comment = "Motul")) }
+
+        assertEquals(record, records(id).single())
+        assertEquals(80_000, car(id).tasks.single().lastDoneKm)
+    }
+
+    @Test
+    fun failedSaleKeepsCarAndTasks() = runTest {
+        val id = addKia(oil(record = NewTaskRecord(doneDate)))
+        failBefore("UPDATE", "cars")
+
+        assertFails { taskHistory.sellCar(id) }
+
+        assertEquals(1, car(id).tasks.size)
+    }
+
+    @Test
+    fun failedPurgeKeepsTasksAndHistory() = runTest {
+        val id = addKia(oil(record = NewTaskRecord(doneDate)))
+        failBefore("DELETE", "cars")
+
+        assertFails { taskHistory.purgeCar(id) }
+
+        assertEquals(1, car(id).tasks.size)
+        assertEquals(1, records(id).size)
     }
 }

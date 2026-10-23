@@ -1,6 +1,13 @@
 package ru.kuznetsov.itstime4service.data.repository
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -11,6 +18,7 @@ import ru.kuznetsov.itstime4service.domain.model.NewCar
 import ru.kuznetsov.itstime4service.domain.model.NewMaintenanceTask
 import ru.kuznetsov.itstime4service.domain.model.NewTaskRecord
 import ru.kuznetsov.itstime4service.domain.model.ReminderRecord
+import ru.kuznetsov.itstime4service.domain.model.TaskIcon
 import ru.kuznetsov.itstime4service.domain.model.ThemeMode
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -21,7 +29,7 @@ import kotlin.test.assertTrue
 /**
  * Covers [CarRepositoryImpl], [ServiceHistoryRepositoryImpl], [SettingsRepositoryImpl] and [ReminderRepositoryImpl] on
  * a real SQLite database: every field makes the round trip, `null` stays `null`, rows keep the order they were added
- * in, and observers see each write.
+ * in, and an observer subscribed before a write gets the written value next.
  */
 class RepositoriesTest {
 
@@ -190,5 +198,74 @@ class RepositoriesTest {
             listOf(ReminderRecord("pads", LocalDateTime(2026, 10, 22, 9, 0)), ReminderRecord("oil", LocalDateTime(2026, 10, 24, 9, 0))),
             reminders.getRecords(),
         )
+    }
+
+    @Test
+    fun everyStoredEnumValueIsReadBack() = runTest {
+        ThemeMode.entries.forEach { mode ->
+            settings.updateSettings { it.copy(themeMode = mode) }
+            assertEquals(mode, settings.observeSettings().first().themeMode)
+        }
+        DistanceUnit.entries.forEach { unit ->
+            settings.updateSettings { it.copy(distanceUnit = unit) }
+            assertEquals(unit, settings.observeSettings().first().distanceUnit)
+        }
+        CarsView.entries.forEach { view ->
+            settings.updateSettings { it.copy(carsView = view) }
+            assertEquals(view, settings.observeSettings().first().carsView)
+        }
+        val id = addCar("Kia Rio", *TaskIcon.entries.map { task(it.name).copy(icon = it) }.toTypedArray())
+        assertEquals(TaskIcon.entries, cars.observeCarById(id).first()!!.tasks.map { it.icon })
+    }
+
+    @Test
+    fun reminderTimeKeepsTheEdgesOfTheDay() = runTest {
+        listOf(LocalTime(0, 0), LocalTime(23, 59)).forEach { time ->
+            settings.updateSettings { it.copy(reminderTime = time) }
+            assertEquals(time, settings.observeSettings().first().reminderTime)
+        }
+    }
+
+    private fun <T> TestScope.emissions(flow: Flow<T>): ReceiveChannel<T> {
+        val channel = Channel<T>(Channel.UNLIMITED)
+        backgroundScope.launch(Dispatchers.Default) { flow.collect { channel.send(it) } }
+        return channel
+    }
+
+    @Test
+    fun observedCarSeesEditsAndSale() = runTest {
+        val id = addCar("Kia Rio")
+        val car = emissions(cars.observeCarById(id))
+        assertEquals(84_300, car.receive()!!.mileageKm)
+
+        cars.updateMileage(id, 85_000)
+        assertEquals(85_000, car.receive()!!.mileageKm)
+
+        taskHistory.sellCar(id)
+        assertNull(car.receiveAsFlow().first { it == null })
+    }
+
+    @Test
+    fun observedHistorySeesAddedRecord() = runTest {
+        val id = addCar("Kia Rio")
+        val ofCar = emissions(history.observeHistory(id))
+        val ofAll = emissions(history.observeAllHistory())
+        assertTrue(ofCar.receive().isEmpty())
+        assertTrue(ofAll.receive().isEmpty())
+
+        history.addEntry(id, "Wipers", LocalDate(2026, 5, 2), 82_000, null, null, null)
+
+        assertEquals(listOf("Wipers"), ofCar.receive().map { it.taskName })
+        assertEquals(listOf("Wipers"), ofAll.receive().map { it.taskName })
+    }
+
+    @Test
+    fun observedSettingsSeeEachChange() = runTest {
+        val stored = emissions(settings.observeSettings())
+        assertEquals(ThemeMode.SYSTEM, stored.receive().themeMode)
+
+        settings.updateSettings { it.copy(themeMode = ThemeMode.DARK) }
+
+        assertEquals(ThemeMode.DARK, stored.receive().themeMode)
     }
 }
