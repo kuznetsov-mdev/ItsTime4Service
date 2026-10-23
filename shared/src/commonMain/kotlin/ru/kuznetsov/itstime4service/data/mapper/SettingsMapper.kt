@@ -8,8 +8,8 @@ import ru.kuznetsov.itstime4service.domain.model.Settings
 import ru.kuznetsov.itstime4service.domain.model.ThemeMode
 
 internal fun SettingsRow.toDomain() = Settings(
-    themeMode = ThemeMode.valueOf(theme_mode),
-    distanceUnit = DistanceUnit.valueOf(distance_unit),
+    themeMode = ThemeMode.entries.firstOrNull { it.name == theme_mode } ?: ThemeMode.SYSTEM,
+    distanceUnit = DistanceUnit.entries.firstOrNull { it.name == distance_unit } ?: DistanceUnit.KILOMETERS,
     pushEnabled = push_enabled,
     defaultReminderWindowKm = default_reminder_window_km.toInt(),
     reminderTime = LocalTime.parse(reminder_time),

@@ -185,6 +185,16 @@ class RepositoriesTest {
     }
 
     @Test
+    fun unknownStoredThemeAndUnitReadAsDefaults() = runTest {
+        settings.updateSettings { it.copy(themeMode = ThemeMode.DARK, distanceUnit = DistanceUnit.MILES) }
+        db.execute("UPDATE settings SET theme_mode = 'SEPIA', distance_unit = 'VERSTS'")
+
+        val stored = settings.observeSettings().first()
+        assertEquals(ThemeMode.SYSTEM, stored.themeMode)
+        assertEquals(DistanceUnit.KILOMETERS, stored.distanceUnit)
+    }
+
+    @Test
     fun reminderPlanIsReplacedAsAWhole() = runTest {
         reminders.replaceRecords(listOf(ReminderRecord("oil", LocalDateTime(2026, 10, 21, 9, 0))))
         reminders.replaceRecords(
