@@ -81,11 +81,21 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.compose.uiTest)
         }
         getByName("androidHostTest").dependencies {
             implementation(libs.sqldelight.sqliteDriver)
+            implementation(libs.robolectric)
+            implementation(libs.androidx.compose.uiTestManifest)
         }
     }
+}
+
+tasks.withType<Test>().configureEach {
+    jvmArgs(
+        "--add-exports=java.base/jdk.internal.access=ALL-UNNAMED",
+        "--add-opens=java.base/java.io=ALL-UNNAMED",
+    )
 }
 
 sqldelight {

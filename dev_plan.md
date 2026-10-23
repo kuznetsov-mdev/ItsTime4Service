@@ -338,6 +338,7 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 - ✅ Расширение `commonTest` (сортировка, граничные случаи дат). _Управляемое время (`GetNowUseCase`/`GetTodayUseCase`), `SyncRemindersUseCase`, календарные границы срока по времени, сортировка с работами, просроченными по времени, форматы ввода дат; репозитории и миграции на настоящей SQLite в памяти (`TaskHistoryRepositoryImplTest`, `RepositoriesTest`, `MigrationTest`, тестовая зависимость `sqlite-driver`); все ViewModel-и на графе Koin приложения поверх тестовой базы (в Android — временный файл: `JdbcSqliteDriver` в памяти не держит параллельные потоки) (`TestApp`, 60 тестов), формат даты подменяется в тестах (`DateInputFormat.language`). Тесты ViewModel показали гонку: репозитории работали с базой параллельно на `Dispatchers.Default`, и записанное не читалось обратно — теперь все репозитории идут через общий `databaseDispatcher` с параллелизмом 1. Там же найдено: после сохранения работы без «добавить ещё» повторный тап мог сохранить её второй раз — `TaskFormViewModel` теперь снимает блокировку только при неудаче или для «добавить ещё». ViewModel-и тестов очищаются через `ViewModelStore`. Закоммичено; тесты пройдены._
 - ✅ Тест-план — `specs/test-plan.md`: сценарии по уровням (domain, data, ViewModel, UI, E2E, безопасность), матрица окружений, критерии релиза, матрица трассировки требований из спек на тесты (раздел 7.1) и список недостающего покрытия (раздел 8).
 - ✅ Ошибки базы. _Неизвестные `theme_mode`/`distance_unit` читаются как `SYSTEM`/`KILOMETERS`. Сбой записи — плашка «Не удалось сохранить» (`ErrorBar`), форма или окно с полями остаются с введённым; сбой чтения — экран «Не удалось загрузить данные» с «Повторить» (`LoadError`); корень приложения и пересборка уведомлений не падают. Помощники `attempt`, `reloadable` (`ui/error`). В макете — раздел «Этап 10: ошибки базы», экраны 41–45; спека — «Ошибки базы» в `specs/presentation.md`. Тесты `DatabaseFailuresTest`; не закоммичено, тесты не запускались._
+- 🟡 Compose UI-тесты (шаг C тест-плана). _Подключены `ui-test` в `commonTest` и Robolectric в `androidHostTest`: общий базовый класс `UiTest` (на Android — `RobolectricTestRunner`, SDK 36). Пробные тесты — `LicensesScreenTest` (список, раскрытие текста, «назад») и `ThirdPartyNoticesTest` (список библиотек и тексты лицензий сверяются с `THIRD_PARTY_NOTICES.md`). Для Robolectric на JDK 21 JVM-тестам открыты `jdk.internal.access` и `java.io` (`shared/build.gradle.kts`). Остальные экраны — дальше; тесты пройдены._
 - ⬜ Прогон на реальных Android/iOS устройствах.
 - ⬜ Сборка Google Play / TestFlight.
 - ⬜ Проверка безопасности релизной сборки перед публикацией: состав релиза, сжатие и обфускация кода, резервное копирование данных.
@@ -354,6 +355,9 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 | 6 | — | — |
 | 7 | `app.cash.sqldelight:2.4.0` (plugin + runtime/coroutines-extensions/android-driver/native-driver) | plugin: root+`shared`; driver-deps: `androidMain`/`iosMain` |
 | 8 | `androidx.work:work-runtime-ktx:2.11.0`, `androidx.core:core-ktx`, `androidx.activity:activity-compose` | `androidMain` |
+| 10 | `app.cash.sqldelight:sqlite-driver:2.4.0` | `androidHostTest` |
+| 10 | `org.jetbrains.compose.ui:ui-test:1.12.1` (Compose UI-тесты) | `commonTest` |
+| 10 | `org.robolectric:robolectric:4.17`, `androidx.compose.ui:ui-test-manifest:1.12.1` (UI-тесты на JVM без эмулятора) | `androidHostTest` |
 
 ## Верификация
 
