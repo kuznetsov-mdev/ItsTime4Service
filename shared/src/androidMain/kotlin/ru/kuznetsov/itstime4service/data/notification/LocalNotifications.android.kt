@@ -13,9 +13,9 @@ import kotlin.time.Clock
  * Android notification queue built on WorkManager: every notification is a delayed one-time job
  * handled by [ReminderWorker], so the plan survives a reboot.
  */
-actual class LocalNotifications(private val context: Context) {
+actual class LocalNotifications(private val context: Context) : NotificationQueue {
 
-    actual fun replaceAll(notifications: List<LocalNotification>) {
+    actual override fun replaceAll(notifications: List<LocalNotification>) {
         val workManager = WorkManager.getInstance(context)
         workManager.cancelAllWorkByTag(ReminderWorker.TAG)
         val now = Clock.System.now()

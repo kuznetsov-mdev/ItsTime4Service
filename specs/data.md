@@ -304,16 +304,16 @@ expect class DatabaseDriverFactory {
 SyncRemindersUseCase ──▶ ReminderScheduler.schedule(reminders, distanceUnit)
                               │  ReminderSchedulerImpl: PlannedReminder → LocalNotification
                               ▼
-                         LocalNotifications.replaceAll(notifications)
+                         NotificationQueue.replaceAll(notifications) — LocalNotifications
                               ├─ Android: WorkManager → ReminderWorker → NotificationManagerCompat
                               └─ iOS: UNUserNotificationCenter
 ```
 
 ### `ReminderSchedulerImpl`
 
-`data/notification/ReminderSchedulerImpl.kt`. Реализует `ReminderScheduler`; зависит от `LocalNotifications`.
+`data/notification/ReminderSchedulerImpl.kt`. Реализует `ReminderScheduler`; зависит от `NotificationQueue` (в приложении — `LocalNotifications`) и функции `text(resource, args)`, которая читает строку; по умолчанию это `getString`, в тестах — подстановка ключа ресурса.
 
-`schedule(reminders, distanceUnit)` на каждый `PlannedReminder` строит `LocalNotification` и передаёт весь список в `LocalNotifications.replaceAll`. Пустой список тоже передаётся — это отмена всего запланированного.
+`schedule(reminders, distanceUnit)` на каждый `PlannedReminder` строит `LocalNotification` и передаёт весь список в `NotificationQueue.replaceAll`. Пустой список тоже передаётся — это отмена всего запланированного.
 
 | Поле `LocalNotification` | Тип | Откуда |
 |---|---|---|
@@ -339,9 +339,11 @@ SyncRemindersUseCase ──▶ ReminderScheduler.schedule(reminders, distanceUni
 `data/notification/LocalNotifications.kt`:
 
 ```kotlin
-expect class LocalNotifications {
+interface NotificationQueue {
     fun replaceAll(notifications: List<LocalNotification>)
 }
+
+expect class LocalNotifications : NotificationQueue
 ```
 
 `replaceAll` — «снять всё, что ещё не показано, и поставить переданное». Уже показанные уведомления не трогаются ни на одной платформе.
@@ -389,7 +391,7 @@ expect class LocalNotifications {
 | `TaskHistoryRepository` | `singleOf(::TaskHistoryRepositoryImpl) bind …` |
 | `SettingsRepository` | `singleOf(::SettingsRepositoryImpl) bind …` |
 | `ReminderRepository` | `singleOf(::ReminderRepositoryImpl) bind …` |
-| `ReminderScheduler` | `singleOf(::ReminderSchedulerImpl) bind …` |
+| `ReminderScheduler` | `single { ReminderSchedulerImpl(get()) } bind …` |
 
 ### `platformModule`
 
@@ -397,8 +399,8 @@ expect class LocalNotifications {
 
 | Платформа | Содержимое |
 |---|---|
-| Android (`PlatformModule.android.kt`) | `single { DatabaseDriverFactory(androidContext()) }`, `single { LocalNotifications(androidContext()) }` |
-| iOS (`PlatformModule.ios.kt`) | `single { DatabaseDriverFactory() }`, `single { LocalNotifications() }` |
+| Android (`PlatformModule.android.kt`) | `single { DatabaseDriverFactory(androidContext()) }`, `single { LocalNotifications(androidContext()) } bind NotificationQueue::class` |
+| iOS (`PlatformModule.ios.kt`) | `single { DatabaseDriverFactory() }`, `single { LocalNotifications() } bind NotificationQueue::class` |
 
 ### `initKoin`
 
@@ -446,8 +448,9 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
 - `TaskHistoryRepositoryImplTest` — каждая операция порта: машина с работами и записями, отметка и её снятие (в том числе после смены пробега), правка работы со связанной записью и выбор последней добавленной при равных датах, правка записи со сдвигом работы и без него, сохранение названия, `task_id` и данных отката, продажа и полное удаление; сбой посреди операции (триггер SQLite с `RAISE(ABORT)` на одной из записей) не оставляет частичных изменений;
 - `RepositoriesTest` — поля машин, работ, истории, настроек и плана уведомлений проходят запись и чтение, `NULL` остаётся `NULL`, порядок строк — порядок добавления, неизвестные `cars_view`, `theme_mode` и `distance_unit` читаются как `LIST`, `SYSTEM` и `KILOMETERS`, каждое значение enum-ов и границы суток во времени напоминания читаются обратно, план заменяется целиком; подписчик, подписанный до записи, получает новое значение следующим;
 - `MigrationTest` — версия схемы 5; база версии 1 с данными (схема собрана из текущих таблиц без добавленного миграциями) обновляется до текущей, данные на месте, новые колонки — со значениями по умолчанию, после обновления работают отметка и её снятие; база версии 2 сохраняет план уведомлений; база версии 3 — связанные записи с данными отката, проданные машины и выбор машины при запуске; обновление 4 → 5 даёт `plate_hidden`/`vin_hidden` = 0.
+- `ReminderSchedulerImplTest` — без базы: id, заголовок и время уведомления, текст «осталось», «просрочено на» (без знака), «время вышло», приоритет пройденного пробега над вышедшим временем, мили; весь план, в том числе пустой, заменяет очередь целиком. Строки подставляются ключами ресурсов.
 
 ## Что ещё не реализовано
 
-- Юнит-тесты на `ReminderSchedulerImpl` и платформенное расписание уведомлений.
+- Тесты платформенного расписания уведомлений (`LocalNotifications` на WorkManager и `UNUserNotificationCenter`) — только на устройстве.
 - Синхронизация, резервная копия средствами приложения, экспорт и импорт данных — данные живут только в локальном файле `itstime4service.db`.

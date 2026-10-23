@@ -147,10 +147,10 @@
 
 ## 7. Текущее состояние покрытия
 
-Состояние на 23.10.2026. В `shared/src/commonTest` 342 теста. Они выполняются в Android host tests и в iOS simulator tests:
+Состояние на 23.10.2026. В `shared/src/commonTest` 349 тестов. Они выполняются в Android host tests и в iOS simulator tests:
 
 - **Domain (174):** все расчётные use case-ы, а также use case-ы машин, работ, истории, настроек, запуска и уведомлений, правила `TaskHistoryRules`. Часы и часовой пояс управляемые (`GetNowUseCase`, `GetTodayUseCase`).
-- **Data (45):** репозитории и миграции на настоящей SQLite: `TaskHistoryRepositoryImplTest` (в том числе сбой посреди транзакции через триггер SQLite), `RepositoriesTest` (в том числе подписка до записи), `MigrationTest` (с каждой прежней версии), `CarMapperTest`. Подробности — в разделе «Тесты на базе» `specs/data.md`.
+- **Data (52):** репозитории и миграции на настоящей SQLite: `TaskHistoryRepositoryImplTest` (в том числе сбой посреди транзакции через триггер SQLite), `RepositoriesTest` (в том числе подписка до записи), `MigrationTest` (с каждой прежней версии), `CarMapperTest`, `ReminderSchedulerImplTest` (текст и состав уведомлений). Подробности — в разделе «Тесты на базе» `specs/data.md`.
 - **ViewModel (84):** все шесть ViewModel-ей и `CarsViewModel` на графе Koin приложения поверх тестовой базы (`TestApp`). Сбои базы — `DatabaseFailuresTest`. Подробности — в разделе «Тесты ViewModel» `specs/presentation.md`.
 - **Логика UI (39):** `HistoryRows`, `TaskFields`, форматы ввода дат, перевод км/мили, маска номера, подбор иконок.
 - **iOS UI (1):** `ScreensWalkthroughUITests` — один сквозной проход по экранам на русском языке с перезапусками.
@@ -158,7 +158,7 @@
 Не покрыто:
 
 - Compose UI-тесты экранов и компонентов, Android UI/E2E набор;
-- `ReminderSchedulerImpl` и платформенное расписание уведомлений;
+- платформенное расписание уведомлений (`LocalNotifications`);
 - CI, сканирование секретов, SCA и SAST;
 - проверки на физических устройствах и release-сборке.
 
@@ -199,7 +199,7 @@
 | Продажа и полное удаление машины | DATA-05 | `TaskHistoryRepositoryImplTest` | D | ✅ | — |
 | Миграции схемы | DATA-06 | `MigrationTest` | D | ✅ | — |
 | Сохранение после перезапуска | DATA-07 | `ScreensWalkthroughUITests` | E2E (iOS) | 🟡 | нет на Android |
-| Платформенный планировщик уведомлений | DATA-09 | — | D, E2E | ⬜ | нет тестов |
+| Планировщик уведомлений | DATA-09 | `ReminderSchedulerImplTest` | U | 🟡 | платформенная очередь (WorkManager, `UNUserNotificationCenter`) — только на устройстве |
 
 **Presentation** (`specs/presentation.md`)
 
@@ -266,7 +266,7 @@
 - [x] Проверить мапперы всех моделей, дат, enum-ов, nullable-колонок и неизвестных сохранённых значений. *Неизвестные `theme_mode` и `distance_unit` раньше роняли чтение настроек; теперь читаются как `SYSTEM` и `KILOMETERS`.*
 - [x] Проверить создание чистой базы и миграцию с каждой поддерживаемой версии на тестовых копиях реальных схем с данными: несколько авто, работы, история, настройки, пустые таблицы и `null`.
 - [x] Проверить round-trip всех колонок, включая госномер, иконку, CarsView, ссылки запуска и записи напоминаний; убедиться, что старые данные после миграции читаются и сохраняются.
-- [ ] Покрыть `ReminderSchedulerImpl` и платформенное расписание уведомлений (DATA-09).
+- [ ] Покрыть `ReminderSchedulerImpl` и платформенное расписание уведомлений (DATA-09). *`ReminderSchedulerImpl` — `ReminderSchedulerImplTest`; платформенная очередь — в E2E и на устройстве.*
 
 ### 8.4 ViewModel и состояние экранов
 

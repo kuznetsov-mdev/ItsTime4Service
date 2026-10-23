@@ -14,9 +14,16 @@ data class LocalNotification(
 )
 
 /**
- * The platform's local notification queue.
+ * A queue of local notifications.
  * [replaceAll] cancels every notification of the app that has not fired yet and schedules the given ones.
  */
-expect class LocalNotifications {
+interface NotificationQueue {
     fun replaceAll(notifications: List<LocalNotification>)
+}
+
+/**
+ * The platform's local notification queue.
+ */
+expect class LocalNotifications : NotificationQueue {
+    override fun replaceAll(notifications: List<LocalNotification>)
 }

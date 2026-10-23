@@ -1,5 +1,6 @@
 package ru.kuznetsov.itstime4service.data.notification
 
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.app_name
@@ -19,23 +20,24 @@ import ru.kuznetsov.itstime4service.ui.format.kmIn
  * [ReminderScheduler] that turns planned reminders into localized notifications and passes them to the platform.
  * The text reads "car: task — state", where the state is the distance left, the distance overdue
  * or a note that the time interval has run out.
+ * The notifications go to a [NotificationQueue] — the platform's [LocalNotifications] in the app; [text] reads a string
+ * resource with its arguments and is replaced in tests, which have no resources to read.
  */
 class ReminderSchedulerImpl(
-    private val localNotifications: LocalNotifications,
+    private val queue: NotificationQueue,
+    private val text: suspend (StringResource, List<Any>) -> String = { resource, args -> getString(resource, *args.toTypedArray()) },
 ) : ReminderScheduler {
 
     override suspend fun schedule(reminders: List<PlannedReminder>, distanceUnit: DistanceUnit) {
-        val title = getString(Res.string.app_name)
-        localNotifications.replaceAll(
+        val title = text(Res.string.app_name, emptyList())
+        queue.replaceAll(
             reminders.map { reminder ->
                 LocalNotification(
                     id = "${reminder.taskId}@${reminder.fireAt}",
                     title = title,
-                    text = getString(
+                    text = text(
                         Res.string.notification_reminder_text,
-                        reminder.carBrand,
-                        reminder.taskName,
-                        stateText(reminder, distanceUnit),
+                        listOf(reminder.carBrand, reminder.taskName, stateText(reminder, distanceUnit)),
                     ),
                     fireAt = reminder.fireAt,
                 )
@@ -47,9 +49,9 @@ class ReminderSchedulerImpl(
         val remainingMonths = reminder.remainingMonths
         return when {
             reminder.remainingKm <= 0 ->
-                getString(Res.string.task_overdue_by, distanceText(-reminder.remainingKm, distanceUnit))
-            remainingMonths != null && remainingMonths <= 0 -> getString(Res.string.task_time_expired)
-            else -> getString(Res.string.task_remaining, distanceText(reminder.remainingKm, distanceUnit))
+                text(Res.string.task_overdue_by, listOf(distanceText(-reminder.remainingKm, distanceUnit)))
+            remainingMonths != null && remainingMonths <= 0 -> text(Res.string.task_time_expired, emptyList())
+            else -> text(Res.string.task_remaining, listOf(distanceText(reminder.remainingKm, distanceUnit)))
         }
     }
 
@@ -58,6 +60,6 @@ class ReminderSchedulerImpl(
             DistanceUnit.KILOMETERS -> Res.string.mileage_km
             DistanceUnit.MILES -> Res.string.distance_mi
         }
-        return getString(template, km.kmIn(distanceUnit).grouped())
+        return text(template, listOf(km.kmIn(distanceUnit).grouped()))
     }
 }

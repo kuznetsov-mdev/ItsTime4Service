@@ -12,9 +12,9 @@ import platform.UserNotifications.UNUserNotificationCenter
  * iOS notification queue built on UNUserNotificationCenter: every notification is a pending request
  * with a one-shot calendar trigger. Requests are silently dropped by the system until the user allows notifications.
  */
-actual class LocalNotifications {
+actual class LocalNotifications : NotificationQueue {
 
-    actual fun replaceAll(notifications: List<LocalNotification>) {
+    actual override fun replaceAll(notifications: List<LocalNotification>) {
         val center = UNUserNotificationCenter.currentNotificationCenter()
         center.removeAllPendingNotificationRequests()
         notifications.forEach { notification ->

@@ -1,7 +1,6 @@
 package ru.kuznetsov.itstime4service.di
 
 import kotlinx.coroutines.CoroutineDispatcher
-import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import ru.kuznetsov.itstime4service.data.local.DatabaseDriverFactory
@@ -28,5 +27,5 @@ val dataModule = module {
     single { TaskHistoryRepositoryImpl(get(), get()) } bind TaskHistoryRepository::class
     single { SettingsRepositoryImpl(get(), get()) } bind SettingsRepository::class
     single { ReminderRepositoryImpl(get(), get()) } bind ReminderRepository::class
-    singleOf(::ReminderSchedulerImpl) bind ReminderScheduler::class
+    single { ReminderSchedulerImpl(get()) } bind ReminderScheduler::class
 }
