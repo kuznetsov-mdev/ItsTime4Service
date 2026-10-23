@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +25,7 @@ import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogButton
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogCard
+import ru.kuznetsov.itstime4service.ui.components.indicators.ErrorBar
 import ru.kuznetsov.itstime4service.ui.components.fields.LabeledMiniField
 import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
 import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
@@ -38,9 +40,19 @@ internal fun HistoryEntryDialog(
     onChange: (HistoryEntryForm) -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
+    saveFailed: Boolean = false,
+    onSaveFailureShown: () -> Unit = {},
 ) {
     Dialog(onDismissRequest = onDismiss) {
-        HistoryEntryCard(form = form, distanceUnit = distanceUnit, onChange = onChange, onSave = onSave, onDismiss = onDismiss)
+        HistoryEntryCard(
+            form = form,
+            distanceUnit = distanceUnit,
+            onChange = onChange,
+            onSave = onSave,
+            onDismiss = onDismiss,
+            saveFailed = saveFailed,
+            onSaveFailureShown = onSaveFailureShown,
+        )
     }
 }
 
@@ -52,6 +64,8 @@ internal fun HistoryEntryCard(
     onSave: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    saveFailed: Boolean = false,
+    onSaveFailureShown: () -> Unit = {},
 ) {
     val colors = ItsTime4ServiceTheme.colors
     DialogCard(icon = ItsTime4ServiceIcons.Wrench, title = form.taskName, text = form.car.label(), modifier = modifier) {
@@ -92,6 +106,7 @@ internal fun HistoryEntryCard(
                 onDone = onSave,
             )
         }
+        ErrorBar(saveFailed, onSaveFailureShown, Modifier.padding(top = 14.dp))
         Spacer(Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DialogButton(

@@ -220,4 +220,8 @@
     <string name="plate_hidden">Matrícula oculta</string>
     <string name="vin_hidden">VIN oculto</string>
     <string name="loading">Cargando…</string>
+    <string name="save_failed">No se pudo guardar. Inténtalo de nuevo</string>
+    <string name="load_failed_title">No se pudieron cargar los datos</string>
+    <string name="load_failed_text">Tus registros siguen ahí, solo no se pudieron leer. Inténtalo de nuevo.</string>
+    <string name="retry">Reintentar</string>
 </resources>

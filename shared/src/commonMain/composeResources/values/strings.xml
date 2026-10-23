@@ -218,4 +218,8 @@
     <string name="plate_hidden">Licence plate hidden</string>
     <string name="vin_hidden">VIN hidden</string>
     <string name="loading">Loading…</string>
+    <string name="save_failed">Could not save. Please try again</string>
+    <string name="load_failed_title">Could not load the data</string>
+    <string name="load_failed_text">Your records are still there, they just could not be read. Please try again.</string>
+    <string name="retry">Retry</string>
 </resources>

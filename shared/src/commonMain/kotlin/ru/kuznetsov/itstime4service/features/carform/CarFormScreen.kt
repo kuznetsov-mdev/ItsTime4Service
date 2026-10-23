@@ -50,6 +50,8 @@ import ru.kuznetsov.itstime4service.ui.components.buttons.PrimaryButton
 import ru.kuznetsov.itstime4service.ui.components.fields.AppNumberField
 import ru.kuznetsov.itstime4service.ui.components.fields.AppTextField
 import ru.kuznetsov.itstime4service.ui.components.fields.FieldLabel
+import ru.kuznetsov.itstime4service.ui.components.indicators.ErrorBar
+import ru.kuznetsov.itstime4service.ui.components.screen.LoadError
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTopBar
@@ -85,6 +87,8 @@ fun CarFormScreen(
         onTaskRecordToggle = viewModel::onTaskRecordToggle,
         onSave = viewModel::onSave,
         modifier = modifier,
+        onSaveFailureShown = viewModel::onSaveFailureShown,
+        onRetry = viewModel::onRetry,
     )
 }
 
@@ -105,6 +109,8 @@ internal fun CarFormContent(
     onTaskRecordToggle: (key: Int, on: Boolean) -> Unit,
     onSave: (defaultTaskName: String) -> Unit,
     modifier: Modifier = Modifier,
+    onSaveFailureShown: () -> Unit = {},
+    onRetry: () -> Unit = {},
 ) {
     val colors = ItsTime4ServiceTheme.colors
     val typography = ItsTime4ServiceTheme.typography
@@ -113,6 +119,10 @@ internal fun CarFormContent(
     Column(modifier.fillMaxSize()) {
         ScreenTopBar(onBack = onBack)
         ScreenTitle(title = stringResource(Res.string.screen_add_car))
+        if (state.loadFailed) {
+            LoadError(onRetry = onRetry, modifier = Modifier.weight(1f).fillMaxWidth())
+            return@Column
+        }
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -204,6 +214,11 @@ internal fun CarFormContent(
                 }
             }
         }
+        ErrorBar(
+            visible = state.saveFailed,
+            onShown = onSaveFailureShown,
+            modifier = Modifier.padding(start = ScreenHorizontalPadding, end = ScreenHorizontalPadding, top = 12.dp),
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()

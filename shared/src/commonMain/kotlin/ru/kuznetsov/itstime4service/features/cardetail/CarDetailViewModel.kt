@@ -2,6 +2,7 @@ package ru.kuznetsov.itstime4service.features.cardetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +30,8 @@ import ru.kuznetsov.itstime4service.domain.usecase.SortedTaskStatsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UnmarkTaskDoneUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateMileageUseCase
+import ru.kuznetsov.itstime4service.ui.error.attempt
+import ru.kuznetsov.itstime4service.ui.error.reloadable
 import ru.kuznetsov.itstime4service.ui.format.deviceRegion
 import ru.kuznetsov.itstime4service.ui.format.keepKm
 import ru.kuznetsov.itstime4service.ui.format.kmIn
@@ -45,11 +48,13 @@ import ru.kuznetsov.itstime4service.ui.icons.taskIcon
  * multiplier; every step is stored right away and the mileage never drops to zero or below. Steps and a mileage
  * typed by hand are applied one after another, each to the mileage as stored at that moment.
  * Marking a task as done first opens a window for the service name, the cost and a comment, which go into
- * the service history record. A task shows as done while its mark holds (see [DoneMarksUseCase]); removing
+ * the service history record; repeated taps on save while the mark is being stored are ignored. A task shows as done while its mark holds (see [DoneMarksUseCase]); removing
  * the mark after a confirmation rolls the task back and deletes the record.
  * Opening the screen remembers the car as the last opened one, which the app may start on next time.
  * The licence plate is drawn after its format, with the device region as a tie-breaker (see [DetectPlateStyleUseCase]).
  * The plate and the VIN can be hidden and shown again; the choice is stored with the car, and a hidden one is not edited.
+ * A failed write shows the "could not save" bar until [onSaveFailureShown]: the "task done" window and an edit in
+ * place stay open with what was typed. A failed read shows the load error until [onRetry] reads the car again.
  */
 class CarDetailViewModel(
     private val carId: String,
@@ -73,28 +78,34 @@ class CarDetailViewModel(
 
     private val overlay = MutableStateFlow(Overlay())
     private val mileageMutex = Mutex()
+    private var isMarking = false
+
+    private val retries = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     init {
-        viewModelScope.launch { recordCarOpened(carId) }
+        viewModelScope.launch { attempt { recordCarOpened(carId) } }
     }
 
-    val state: StateFlow<CarDetailUiState> = combine(
-        observeCarById(carId),
-        observeHistory(carId),
-        observeSettings(),
-        overlay,
-    ) { car, history, settings, overlay ->
-        val details = car?.toDetails(doneMarks(car, history).keys)
-        CarDetailUiState(
-            isLoading = false,
-            car = details,
-            distanceUnit = settings.distanceUnit,
-            editingField = overlay.editingField,
-            isConfirmingDelete = overlay.isConfirmingDelete,
-            taskDoneDialog = details?.tasks?.firstOrNull { it.id == overlay.doneDialogTaskId },
-            isConfirmingUnmark = overlay.unmarkTaskId != null,
-            mileageMultiplier = overlay.mileageMultiplier,
-        )
+    val state: StateFlow<CarDetailUiState> = reloadable(retries, CarDetailUiState(isLoading = false, loadFailed = true)) {
+        combine(
+            observeCarById(carId),
+            observeHistory(carId),
+            observeSettings(),
+            overlay,
+        ) { car, history, settings, overlay ->
+            val details = car?.toDetails(doneMarks(car, history).keys)
+            CarDetailUiState(
+                isLoading = false,
+                car = details,
+                distanceUnit = settings.distanceUnit,
+                editingField = overlay.editingField,
+                isConfirmingDelete = overlay.isConfirmingDelete,
+                taskDoneDialog = details?.tasks?.firstOrNull { it.id == overlay.doneDialogTaskId },
+                isConfirmingUnmark = overlay.unmarkTaskId != null,
+                mileageMultiplier = overlay.mileageMultiplier,
+                saveFailed = overlay.saveFailed,
+            )
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), CarDetailUiState())
 
     fun onEdit(field: EditableField) {
@@ -106,42 +117,36 @@ class CarDetailViewModel(
     fun onPlateHiddenToggle() {
         val car = state.value.car ?: return
         onCancelEdit()
-        viewModelScope.launch { setPlateHidden(carId, !car.plateHidden) }
+        save { setPlateHidden(carId, !car.plateHidden) }
     }
 
     fun onVinHiddenToggle() {
         val car = state.value.car ?: return
         onCancelEdit()
-        viewModelScope.launch { setVinHidden(carId, !car.vinHidden) }
+        save { setVinHidden(carId, !car.vinHidden) }
     }
 
     fun onCancelEdit() = overlay.update { it.copy(editingField = null) }
 
-    fun onSaveBrand(text: String) {
-        viewModelScope.launch {
-            val car = observeCarById(carId).first() ?: return@launch
-            if (updateCar(carId, text, car.vin, car.plate)) onCancelEdit()
-        }
+    fun onSaveBrand(text: String) = save {
+        val car = observeCarById(carId).first() ?: return@save
+        if (updateCar(carId, text, car.vin, car.plate)) onCancelEdit()
     }
 
-    fun onSaveVin(text: String) {
-        viewModelScope.launch {
-            val car = observeCarById(carId).first() ?: return@launch
-            if (updateCar(carId, car.brand, text, car.plate)) onCancelEdit()
-        }
+    fun onSaveVin(text: String) = save {
+        val car = observeCarById(carId).first() ?: return@save
+        if (updateCar(carId, car.brand, text, car.plate)) onCancelEdit()
     }
 
-    fun onSavePlate(text: String) {
-        viewModelScope.launch {
-            val car = observeCarById(carId).first() ?: return@launch
-            if (updateCar(carId, car.brand, car.vin, text)) onCancelEdit()
-        }
+    fun onSavePlate(text: String) = save {
+        val car = observeCarById(carId).first() ?: return@save
+        if (updateCar(carId, car.brand, car.vin, text)) onCancelEdit()
     }
 
     fun onSaveMileage(text: String) {
         val mileage = text.trim().toIntOrNull() ?: return
         val unit = state.value.distanceUnit
-        viewModelScope.launch {
+        save {
             mileageMutex.withLock {
                 val car = observeCarById(carId).first() ?: return@withLock
                 if (updateMileage(carId, keepKm(car.mileageKm, mileage, unit))) onCancelEdit()
@@ -155,7 +160,7 @@ class CarDetailViewModel(
         val unit = state.value.distanceUnit
         val step = direction * overlay.value.mileageMultiplier * CarDetailUiState.MILEAGE_STEP
         overlay.update { it.copy(editingField = null) }
-        viewModelScope.launch {
+        save {
             mileageMutex.withLock {
                 val car = observeCarById(carId).first() ?: return@withLock
                 val mileage = car.mileageKm.kmIn(unit) + step
@@ -170,9 +175,11 @@ class CarDetailViewModel(
 
     fun onTaskDoneConfirm(serviceName: String, cost: String, comment: String) {
         val taskId = overlay.value.doneDialogTaskId ?: return
-        overlay.update { it.copy(doneDialogTaskId = null) }
-        viewModelScope.launch {
+        if (isMarking) return
+        isMarking = true
+        save(onDone = { isMarking = false }) {
             mileageMutex.withLock { markTaskDone(carId, taskId, getToday(), serviceName, cost.toIntOrNull(), comment) }
+            overlay.update { if (it.doneDialogTaskId == taskId) it.copy(doneDialogTaskId = null) else it }
         }
     }
 
@@ -183,7 +190,7 @@ class CarDetailViewModel(
     fun onUnmarkConfirm() {
         val taskId = overlay.value.unmarkTaskId ?: return
         overlay.update { it.copy(unmarkTaskId = null) }
-        viewModelScope.launch {
+        save {
             mileageMutex.withLock { unmarkTaskDone(carId, taskId) }
         }
     }
@@ -194,7 +201,20 @@ class CarDetailViewModel(
 
     fun onDeleteConfirm() {
         overlay.update { it.copy(isConfirmingDelete = false) }
-        viewModelScope.launch { deleteCar(carId) }
+        save { deleteCar(carId) }
+    }
+
+    fun onSaveFailureShown() = overlay.update { it.copy(saveFailed = false) }
+
+    fun onRetry() {
+        retries.tryEmit(Unit)
+    }
+
+    private fun save(onDone: () -> Unit = {}, block: suspend () -> Unit) {
+        viewModelScope.launch {
+            attempt(block).onFailure { overlay.update { it.copy(saveFailed = true) } }
+            onDone()
+        }
     }
 
     private fun Car.toDetails(doneTaskIds: Set<String>): CarDetails {
@@ -228,8 +248,8 @@ class CarDetailViewModel(
     }
 
     /**
-     * Screen-only state that is not stored anywhere: what is being edited, which windows are open
-     * and the chosen mileage step multiplier.
+     * Screen-only state that is not stored anywhere: what is being edited, which windows are open,
+     * the chosen mileage step multiplier and whether the last write failed.
      */
     private data class Overlay(
         val editingField: EditableField? = null,
@@ -237,6 +257,7 @@ class CarDetailViewModel(
         val doneDialogTaskId: String? = null,
         val unmarkTaskId: String? = null,
         val mileageMultiplier: Int = 1,
+        val saveFailed: Boolean = false,
     )
 
     private companion object {

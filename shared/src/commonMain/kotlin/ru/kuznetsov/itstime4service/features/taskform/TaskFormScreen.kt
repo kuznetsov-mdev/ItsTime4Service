@@ -64,7 +64,9 @@ import ru.kuznetsov.itstime4service.ui.components.fields.AppTextField
 import ru.kuznetsov.itstime4service.ui.components.fields.FieldLabel
 import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
 import ru.kuznetsov.itstime4service.ui.components.indicators.AppCheckbox
+import ru.kuznetsov.itstime4service.ui.components.indicators.ErrorBar
 import ru.kuznetsov.itstime4service.ui.components.indicators.Preloader
+import ru.kuznetsov.itstime4service.ui.components.screen.LoadError
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTopBar
@@ -107,6 +109,8 @@ fun TaskFormScreen(
         onDeleteDismiss = viewModel::onDeleteDismiss,
         onDeleteConfirm = viewModel::onDeleteConfirm,
         modifier = modifier,
+        onSaveFailureShown = viewModel::onSaveFailureShown,
+        onRetry = viewModel::onRetry,
     )
 }
 
@@ -127,6 +131,8 @@ internal fun TaskFormContent(
     onDeleteDismiss: () -> Unit,
     onDeleteConfirm: () -> Unit,
     modifier: Modifier = Modifier,
+    onSaveFailureShown: () -> Unit = {},
+    onRetry: () -> Unit = {},
 ) {
     val fields = state.fields
     Column(modifier.fillMaxSize()) {
@@ -146,6 +152,10 @@ internal fun TaskFormContent(
         )
         if (state.isLoading) {
             Preloader(Modifier.weight(1f).fillMaxWidth())
+            return@Column
+        }
+        if (state.loadFailed) {
+            LoadError(onRetry = onRetry, modifier = Modifier.weight(1f).fillMaxWidth())
             return@Column
         }
         key(state.formKey) {
@@ -279,6 +289,7 @@ internal fun TaskFormContent(
                 .padding(start = ScreenHorizontalPadding, end = ScreenHorizontalPadding, top = 12.dp, bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            ErrorBar(visible = state.saveFailed, onShown = onSaveFailureShown)
             if (!state.isEditing) {
                 OutlineButton(
                     text = stringResource(Res.string.action_add_more),

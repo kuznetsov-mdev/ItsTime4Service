@@ -1,6 +1,8 @@
 package ru.kuznetsov.itstime4service.domain.usecase
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -13,6 +15,8 @@ import kotlinx.coroutines.flow.onStart
  * settings the plan depends on — push, reminder time and distance unit — and after every event of
  * `permissionGrants`, sent when the system permission for notifications is granted. Other settings, such as the theme
  * or the last opened car, leave the plan as it is. A rebuild still running when the next change comes is dropped.
+ * A failed rebuild leaves the plan as it was until the next change. A failed read of the cars or the settings ends the
+ * tracking quietly: the plan stays as it was until the next start of the app.
  */
 class KeepRemindersInSyncUseCase(
     private val observeCars: ObserveCarsUseCase,
@@ -27,6 +31,14 @@ class KeepRemindersInSyncUseCase(
         }
         combine(observeCars().distinctUntilChanged(), reminderSettings, permissionGrants.onStart { emit(Unit) }) { cars, settings, _ ->
             cars to settings
-        }.collectLatest { (cars, settings) -> syncReminders(cars, settings) }
+        }.catch { }.collectLatest { (cars, settings) ->
+            try {
+                syncReminders(cars, settings)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                return@collectLatest
+            }
+        }
     }
 }

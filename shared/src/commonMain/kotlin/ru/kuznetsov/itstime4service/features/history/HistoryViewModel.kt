@@ -3,6 +3,7 @@ package ru.kuznetsov.itstime4service.features.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.kuznetsov.itstime4service.domain.model.Car
 import ru.kuznetsov.itstime4service.domain.model.CarSummary
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.domain.usecase.AddHistoryEntryUseCase
@@ -19,6 +21,8 @@ import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarSummariesUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateHistoryEntryUseCase
+import ru.kuznetsov.itstime4service.ui.error.attempt
+import ru.kuznetsov.itstime4service.ui.error.reloadable
 import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
 import ru.kuznetsov.itstime4service.ui.format.keepKm
 import ru.kuznetsov.itstime4service.ui.format.kmFrom
@@ -39,6 +43,8 @@ import ru.kuznetsov.itstime4service.ui.format.kmIn
  * A record can also be added by hand for a car that is not sold: the window starts on the car chosen in the picker,
  * or the first one, and offers the car's task names as chips. Such a record is not tied to a task. Repeated taps
  * on "Add" while the record is being stored are ignored.
+ * Both record windows close only once the record is stored; a failed write keeps them open with the "could not save"
+ * bar until [onSaveFailureShown]. A failed read shows the load error until [onRetry] reads the data again.
  */
 class HistoryViewModel(
     initialCarId: String?,
@@ -57,30 +63,43 @@ class HistoryViewModel(
         records.map { HistoryRow(it.entry, it.car.toHistoryCar()) }
     }
 
-    val state: StateFlow<HistoryUiState> = combine(
-        observeCarSummaries(),
-        rows,
-        observeSettings(),
-        observeCars(),
-        view,
-    ) { cars, rows, settings, activeCars, view ->
+    private val retries = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    val state: StateFlow<HistoryUiState> = reloadable(retries, HistoryUiState(isLoading = false, loadFailed = true)) {
+        combine(
+            observeCarSummaries(),
+            rows,
+            observeSettings(),
+            observeCars(),
+            view,
+        ) { cars, rows, settings, activeCars, view -> uiState(cars, rows, settings.distanceUnit, activeCars, view) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HistoryUiState())
+
+    private fun uiState(
+        cars: List<CarSummary>,
+        rows: List<HistoryRow>,
+        unit: DistanceUnit,
+        activeCars: List<Car>,
+        view: View,
+    ): HistoryUiState {
         val owners = cars.map { it.toHistoryCar() }
         val selectedCarId = view.selectedCarId?.takeIf { id -> owners.any { it.id == id } }
-        HistoryUiState(
+        return HistoryUiState(
             isLoading = false,
             cars = owners,
             selectedCarId = selectedCarId,
             isCarMenuOpen = view.isCarMenuOpen,
             filter = view.filter,
             filterDraft = view.filterDraft,
-            years = HistoryRows.grouped(HistoryRows.matching(rows, view.filter.toCriteria(selectedCarId, settings.distanceUnit))),
+            years = HistoryRows.grouped(HistoryRows.matching(rows, view.filter.toCriteria(selectedCarId, unit))),
             hasEntries = HistoryRows.ofCar(rows, selectedCarId).isNotEmpty(),
             entryForm = view.entryForm,
             newEntry = view.newEntry,
             newEntrySuggestions = HistoryRows.suggestions(view.newEntry?.let { form -> activeCars.firstOrNull { it.id == form.carId } }),
-            distanceUnit = settings.distanceUnit,
+            distanceUnit = unit,
+            saveFailed = view.saveFailed,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HistoryUiState())
+    }
 
     fun onCarMenuToggle() = view.update { it.copy(isCarMenuOpen = !it.isCarMenuOpen) }
 
@@ -155,7 +174,7 @@ class HistoryViewModel(
             onEntryDismiss()
             return
         }
-        viewModelScope.launch {
+        save {
             val saved = updateHistoryEntry(
                 original.copy(
                     date = date,
@@ -197,7 +216,7 @@ class HistoryViewModel(
         }
         if (isAdding) return
         isAdding = true
-        viewModelScope.launch {
+        save(onFailure = { isAdding = false }) {
             val added = addHistoryEntry(
                 carId = form.carId,
                 taskName = form.taskName,
@@ -214,6 +233,21 @@ class HistoryViewModel(
 
     fun onNewEntryDismiss() = view.update { it.copy(newEntry = null) }
 
+    fun onSaveFailureShown() = view.update { it.copy(saveFailed = false) }
+
+    fun onRetry() {
+        retries.tryEmit(Unit)
+    }
+
+    private fun save(onFailure: () -> Unit = {}, block: suspend () -> Unit) {
+        viewModelScope.launch {
+            attempt(block).onFailure {
+                onFailure()
+                view.update { it.copy(saveFailed = true) }
+            }
+        }
+    }
+
     private fun HistoryFilter.toCriteria(carId: String?, unit: DistanceUnit) = HistoryCriteria(
         carId = carId,
         from = DateInputFormat.current.parse(dateFrom),
@@ -229,7 +263,8 @@ class HistoryViewModel(
     private fun String.digits(): String = filter(Char::isDigit).take(MAX_NUMBER_LENGTH)
 
     /**
-     * Screen-only state that is not stored anywhere: the chosen car, the filter and the open windows.
+     * Screen-only state that is not stored anywhere: the chosen car, the filter, the open windows
+     * and whether the last write failed.
      */
     private data class View(
         val selectedCarId: String? = null,
@@ -238,6 +273,7 @@ class HistoryViewModel(
         val filterDraft: HistoryFilter? = null,
         val entryForm: HistoryEntryForm? = null,
         val newEntry: NewHistoryEntryForm? = null,
+        val saveFailed: Boolean = false,
     )
 
     private companion object {

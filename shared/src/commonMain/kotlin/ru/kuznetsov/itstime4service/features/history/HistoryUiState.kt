@@ -12,9 +12,12 @@ import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
  * [filterDraft] is non-null while the filter window is open, [entryForm] while a record is open,
  * [newEntry] while a record is being added by hand. Records can be added only to [activeCars], the cars not sold;
  * [newEntrySuggestions] are the task names of the car chosen in [newEntry], offered as chips.
+ * [loadFailed] replaces the list with the load error; [saveFailed] shows the "could not save" bar, inside the open
+ * record window if there is one.
  */
 data class HistoryUiState(
     val isLoading: Boolean = true,
+    val loadFailed: Boolean = false,
     val cars: List<HistoryCar> = emptyList(),
     val selectedCarId: String? = null,
     val isCarMenuOpen: Boolean = false,
@@ -26,6 +29,7 @@ data class HistoryUiState(
     val newEntry: NewHistoryEntryForm? = null,
     val newEntrySuggestions: List<String> = emptyList(),
     val distanceUnit: DistanceUnit = DistanceUnit.KILOMETERS,
+    val saveFailed: Boolean = false,
 ) {
     val selectedCar: HistoryCar? get() = cars.firstOrNull { it.id == selectedCarId }
     val activeCars: List<HistoryCar> get() = cars.filterNot { it.isSold }

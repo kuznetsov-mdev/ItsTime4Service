@@ -35,21 +35,35 @@ import itstime4service.shared.generated.resources.dialog_task_done_text
 import itstime4service.shared.generated.resources.dialog_task_done_title
 import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
 import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
+import ru.kuznetsov.itstime4service.ui.components.indicators.ErrorBar
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 
 private const val MAX_COST_LENGTH = 7
 
-/** Modal shown when a task is marked as done — three optional fields: where it was serviced, the cost and a comment. */
+/**
+ * Modal shown when a task is marked as done — three optional fields: where it was serviced, the cost and a comment.
+ * It stays open until the mark is stored; while [saveFailed] the "could not save" bar is shown above the buttons, and
+ * [onSaveFailureShown] is called once it has been seen.
+ */
 @Composable
 fun TaskDoneDialog(
     taskName: String,
     onConfirm: (serviceName: String, cost: String, comment: String) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    saveFailed: Boolean = false,
+    onSaveFailureShown: () -> Unit = {},
 ) {
     Dialog(onDismissRequest = onDismiss) {
-        TaskDoneDialogCard(taskName = taskName, onConfirm = onConfirm, onDismiss = onDismiss, modifier = modifier)
+        TaskDoneDialogCard(
+            taskName = taskName,
+            onConfirm = onConfirm,
+            onDismiss = onDismiss,
+            modifier = modifier,
+            saveFailed = saveFailed,
+            onSaveFailureShown = onSaveFailureShown,
+        )
     }
 }
 
@@ -59,6 +73,8 @@ private fun TaskDoneDialogCard(
     onConfirm: (serviceName: String, cost: String, comment: String) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    saveFailed: Boolean = false,
+    onSaveFailureShown: () -> Unit = {},
 ) {
     val colors = ItsTime4ServiceTheme.colors
     val typography = ItsTime4ServiceTheme.typography
@@ -107,6 +123,7 @@ private fun TaskDoneDialogCard(
                 onDone = { onConfirm(serviceName, cost, comment) },
             )
         }
+        ErrorBar(saveFailed, onSaveFailureShown, Modifier.padding(top = 14.dp))
         Spacer(Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DialogButton(

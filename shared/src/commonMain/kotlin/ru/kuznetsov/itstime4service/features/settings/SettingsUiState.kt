@@ -12,6 +12,7 @@ import kotlin.math.roundToInt
  * [purgeCars] are all cars, sold ones last; they feed the "delete a car" list, hidden without them.
  * [openDefault] and [defaultCarId] describe the "open by default" choice; [purgeCar] is the car whose
  * full deletion is being confirmed.
+ * [loadFailed] replaces the screen with the load error; [saveFailed] shows the "could not save" bar.
  */
 data class SettingsUiState(
     val settings: Settings? = null,
@@ -21,6 +22,8 @@ data class SettingsUiState(
     val defaultCarId: String? = null,
     val purgeCars: List<SettingsCar> = emptyList(),
     val purgeCar: SettingsCar? = null,
+    val loadFailed: Boolean = false,
+    val saveFailed: Boolean = false,
 ) {
     val reminderSteps: Int
         get() {

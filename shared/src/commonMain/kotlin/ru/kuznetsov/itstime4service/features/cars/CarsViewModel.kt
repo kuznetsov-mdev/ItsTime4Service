@@ -2,10 +2,13 @@ package ru.kuznetsov.itstime4service.features.cars
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import ru.kuznetsov.itstime4service.domain.model.Car
@@ -20,6 +23,8 @@ import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SetPlateHiddenUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.SortedTaskStatsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateSettingsUseCase
+import ru.kuznetsov.itstime4service.ui.error.attempt
+import ru.kuznetsov.itstime4service.ui.error.reloadable
 import ru.kuznetsov.itstime4service.ui.format.deviceRegion
 import ru.kuznetsov.itstime4service.ui.format.toLook
 
@@ -29,6 +34,8 @@ import ru.kuznetsov.itstime4service.ui.format.toLook
  * a thin sliver of the ring, so the gauge never looks empty. A card shows the status ring, the four most urgent
  * tasks, the four latest history records and the licence plate. A tap on the plate hides it or shows it again; the choice
  * is stored with the car (see [SetPlateHiddenUseCase]).
+ * A failed write raises the "could not save" bar until [onSaveFailureShown]; a failed read shows the load error until
+ * [onRetry] reads the data again.
  */
 class CarsViewModel(
     observeCars: ObserveCarsUseCase,
@@ -42,24 +49,41 @@ class CarsViewModel(
     private val setPlateHidden: SetPlateHiddenUseCase,
 ) : ViewModel() {
 
-    val state: StateFlow<CarsUiState> = combine(observeCars(), observeAllHistory(), observeSettings()) { cars, history, settings ->
-        val today = getToday()
-        val historyByCar = history.groupBy { it.car.id }
-        CarsUiState(
-            isLoading = false,
-            cars = cars.map { it.toItem(today, historyByCar[it.id].orEmpty()) },
-            distanceUnit = settings.distanceUnit,
-            view = settings.carsView,
-        )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), CarsUiState())
+    private val retries = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private val saveFailed = MutableStateFlow(false)
 
-    fun onViewSelect(view: CarsView) {
-        viewModelScope.launch { updateSettings { it.copy(carsView = view) } }
-    }
+    val state: StateFlow<CarsUiState> = combine(
+        reloadable(retries, CarsUiState(isLoading = false, loadFailed = true)) {
+            combine(observeCars(), observeAllHistory(), observeSettings()) { cars, history, settings ->
+                val today = getToday()
+                val historyByCar = history.groupBy { it.car.id }
+                CarsUiState(
+                    isLoading = false,
+                    cars = cars.map { it.toItem(today, historyByCar[it.id].orEmpty()) },
+                    distanceUnit = settings.distanceUnit,
+                    view = settings.carsView,
+                )
+            }
+        },
+        saveFailed,
+    ) { state, failed -> state.copy(saveFailed = failed) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), CarsUiState())
+
+    fun onViewSelect(view: CarsView) = save { updateSettings { it.copy(carsView = view) } }
 
     fun onPlateToggle(carId: String) {
         val car = state.value.cars.firstOrNull { it.id == carId } ?: return
-        viewModelScope.launch { setPlateHidden(carId, !car.plateHidden) }
+        save { setPlateHidden(carId, !car.plateHidden) }
+    }
+
+    fun onSaveFailureShown() = saveFailed.update { false }
+
+    fun onRetry() {
+        retries.tryEmit(Unit)
+    }
+
+    private fun save(block: suspend () -> Unit) {
+        viewModelScope.launch { attempt(block).onFailure { saveFailed.value = true } }
     }
 
     private fun Car.toItem(today: LocalDate, history: List<HistoryRecord>): CarItem {

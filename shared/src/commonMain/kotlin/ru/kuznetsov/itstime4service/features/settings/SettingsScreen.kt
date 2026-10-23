@@ -1,6 +1,7 @@
 package ru.kuznetsov.itstime4service.features.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -64,7 +66,9 @@ import ru.kuznetsov.itstime4service.ui.components.cards.NotificationPreviewCard
 import ru.kuznetsov.itstime4service.ui.components.dialogs.ConfirmDialog
 import ru.kuznetsov.itstime4service.ui.components.dialogs.TimePickerDialog
 import ru.kuznetsov.itstime4service.ui.components.indicators.AppSwitch
+import ru.kuznetsov.itstime4service.ui.components.indicators.ErrorBar
 import ru.kuznetsov.itstime4service.ui.components.indicators.Preloader
+import ru.kuznetsov.itstime4service.ui.components.screen.LoadError
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.components.steppers.Stepper
@@ -84,23 +88,30 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    SettingsContent(
-        state = state,
-        onThemeSelect = viewModel::onThemeSelect,
-        onUnitSelect = viewModel::onUnitSelect,
-        onPushToggle = viewModel::onPushToggle,
-        onReminderWindowChange = viewModel::onReminderWindowChange,
-        onReminderTimeClick = viewModel::onReminderTimeClick,
-        onReminderTimeDismiss = viewModel::onReminderTimeDismiss,
-        onReminderTimeChange = viewModel::onReminderTimeChange,
-        onOpenDefaultToggle = viewModel::onOpenDefaultToggle,
-        onDefaultCarSelect = viewModel::onDefaultCarSelect,
-        onPurgeRequest = viewModel::onPurgeRequest,
-        onPurgeDismiss = viewModel::onPurgeDismiss,
-        onPurgeConfirm = viewModel::onPurgeConfirm,
-        onOpenLicenses = onOpenLicenses,
-        modifier = modifier,
-    )
+    Box(modifier.fillMaxSize()) {
+        SettingsContent(
+            state = state,
+            onThemeSelect = viewModel::onThemeSelect,
+            onUnitSelect = viewModel::onUnitSelect,
+            onPushToggle = viewModel::onPushToggle,
+            onReminderWindowChange = viewModel::onReminderWindowChange,
+            onReminderTimeClick = viewModel::onReminderTimeClick,
+            onReminderTimeDismiss = viewModel::onReminderTimeDismiss,
+            onReminderTimeChange = viewModel::onReminderTimeChange,
+            onOpenDefaultToggle = viewModel::onOpenDefaultToggle,
+            onDefaultCarSelect = viewModel::onDefaultCarSelect,
+            onPurgeRequest = viewModel::onPurgeRequest,
+            onPurgeDismiss = viewModel::onPurgeDismiss,
+            onPurgeConfirm = viewModel::onPurgeConfirm,
+            onOpenLicenses = onOpenLicenses,
+            onRetry = viewModel::onRetry,
+        )
+        ErrorBar(
+            visible = state.saveFailed,
+            onShown = viewModel::onSaveFailureShown,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 18.dp, vertical = 10.dp),
+        )
+    }
 }
 
 @Composable
@@ -120,6 +131,7 @@ internal fun SettingsContent(
     onPurgeConfirm: () -> Unit,
     onOpenLicenses: () -> Unit,
     modifier: Modifier = Modifier,
+    onRetry: () -> Unit = {},
 ) {
     val purgeCar = state.purgeCar
     if (purgeCar != null) {
@@ -144,6 +156,10 @@ internal fun SettingsContent(
     }
     Column(modifier.fillMaxSize()) {
         ScreenTitle(title = stringResource(Res.string.screen_settings), modifier = Modifier.padding(top = 12.dp))
+        if (state.loadFailed) {
+            LoadError(onRetry = onRetry, modifier = Modifier.weight(1f).fillMaxWidth())
+            return@Column
+        }
         if (settings == null) {
             Preloader(Modifier.weight(1f).fillMaxWidth())
             return@Column

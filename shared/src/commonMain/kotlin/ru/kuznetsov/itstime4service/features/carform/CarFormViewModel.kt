@@ -12,6 +12,7 @@ import ru.kuznetsov.itstime4service.domain.model.NewMaintenanceTask
 import ru.kuznetsov.itstime4service.domain.usecase.AddCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.GetTodayUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
+import ru.kuznetsov.itstime4service.ui.error.attempt
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
 import ru.kuznetsov.itstime4service.ui.format.TaskPreset
 import ru.kuznetsov.itstime4service.ui.format.kmFrom
@@ -27,10 +28,12 @@ import ru.kuznetsov.itstime4service.ui.format.kmFrom
  * A task block can be stored together with a history record of the task's last service; turning that on fills an
  * empty last-done date with today.
  * The licence plate is optional and typed in upper case, up to 12 characters.
+ * A failed save keeps the form as it was and shows the "could not save" bar until [onSaveFailureShown]; save works
+ * again right away. A failed read of the distance unit shows the load error until [onRetry] reads it again.
  */
 class CarFormViewModel(
     private val addCar: AddCarUseCase,
-    observeSettings: ObserveSettingsUseCase,
+    private val observeSettings: ObserveSettingsUseCase,
     private val getToday: GetTodayUseCase,
 ) : ViewModel() {
 
@@ -41,9 +44,7 @@ class CarFormViewModel(
     private var isSaving = false
 
     init {
-        viewModelScope.launch {
-            observeSettings().collect { settings -> _state.update { it.copy(distanceUnit = settings.distanceUnit) } }
-        }
+        observeUnit()
     }
 
     fun onBrandChange(value: String) = _state.update { it.copy(brand = value) }
@@ -101,8 +102,27 @@ class CarFormViewModel(
                     ),
                 )
             }
-            val carId = addCar(NewCar(brand = form.brand, mileageKm = mileageKm, vin = form.vin, tasks = tasks, plate = form.plate))
+            val carId = attempt { addCar(NewCar(brand = form.brand, mileageKm = mileageKm, vin = form.vin, tasks = tasks, plate = form.plate)) }
+                .getOrElse {
+                    isSaving = false
+                    _state.update { it.copy(saveFailed = true) }
+                    return@launch
+                }
             if (carId != null) _state.update { it.copy(isSaved = true) } else isSaving = false
+        }
+    }
+
+    fun onSaveFailureShown() = _state.update { it.copy(saveFailed = false) }
+
+    fun onRetry() {
+        _state.update { it.copy(loadFailed = false) }
+        observeUnit()
+    }
+
+    private fun observeUnit() {
+        viewModelScope.launch {
+            attempt { observeSettings().collect { settings -> _state.update { it.copy(distanceUnit = settings.distanceUnit) } } }
+                .onFailure { _state.update { it.copy(loadFailed = true) } }
         }
     }
 

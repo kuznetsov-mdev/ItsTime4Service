@@ -10,11 +10,14 @@ import ru.kuznetsov.itstime4service.ui.components.indicators.PlateLook
  * [car] is `null` while loading and after the car has been deleted; [isMissing] tells the two apart
  * and is the signal for the screen to close itself.
  * [editingField] is the one header value currently edited in place, if any.
- * [taskDoneDialog] is the task whose "task done" window is open; [isConfirmingUnmark] means the window
- * asking to remove a done mark is open.
+ * [taskDoneDialog] is the task whose "task done" window is open; it stays open until the mark is stored.
+ * [isConfirmingUnmark] means the window asking to remove a done mark is open.
+ * [loadFailed] replaces the screen with the load error; [saveFailed] shows the "could not save" bar, inside the
+ * "task done" window while it is open.
  */
 data class CarDetailUiState(
     val isLoading: Boolean = true,
+    val loadFailed: Boolean = false,
     val car: CarDetails? = null,
     val distanceUnit: DistanceUnit = DistanceUnit.KILOMETERS,
     val editingField: EditableField? = null,
@@ -22,8 +25,9 @@ data class CarDetailUiState(
     val taskDoneDialog: TaskItem? = null,
     val isConfirmingUnmark: Boolean = false,
     val mileageMultiplier: Int = 1,
+    val saveFailed: Boolean = false,
 ) {
-    val isMissing: Boolean get() = !isLoading && car == null
+    val isMissing: Boolean get() = !isLoading && !loadFailed && car == null
 
     companion object {
         const val MILEAGE_STEP = 100

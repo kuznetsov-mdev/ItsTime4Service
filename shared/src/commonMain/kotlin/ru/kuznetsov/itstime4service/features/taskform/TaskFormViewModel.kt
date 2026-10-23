@@ -16,6 +16,7 @@ import ru.kuznetsov.itstime4service.domain.usecase.GetTodayUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveCarByIdUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.ObserveSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateTaskUseCase
+import ru.kuznetsov.itstime4service.ui.error.attempt
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
 import ru.kuznetsov.itstime4service.ui.format.TaskPreset
 import ru.kuznetsov.itstime4service.ui.format.toFields
@@ -31,6 +32,8 @@ import ru.kuznetsov.itstime4service.ui.format.toFields
  * A new task can be stored together with a history record of its last service; turning that on fills an empty
  * last-done date with today.
  * Repeated taps on save or "add another" while a task is being stored are ignored.
+ * A failed save or deletion keeps the form as it was and shows the "could not save" bar until [onSaveFailureShown];
+ * save works again right away. A failed read of the car shows the load error until [onRetry] reads it again.
  * Distances are typed in the unit chosen in settings and stored in kilometers; a distance left as it was
  * keeps its stored value.
  */
@@ -52,7 +55,7 @@ class TaskFormViewModel(
     private var isSaving = false
 
     init {
-        viewModelScope.launch { load() }
+        load()
     }
 
     fun onFieldsChange(fields: TaskFields) = _state.update { it.copy(fields = fields.sanitized()) }
@@ -80,12 +83,26 @@ class TaskFormViewModel(
         val id = taskId ?: return
         _state.update { it.copy(isConfirmingDelete = false) }
         viewModelScope.launch {
-            deleteTask(carId, id)
-            _state.update { it.copy(isClosed = true) }
+            attempt { deleteTask(carId, id) }
+                .onSuccess { _state.update { it.copy(isClosed = true) } }
+                .onFailure { _state.update { it.copy(saveFailed = true) } }
         }
     }
 
-    private suspend fun load() {
+    fun onSaveFailureShown() = _state.update { it.copy(saveFailed = false) }
+
+    fun onRetry() {
+        _state.update { it.copy(isLoading = true, loadFailed = false) }
+        load()
+    }
+
+    private fun load() {
+        viewModelScope.launch {
+            attempt { read() }.onFailure { _state.update { it.copy(isLoading = false, loadFailed = true) } }
+        }
+    }
+
+    private suspend fun read() {
         val car = observeCarById(carId).first()
         val unit = observeSettings().first().distanceUnit
         val task = taskId?.let { id -> car?.tasks?.firstOrNull { it.id == id } }
@@ -110,7 +127,12 @@ class TaskFormViewModel(
         if (isSaving) return
         isSaving = true
         viewModelScope.launch {
-            val saved = if (taskId != null) updateTask(carId, taskId, task) else addTask(carId, task)
+            val saved = attempt { if (taskId != null) updateTask(carId, taskId, task) else addTask(carId, task) }
+                .getOrElse {
+                    isSaving = false
+                    _state.update { it.copy(saveFailed = true) }
+                    return@launch
+                }
             if (!saved) {
                 isSaving = false
                 return@launch

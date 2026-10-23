@@ -48,6 +48,8 @@ import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
  * are the ones the app runs, only the database, the notification scheduler ([reminders]) and the clock, fixed at noon
  * UTC of [TODAY], are replaced. Repository work uses the test dispatcher when [ViewModelTestSetup] is active. [close]
  * clears every view model made by [viewModel] and closes the Koin app so resources do not leak into another test.
+ * [failWrites] makes every write to a table fail with a trigger until [allowWrites]; [hideTable] makes every read of a
+ * table fail by renaming it until [restoreTable].
  */
 internal class TestApp {
     private val db = TestDatabase().create()
@@ -89,6 +91,16 @@ internal class TestApp {
         koinApp.close()
     }
 
+    fun failWrites(table: String) = WRITES.forEach { event ->
+        db.execute("CREATE TRIGGER fail_${event.lowercase()}_$table BEFORE $event ON $table BEGIN SELECT RAISE(ABORT, 'test failure'); END")
+    }
+
+    fun allowWrites(table: String) = WRITES.forEach { event -> db.execute("DROP TRIGGER fail_${event.lowercase()}_$table") }
+
+    fun hideTable(table: String) = db.execute("ALTER TABLE $table RENAME TO ${table}_hidden")
+
+    fun restoreTable(table: String) = db.execute("ALTER TABLE ${table}_hidden RENAME TO $table")
+
     suspend fun addCar(
         brand: String,
         mileageKm: Int = MILEAGE_KM,
@@ -116,6 +128,7 @@ internal class TestApp {
     companion object {
         val TODAY = LocalDate(2026, 10, 21)
         const val MILEAGE_KM = 100_000
+        private val WRITES = listOf("INSERT", "UPDATE", "DELETE")
     }
 }
 

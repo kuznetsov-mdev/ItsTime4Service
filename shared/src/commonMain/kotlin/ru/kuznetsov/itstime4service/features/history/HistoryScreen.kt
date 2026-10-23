@@ -30,7 +30,9 @@ import itstime4service.shared.generated.resources.screen_history
 import ru.kuznetsov.itstime4service.domain.model.ServiceHistoryEntry
 import ru.kuznetsov.itstime4service.ui.components.ScreenPreview
 import ru.kuznetsov.itstime4service.ui.components.buttons.Fab
+import ru.kuznetsov.itstime4service.ui.components.indicators.ErrorBar
 import ru.kuznetsov.itstime4service.ui.components.indicators.Preloader
+import ru.kuznetsov.itstime4service.ui.components.screen.LoadError
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 
@@ -60,6 +62,8 @@ fun HistoryScreen(
         onNewEntrySave = viewModel::onNewEntrySave,
         onNewEntryDismiss = viewModel::onNewEntryDismiss,
         modifier = modifier,
+        onSaveFailureShown = viewModel::onSaveFailureShown,
+        onRetry = viewModel::onRetry,
     )
 }
 
@@ -84,8 +88,11 @@ internal fun HistoryContent(
     onNewEntrySave: () -> Unit,
     onNewEntryDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    onSaveFailureShown: () -> Unit = {},
+    onRetry: () -> Unit = {},
 ) {
-    val canAddEntry = !state.isLoading && state.activeCars.isNotEmpty()
+    val canAddEntry = !state.isLoading && !state.loadFailed && state.activeCars.isNotEmpty()
+    val windowOpen = state.entryForm != null || state.newEntry != null
     Box(modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             ScreenTitle(title = stringResource(Res.string.screen_history), modifier = Modifier.padding(top = 12.dp))
@@ -98,6 +105,8 @@ internal fun HistoryContent(
             )
             if (state.isLoading) {
                 Preloader(Modifier.weight(1f).fillMaxWidth())
+            } else if (state.loadFailed) {
+                LoadError(onRetry = onRetry, modifier = Modifier.weight(1f).fillMaxWidth())
             } else if (state.years.isEmpty()) {
                 EmptyHistory(
                     text = stringResource(
@@ -134,6 +143,11 @@ internal fun HistoryContent(
                 contentDescription = stringResource(Res.string.action_add_entry),
             )
         }
+        ErrorBar(
+            visible = state.saveFailed && !windowOpen,
+            onShown = onSaveFailureShown,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 18.dp, vertical = 10.dp),
+        )
     }
     val filterDraft = state.filterDraft
     if (filterDraft != null) {
@@ -154,6 +168,8 @@ internal fun HistoryContent(
             onChange = onEntryChange,
             onSave = onEntrySave,
             onDismiss = onEntryDismiss,
+            saveFailed = state.saveFailed,
+            onSaveFailureShown = onSaveFailureShown,
         )
     }
     val newEntry = state.newEntry
@@ -166,6 +182,8 @@ internal fun HistoryContent(
             onChange = onNewEntryChange,
             onSave = onNewEntrySave,
             onDismiss = onNewEntryDismiss,
+            saveFailed = state.saveFailed,
+            onSaveFailureShown = onSaveFailureShown,
         )
     }
 }

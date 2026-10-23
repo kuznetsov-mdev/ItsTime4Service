@@ -64,6 +64,7 @@ import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
 import ru.kuznetsov.itstime4service.ui.components.buttons.PresetChip
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogButton
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogCard
+import ru.kuznetsov.itstime4service.ui.components.indicators.ErrorBar
 import ru.kuznetsov.itstime4service.ui.components.fields.LabeledMiniField
 import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
 import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
@@ -80,6 +81,8 @@ internal fun NewHistoryEntryDialog(
     onChange: (NewHistoryEntryForm) -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
+    saveFailed: Boolean = false,
+    onSaveFailureShown: () -> Unit = {},
 ) {
     Dialog(onDismissRequest = onDismiss) {
         NewHistoryEntryCard(
@@ -90,6 +93,8 @@ internal fun NewHistoryEntryDialog(
             onChange = onChange,
             onSave = onSave,
             onDismiss = onDismiss,
+            saveFailed = saveFailed,
+            onSaveFailureShown = onSaveFailureShown,
         )
     }
 }
@@ -105,6 +110,8 @@ internal fun NewHistoryEntryCard(
     onSave: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    saveFailed: Boolean = false,
+    onSaveFailureShown: () -> Unit = {},
 ) {
     val colors = ItsTime4ServiceTheme.colors
     DialogCard(
@@ -189,6 +196,7 @@ internal fun NewHistoryEntryCard(
                 )
             }
         }
+        ErrorBar(saveFailed, onSaveFailureShown, Modifier.padding(top = 14.dp))
         Spacer(Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DialogButton(

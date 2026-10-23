@@ -10,9 +10,12 @@ import ru.kuznetsov.itstime4service.ui.components.indicators.PlateLook
  * State of the "My cars" screen.
  * [isLoading] stays `true` until the first list arrives, so the empty state is not flashed on start.
  * [view] is how the list is shown, as stored in settings.
+ * [loadFailed] replaces the list with the load error; [saveFailed] shows the "could not save" bar.
  */
 data class CarsUiState(
     val isLoading: Boolean = true,
+    val loadFailed: Boolean = false,
+    val saveFailed: Boolean = false,
     val cars: List<CarItem> = emptyList(),
     val distanceUnit: DistanceUnit = DistanceUnit.KILOMETERS,
     val view: CarsView = CarsView.LIST,

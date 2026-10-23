@@ -8,6 +8,7 @@ import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.ChevronDown
 import com.composables.icons.lucide.ChevronLeft
 import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.CircleDot
 import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Disc
@@ -70,4 +71,5 @@ object ItsTime4ServiceIcons {
     val ScrollText: ImageVector get() = Lucide.ScrollText
     val Eye: ImageVector get() = Lucide.Eye
     val EyeOff: ImageVector get() = Lucide.EyeOff
+    val CircleAlert: ImageVector get() = Lucide.CircleAlert
 }

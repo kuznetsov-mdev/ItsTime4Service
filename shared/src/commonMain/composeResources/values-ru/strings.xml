@@ -222,4 +222,8 @@
     <string name="plate_hidden">Госномер скрыт</string>
     <string name="vin_hidden">VIN скрыт</string>
     <string name="loading">Загрузка…</string>
+    <string name="save_failed">Не удалось сохранить. Попробуйте ещё раз</string>
+    <string name="load_failed_title">Не удалось загрузить данные</string>
+    <string name="load_failed_text">Записи на месте, их не удалось прочитать. Попробуйте ещё раз.</string>
+    <string name="retry">Повторить</string>
 </resources>

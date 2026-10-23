@@ -52,8 +52,10 @@ import ru.kuznetsov.itstime4service.ui.components.buttons.Fab
 import ru.kuznetsov.itstime4service.ui.components.dialogs.ConfirmDialog
 import ru.kuznetsov.itstime4service.ui.components.dialogs.TaskDoneDialog
 import ru.kuznetsov.itstime4service.ui.components.indicators.PlateLook
+import ru.kuznetsov.itstime4service.ui.components.indicators.ErrorBar
 import ru.kuznetsov.itstime4service.ui.components.indicators.Preloader
 import ru.kuznetsov.itstime4service.ui.components.indicators.color
+import ru.kuznetsov.itstime4service.ui.components.screen.LoadError
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTopBar
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
@@ -99,6 +101,8 @@ fun CarDetailScreen(
         onDeleteDismiss = viewModel::onDeleteDismiss,
         onDeleteConfirm = viewModel::onDeleteConfirm,
         modifier = modifier,
+        onSaveFailureShown = viewModel::onSaveFailureShown,
+        onRetry = viewModel::onRetry,
     )
 }
 
@@ -129,6 +133,8 @@ internal fun CarDetailContent(
     onDeleteDismiss: () -> Unit,
     onDeleteConfirm: () -> Unit,
     modifier: Modifier = Modifier,
+    onSaveFailureShown: () -> Unit = {},
+    onRetry: () -> Unit = {},
 ) {
     val car = state.car
     val taskListState = rememberLazyListState()
@@ -164,6 +170,7 @@ internal fun CarDetailContent(
                 )
             }
             if (car == null && state.isLoading) Preloader(Modifier.weight(1f).fillMaxWidth())
+            if (state.loadFailed) LoadError(onRetry = onRetry, modifier = Modifier.weight(1f).fillMaxWidth())
             if (car != null) {
                 CarHeader(
                     car = car,
@@ -217,6 +224,11 @@ internal fun CarDetailContent(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = ScreenHorizontalPadding, bottom = 22.dp),
             )
         }
+        ErrorBar(
+            visible = state.saveFailed && state.taskDoneDialog == null,
+            onShown = onSaveFailureShown,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = ScreenHorizontalPadding, vertical = 10.dp),
+        )
     }
     if (car != null && state.isConfirmingDelete) {
         ConfirmDialog(
@@ -230,7 +242,13 @@ internal fun CarDetailContent(
     }
     val doneTask = state.taskDoneDialog
     if (doneTask != null) {
-        TaskDoneDialog(taskName = doneTask.name, onConfirm = onTaskDoneConfirm, onDismiss = onTaskDoneDismiss)
+        TaskDoneDialog(
+            taskName = doneTask.name,
+            onConfirm = onTaskDoneConfirm,
+            onDismiss = onTaskDoneDismiss,
+            saveFailed = state.saveFailed,
+            onSaveFailureShown = onSaveFailureShown,
+        )
     }
     if (state.isConfirmingUnmark) {
         ConfirmDialog(

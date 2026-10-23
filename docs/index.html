@@ -652,6 +652,17 @@
   .component-meta .pkg { font-family: var(--mono); font-size: 10.5px; color: var(--accent); margin-top: 4px; }
   .component-meta .note { font-size: 11px; color: var(--ink-faint); margin-top: 5px; line-height: 1.45; }
 
+  /* ошибки базы: плашка «не удалось сохранить» и экран «не удалось загрузить» */
+  .error-bar { display: flex; align-items: center; gap: 10px; margin: 0 18px 10px; padding: 11px 14px; border-radius: 12px; background: var(--ink); color: var(--bg); font-size: 12.5px; line-height: 1.35; box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+  .error-bar .i { color: var(--tier-due); flex-shrink: 0; }
+  .error-bar.floating { position: absolute; left: 0; right: 0; bottom: 70px; z-index: 30; }
+  .dialog .error-bar { margin: 14px 0 0; }
+  .load-error { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 0 32px; text-align: center; }
+  .load-error-ring { width: 64px; height: 64px; border-radius: 50%; background: var(--surface); border: 1px solid var(--rule); display: flex; align-items: center; justify-content: center; color: var(--tier-due); }
+  .load-error .t1 { font-size: 15px; font-weight: 700; color: var(--ink); margin-top: 4px; }
+  .load-error .t2 { font-size: 12px; color: var(--ink-faint); line-height: 1.45; }
+  .load-error .outline-btn { width: auto; margin: 8px 0 0; padding: 11px 26px; }
+
   /* прелоадер: пока грузятся данные — машинка мчится в круге: по рамке бежит дуга, за машинкой — линии скорости */
   .preloader { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--bg); }
   .preloader-ring { position: relative; width: 84px; height: 84px; border-radius: 50%; background: var(--surface); border: 1px solid var(--rule); display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -773,6 +784,21 @@
     <div class="locked-light" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery" id="gallery9Light"></div></div>
     <div style="height:28px"></div>
     <div class="locked-dark" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery" id="gallery9Dark"></div></div>
+  </div>
+
+  <!-- ================= STAGE 10 ================= -->
+  <div class="section-block panel" id="stage10Block">
+    <div class="section-head"><h2>Этап 10: ошибки базы</h2></div>
+    <p class="section-sub">Что видит пользователь, если локальная база не записала или не прочитала данные. Согласовано и реализовано; экраны ниже — светлая и тёмная тема.</p>
+    <ol class="decisions">
+      <li><b>Не удалось сохранить</b> — любое изменение: форма авто и работы, правка на месте, пробег, отметка «выполнено» и её снятие, удаление, запись истории, настройки, вид списка, скрытие номера и VIN. Появляется плашка «Не удалось сохранить. Попробуйте ещё раз» и исчезает сама через 4 с; данные в базе остаются прежними.</li>
+      <li><b>Где плашка:</b> на экране с кнопкой внизу — над кнопкой (41); на вкладках — над таб-баром (43); на экране авто — внизу экрана. Форма или окно с полями (запись истории, «Работа выполнена») остаётся открытым с введённым, плашка — внутри окна над кнопками (42); кнопка снова доступна. Окна-подтверждения («Удалить авто?», «Снять отметку?») закрываются сразу, плашка — на экране.</li>
+      <li><b>Не удалось загрузить</b> — вместо данных экрана круг со знаком «!», «Не удалось загрузить данные», пояснение и кнопка «Повторить» (44, 45); таб-бар и «назад» работают. «Повторить» читает данные заново.</li>
+      <li><b>Приложение не падает:</b> сбой при запуске (тема, авто при запуске) — системная тема и список авто; сбой пересборки уведомлений — план остаётся прежним до следующего изменения.</li>
+    </ol>
+    <div class="locked-light" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery" id="gallery10Light"></div></div>
+    <div style="height:28px"></div>
+    <div class="locked-dark" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery" id="gallery10Dark"></div></div>
   </div>
 
   <!-- ================= STYLE GUIDE: TOKENS ================= -->
@@ -1185,7 +1211,8 @@
     plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
     minus: '<line x1="5" y1="12" x2="19" y2="12"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
-    moonToggle: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>'
+    moonToggle: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>',
+    circleAlert: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'
   };
   function icon(name, size) {
     size = size || 16;
@@ -2300,6 +2327,36 @@
   }
   renderStage9('gallery9Light');
   renderStage9('gallery9Dark');
+  /* ошибки базы: плашка поверх экрана или в окне и экран вместо данных, которые не прочитались */
+  var SAVE_FAILED = 'Не удалось сохранить. Попробуйте ещё раз';
+  function errorBarHtml(floating) {
+    return '<div class="error-bar' + (floating ? ' floating' : '') + '" role="alert">' + icon('circleAlert', 18) + '<span>' + SAVE_FAILED + '</span></div>';
+  }
+  function loadErrorHtml() {
+    return '<div class="load-error" role="alert"><div class="load-error-ring">' + icon('circleAlert', 28) + '</div>' +
+      '<div class="t1">Не удалось загрузить данные</div>' +
+      '<div class="t2">Записи на месте, их не удалось прочитать. Попробуйте ещё раз.</div>' +
+      '<div class="outline-btn">Повторить</div></div>';
+  }
+  function insertBefore(html, marker, part) {
+    var at = html.indexOf(marker);
+    return at < 0 ? html : html.slice(0, at) + part + html.slice(at);
+  }
+  function renderStage10(containerId) {
+    var cars = cloneCars();
+    var sold = cloneSold();
+    var form = taskToBlock(cars[0].tasks[0], 1, true);
+    document.getElementById(containerId).innerHTML =
+      phoneWrap('41', 'Работа: не удалось сохранить', insertBefore(taskScreenHtml(cars[0], form, { interactive: false, iconPicker: 'droplet' }), '<div class="save-btn">', errorBarHtml(false))) +
+      phoneWrap('42', 'Новая запись: не удалось добавить', insertBefore(historyScreenHtml(cars, sold, { carId: 'c1', newEntry: { carId: 'c1', name: 'Замена дворников', date: '12.04.2024', mileage: '61500' } }, { interactive: false }), '<div class="dialog-actions">', errorBarHtml(false))) +
+      phoneWrap('43', 'Мои авто: не удалось сохранить', insertBefore(carsScreenHtml(cars, { interactive: false, viewToggle: true, addRow: true }), '<nav class="tabbar">', errorBarHtml(true))) +
+      phoneWrap('44', 'Мои авто: не удалось загрузить', '<div class="view active" style="position:relative;height:100%">' +
+        '<div class="s-topbar"><span></span><span></span></div><div class="s-title">Мои авто</div>' + loadErrorHtml() + tabbarHtml('cars', { interactive: false }) + '</div>') +
+      phoneWrap('45', 'Экран авто: не удалось загрузить', '<div class="view active" style="position:relative;height:100%">' +
+        '<div class="s-topbar"><button class="icon-btn">' + icon('chevronLeft', 16) + '</button><span></span></div>' + loadErrorHtml() + '</div>');
+  }
+  renderStage10('gallery10Light');
+  renderStage10('gallery10Dark');
   /* ================= variants: mileage panel and task cards ================= */
   var vstate = { a: { km: 84300, mult: 1 }, b: { km: 84300, mult: 1 }, c: { km: 84300, history: [] }, d: { km: 84300 } };
   function vHeader(car) {

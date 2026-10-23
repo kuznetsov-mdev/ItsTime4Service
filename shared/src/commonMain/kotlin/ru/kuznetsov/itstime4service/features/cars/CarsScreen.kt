@@ -33,10 +33,12 @@ import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.domain.model.TaskStatus
 import ru.kuznetsov.itstime4service.ui.components.ScreenPreview
 import ru.kuznetsov.itstime4service.ui.components.cards.ListRowCard
+import ru.kuznetsov.itstime4service.ui.components.indicators.ErrorBar
 import ru.kuznetsov.itstime4service.ui.components.indicators.GaugeRing
 import ru.kuznetsov.itstime4service.ui.components.indicators.Preloader
 import ru.kuznetsov.itstime4service.ui.components.indicators.color
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
+import ru.kuznetsov.itstime4service.ui.components.screen.LoadError
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.format.distanceText
 import ru.kuznetsov.itstime4service.ui.format.toTier
@@ -60,6 +62,8 @@ fun CarsScreen(
         onOpenHistory = onOpenHistory,
         onAddCar = onAddCar,
         modifier = modifier,
+        onSaveFailureShown = viewModel::onSaveFailureShown,
+        onRetry = viewModel::onRetry,
     )
 }
 
@@ -72,8 +76,30 @@ internal fun CarsContent(
     onOpenHistory: (carId: String) -> Unit,
     onAddCar: () -> Unit,
     modifier: Modifier = Modifier,
+    onSaveFailureShown: () -> Unit = {},
+    onRetry: () -> Unit = {},
 ) {
-    Column(modifier.fillMaxSize()) {
+    Box(modifier.fillMaxSize()) {
+        CarsList(state, onViewSelect, onPlateToggle, onOpenCar, onOpenHistory, onAddCar, onRetry)
+        ErrorBar(
+            visible = state.saveFailed,
+            onShown = onSaveFailureShown,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 18.dp, vertical = 10.dp),
+        )
+    }
+}
+
+@Composable
+private fun CarsList(
+    state: CarsUiState,
+    onViewSelect: (CarsView) -> Unit,
+    onPlateToggle: (carId: String) -> Unit,
+    onOpenCar: (carId: String) -> Unit,
+    onOpenHistory: (carId: String) -> Unit,
+    onAddCar: () -> Unit,
+    onRetry: () -> Unit,
+) {
+    Column(Modifier.fillMaxSize()) {
         CarsViewToggle(
             selected = state.view,
             onSelect = onViewSelect,
@@ -87,6 +113,8 @@ internal fun CarsContent(
         )
         if (state.isLoading) {
             Preloader(Modifier.weight(1f).fillMaxWidth())
+        } else if (state.loadFailed) {
+            LoadError(onRetry = onRetry, modifier = Modifier.weight(1f).fillMaxWidth())
         } else if (state.cars.isEmpty()) {
             EmptyCars(Modifier.weight(1f))
             AddCarRow(onClick = onAddCar, modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 14.dp))
