@@ -222,4 +222,5 @@
     <string name="load_failed_title">Could not load the data</string>
     <string name="load_failed_text">Your records are still there, they just could not be read. Please try again.</string>
     <string name="retry">Retry</string>
+    <string name="field_required">Required field</string>
 </resources>

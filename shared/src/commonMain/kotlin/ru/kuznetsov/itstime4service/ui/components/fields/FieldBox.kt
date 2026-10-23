@@ -37,6 +37,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -45,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_done
+import itstime4service.shared.generated.resources.field_required
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 
@@ -57,6 +60,7 @@ import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
  * at its end: it does what the done key does — [onImeAction], or, without one, just closes the keyboard. The button
  * takes the whole height of the field and 44 dp of its width to be easy to hit; the field keeps its height.
  * [showDoneButton] turns it off for a field that has its own button.
+ * A field with [isError] gets a red outline and tells the screen reader "Required field".
  */
 @Composable
 internal fun FieldBox(
@@ -84,6 +88,7 @@ internal fun FieldBox(
     val needsDoneButton = showDoneButton && !NumericKeyboard.hasDoneKey && keyboardType == KeyboardType.Number
     val showsDoneButton = needsDoneButton && isFocused
     val layoutDirection = LocalLayoutDirection.current
+    val errorText = stringResource(Res.string.field_required)
     Row(
         modifier = modifier
             .then(if (needsDoneButton) Modifier.height(IntrinsicSize.Min) else Modifier)
@@ -113,7 +118,8 @@ internal fun FieldBox(
                     modifier = Modifier
                         .fillMaxWidth()
                         .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
-                        .onFocusChanged { isFocused = it.isFocused },
+                        .onFocusChanged { isFocused = it.isFocused }
+                        .semantics { if (isError) error(errorText) },
                     enabled = enabled,
                     textStyle = textStyle.copy(color = colors.ink),
                     singleLine = minLines == 1,

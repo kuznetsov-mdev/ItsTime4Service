@@ -327,7 +327,7 @@ expect fun rememberNotificationPermissionRequest(onResult: (granted: Boolean) ->
 | `buttons` | `SegmentedControl` | взаимоисключающие варианты: тема, единицы, множитель шага |
 | `buttons` | `SecretToggle` | кнопка-глаз «скрыть / показать» у номера и VIN: 27 dp, `surface2`, иконка `inkFaint`; `EyeOff` — скрыть, `Eye` — показать |
 | `buttons` | `TabBarItem` | пункт таб-бара: иконка и подпись; выбранный обведён скруглённой рамкой цвета иконки (1,5 dp, `radiusM`, отступы 16 × 5 dp), у остальных рамка прозрачная — переключение ничего не сдвигает; вся ячейка — `selectable` с ролью `Tab`. Таб-бар приложения рисует одну движущуюся рамку сам (`showFrame = false`, место рамки — `onFramePositioned`) |
-| `fields` | `FieldBox` | `internal`; общая «коробка» полей: заливка `surface2`, рамка `rule`, с `isError` — `tierDue` |
+| `fields` | `FieldBox` | `internal`; общая «коробка» полей: заливка `surface2`, рамка `rule`, с `isError` — `tierDue` и семантика `error(«Обязательное поле»)` (строка `field_required`) — её читает экранный диктор и проверяют UI-тесты; тот же текст и у поля с нечитаемой датой |
 | `fields` | `FieldLabel` | подпись поля капсом; у обязательного — красная звёздочка |
 | `fields` | `AppTextField`, `AppNumberField`, `LabeledMiniField` | текстовое, числовое и компактное поле с подписью; все с `isError` и `onDone` (клавиша «готово») |
 | `fields` | `ServiceRecordFields` | необязательные поля записи истории — сервис, стоимость, комментарий; в `TaskDoneDialog`, окнах записи истории и при «Создать запись в истории» в формах работы |
