@@ -111,8 +111,7 @@ private fun TaskDoneDialogCard(
             style = typography.sans.copy(fontSize = 12.5.sp, lineHeight = 19.sp),
             color = colors.inkMuted,
         )
-        Spacer(Modifier.height(14.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        DialogFields {
             ServiceRecordFields(
                 serviceName = serviceName,
                 cost = cost,

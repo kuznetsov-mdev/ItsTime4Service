@@ -1,11 +1,9 @@
 package ru.kuznetsov.itstime4service.features.history
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -14,14 +12,11 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.v2.runComposeUiTest
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_add
@@ -69,7 +64,7 @@ class HistoryDialogsTest : UiTest() {
         texts["service"] = stringResource(Res.string.field_service_name)
         texts["soldKia"] = stringResource(Res.string.history_sold_car, "Kia")
         ItsTime4ServiceTheme(darkTheme = false) {
-            Box(Modifier.testTag(SCROLL).verticalScroll(rememberScrollState())) { content() }
+            Box(Modifier.fillMaxSize()) { content() }
         }
     }
 
@@ -136,8 +131,8 @@ class HistoryDialogsTest : UiTest() {
 
         onNode(hasText("61500") and hasSetTextAction()).performTextInput("7")
         onNode(hasText("61500") and hasSetTextAction()).performImeAction()
-        onNodeWithText(texts.getValue("cancel")).performScrollTo().performClick()
-        onNodeWithText(texts.getValue("save")).performScrollTo().performClick()
+        onNodeWithText(texts.getValue("cancel")).performClick()
+        onNodeWithText(texts.getValue("save")).performClick()
 
         assertTrue(entryChanges.any { it.mileage.length == 6 && "61500" in it.mileage && "7" in it.mileage })
         assertEquals(listOf("save", "dismiss", "save"), calls)
@@ -163,8 +158,8 @@ class HistoryDialogsTest : UiTest() {
 
         onNode(hasText("мас") and hasSetTextAction()).performTextInput("ло")
         onNode(hasText("мас") and hasSetTextAction()).performImeAction()
-        onNodeWithText(texts.getValue("reset")).performScrollTo().performClick()
-        onNodeWithText(texts.getValue("apply")).performScrollTo().performClick()
+        onNodeWithText(texts.getValue("reset")).performClick()
+        onNodeWithText(texts.getValue("apply")).performClick()
 
         assertTrue(filterChanges.any { "мас" in it.query && "ло" in it.query })
         assertEquals(listOf("apply", "reset", "apply"), calls)
@@ -191,7 +186,6 @@ class HistoryDialogsTest : UiTest() {
         showNewEntry(NewHistoryEntryForm(carId = "kia"))
 
         onAllNodesWithText(texts.getValue("service")).assertCountEquals(0)
-        onNodeWithTag(SCROLL).performTouchInput { swipeUp() }
         onNodeWithText(texts.getValue("more")).performScrollTo().performClick()
 
         assertTrue(newEntryChanges.last().isExpanded)
@@ -229,11 +223,9 @@ class HistoryDialogsTest : UiTest() {
     fun newEntryButtonsReachTheViewModel() = runComposeUiTest {
         showNewEntry(NewHistoryEntryForm(carId = "kia"))
 
-        onNodeWithText(texts.getValue("cancel")).performScrollTo().performClick()
-        onNodeWithText(texts.getValue("add")).performScrollTo().performClick()
+        onNodeWithText(texts.getValue("cancel")).performClick()
+        onNodeWithText(texts.getValue("add")).performClick()
 
         assertEquals(listOf("dismiss", "save"), calls)
     }
 }
-
-private const val SCROLL = "scroll"

@@ -2,7 +2,6 @@ package ru.kuznetsov.itstime4service.features.history
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +27,7 @@ import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogButton
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogCard
+import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogFields
 import ru.kuznetsov.itstime4service.ui.components.fields.LabeledMiniField
 import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
 import ru.kuznetsov.itstime4service.ui.format.unitLabel
@@ -59,8 +59,7 @@ internal fun HistoryFilterCard(
 ) {
     val colors = ItsTime4ServiceTheme.colors
     DialogCard(icon = ItsTime4ServiceIcons.Filter, title = stringResource(Res.string.action_filter), modifier = modifier) {
-        Spacer(Modifier.height(14.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        DialogFields {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
                 LabeledMiniField(
                     label = stringResource(Res.string.field_period),

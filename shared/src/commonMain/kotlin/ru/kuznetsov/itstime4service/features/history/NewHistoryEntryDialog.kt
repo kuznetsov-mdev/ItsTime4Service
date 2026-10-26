@@ -12,13 +12,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -64,6 +61,7 @@ import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
 import ru.kuznetsov.itstime4service.ui.components.buttons.PresetChip
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogButton
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogCard
+import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogFields
 import ru.kuznetsov.itstime4service.ui.components.indicators.ErrorBar
 import ru.kuznetsov.itstime4service.ui.components.fields.LabeledMiniField
 import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
@@ -120,11 +118,7 @@ internal fun NewHistoryEntryCard(
         text = stringResource(Res.string.dialog_new_entry_text),
         modifier = modifier,
     ) {
-        Spacer(Modifier.height(14.dp))
-        Column(
-            modifier = Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
+        DialogFields {
             CarPickerField(form = form, cars = cars, onChange = onChange)
             Column {
                 LabeledMiniField(
