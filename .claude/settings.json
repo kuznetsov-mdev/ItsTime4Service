@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(adb exec-out screencap *)",
+      "Bash(adb logcat -d)",
+      "Bash(adb logcat -d *)",
+      "Bash(xcrun simctl list)",
+      "Bash(xcrun simctl list *)",
+      "Bash(adb shell cat *)",
+      "Bash(adb shell dumpsys *)",
+      "Bash(adb shell uiautomator dump *)",
+      "Bash(sips -g *)",
+      "Bash(adb devices)",
+      "Bash(adb devices *)",
+      "Bash(adb shell pidof *)",
+      "Bash(adb shell getprop *)",
+      "Bash(adb shell uptime)",
+      "Bash(xcrun simctl bootstatus *)",
+      "Bash(xcodebuild -list *)",
+      "Bash(maestro --version)",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__ide__getDiagnostics"
+    ]
+  }
+}
