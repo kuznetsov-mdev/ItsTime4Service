@@ -49,13 +49,13 @@ import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
  * UTC of [TODAY], are replaced. Repository work uses the test dispatcher when [ViewModelTestSetup] is active. [close]
  * clears every view model made by [viewModel] and closes the Koin app so resources do not leak into another test.
  * [failWrites] makes every write to a table fail with a trigger until [allowWrites]; [hideTable] makes every read of a
- * table fail by renaming it until [restoreTable].
+ * table fail by renaming it until [restoreTable]. [koinApp] hosts the whole app in end-to-end UI tests.
  */
 internal class TestApp {
     private val db = TestDatabase().create()
     val reminders = FakeReminders()
 
-    private val koinApp = koinApplication {
+    val koinApp = koinApplication {
         allowOverride(true)
         modules(
             featureModule,
