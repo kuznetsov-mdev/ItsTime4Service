@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
@@ -28,6 +29,7 @@ fun OutlineButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
 ) {
     val colors = ItsTime4ServiceTheme.colors
     val shape = RoundedCornerShape(ItsTime4ServiceTheme.dimens.radiusL)
@@ -37,13 +39,15 @@ fun OutlineButton(
             .background(colors.bg)
             .border(1.5.dp, colors.accent, shape)
             .clickable(onClick = onClick)
-            .padding(PaddingValues(horizontal = 22.dp, vertical = 15.dp)),
+            .padding(PaddingValues(horizontal = if (compact) 6.dp else 22.dp, vertical = 15.dp)),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text,
-            style = ItsTime4ServiceTheme.typography.sans.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+            style = ItsTime4ServiceTheme.typography.sans.copy(fontSize = if (compact) 12.sp else 14.sp, fontWeight = FontWeight.Bold),
             color = colors.accent,
+            maxLines = if (compact) 1 else Int.MAX_VALUE,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

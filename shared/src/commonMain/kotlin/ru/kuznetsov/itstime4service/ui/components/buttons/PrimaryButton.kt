@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
@@ -29,6 +30,7 @@ fun PrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    compact: Boolean = false,
 ) {
     val colors = ItsTime4ServiceTheme.colors
     val dimens = ItsTime4ServiceTheme.dimens
@@ -38,13 +40,15 @@ fun PrimaryButton(
             .clip(RoundedCornerShape(dimens.radiusL))
             .background(colors.accent)
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(PaddingValues(horizontal = 22.dp, vertical = 15.dp)),
+            .padding(PaddingValues(horizontal = if (compact) 6.dp else 22.dp, vertical = 15.dp)),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text,
-            style = ItsTime4ServiceTheme.typography.sans.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+            style = ItsTime4ServiceTheme.typography.sans.copy(fontSize = if (compact) 12.sp else 14.sp, fontWeight = FontWeight.Bold),
             color = colors.onAccent,
+            maxLines = if (compact) 1 else Int.MAX_VALUE,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

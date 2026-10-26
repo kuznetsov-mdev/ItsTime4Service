@@ -230,11 +230,13 @@ internal fun CarFormContent(
                 text = stringResource(Res.string.action_add_task_button),
                 onClick = onAddTask,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
+                compact = true,
             )
             PrimaryButton(
                 text = stringResource(Res.string.action_save_car),
                 onClick = save,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
+                compact = true,
             )
         }
     }
