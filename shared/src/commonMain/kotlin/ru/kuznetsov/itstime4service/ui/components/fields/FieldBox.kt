@@ -39,9 +39,11 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
@@ -89,6 +91,8 @@ internal fun FieldBox(
     val showsDoneButton = needsDoneButton && isFocused
     val layoutDirection = LocalLayoutDirection.current
     val errorText = stringResource(Res.string.field_required)
+    var edited by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
+    val shown = if (edited.text == value) edited else TextFieldValue(value, TextRange(value.length))
     Row(
         modifier = modifier
             .then(if (needsDoneButton) Modifier.height(IntrinsicSize.Min) else Modifier)
@@ -113,8 +117,11 @@ internal fun FieldBox(
                     Text(placeholder, style = textStyle, color = colors.inkFaint)
                 }
                 BasicTextField(
-                    value = value,
-                    onValueChange = onValueChange,
+                    value = shown,
+                    onValueChange = {
+                        edited = it
+                        if (it.text != value) onValueChange(it.text)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)

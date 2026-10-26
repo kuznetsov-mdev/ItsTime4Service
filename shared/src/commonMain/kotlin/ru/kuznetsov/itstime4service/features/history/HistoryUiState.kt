@@ -36,6 +36,16 @@ data class HistoryUiState(
 }
 
 /**
+ * The drafts of the open history windows, kept apart from [HistoryUiState] so that typed text reaches its field in
+ * the same frame: [filterDraft] for the filter window, [entryForm] for a record, [newEntry] for a record added by hand.
+ */
+data class HistoryWindows(
+    val filterDraft: HistoryFilter? = null,
+    val entryForm: HistoryEntryForm? = null,
+    val newEntry: NewHistoryEntryForm? = null,
+)
+
+/**
  * A car as an owner of history records.
  * [isSold] marks a car that was deleted while its history was kept.
  */

@@ -1,6 +1,16 @@
 package ru.kuznetsov.itstime4service.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
@@ -14,12 +24,16 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.v2.runComposeUiTest
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_decrease
 import itstime4service.shared.generated.resources.action_done
 import itstime4service.shared.generated.resources.action_increase
 import org.jetbrains.compose.resources.stringResource
+import ru.kuznetsov.itstime4service.ui.components.buttons.OutlineButton
+import ru.kuznetsov.itstime4service.ui.components.buttons.PrimaryButton
 import ru.kuznetsov.itstime4service.ui.components.buttons.SegmentedControl
 import ru.kuznetsov.itstime4service.ui.components.fields.AppNumberField
 import ru.kuznetsov.itstime4service.ui.components.fields.AppTextField
@@ -34,8 +48,9 @@ import kotlin.test.assertEquals
 
 /**
  * Covers the shared controls by their public behaviour: the stepper and its bounds, the switch and the checkbox
- * as toggles for the screen reader, the segmented control reporting the tapped option, and the check button
- * that a focused numeric field shows where the numeric keyboard has no done key.
+ * as toggles for the screen reader, the segmented control reporting the tapped option, compact buttons in a row
+ * keeping their text on one line, the cursor of a field whose value arrives a frame late, and the check button that
+ * a focused numeric field shows where the numeric keyboard has no done key.
  */
 @OptIn(ExperimentalTestApi::class)
 class ControlsTest : UiTest() {
@@ -112,6 +127,41 @@ class ControlsTest : UiTest() {
             onNodeWithContentDescription(texts.getValue("done")).performClick()
             assertEquals(listOf("done"), calls)
         }
+    }
+
+    @Test
+    fun compactButtonsInARowKeepTheirTextOnOneLine() = runComposeUiTest {
+        show {
+            Row(Modifier.width(284.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlineButton("+ Добавить работу", onClick = {}, modifier = Modifier.weight(1f), compact = true)
+                PrimaryButton("Сохранить авто", onClick = {}, modifier = Modifier.weight(1f), compact = true)
+            }
+        }
+
+        assertEquals(1, lineCount("+ Добавить работу"))
+        assertEquals(1, lineCount("Сохранить авто"))
+    }
+
+    private fun ComposeUiTest.lineCount(text: String): Int {
+        val layouts = mutableListOf<TextLayoutResult>()
+        onNodeWithText(text).performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        return layouts.single().lineCount
+    }
+
+    @Test
+    fun valueArrivingLateKeepsTheCursorAfterTheTypedText() = runComposeUiTest {
+        var value by mutableStateOf("")
+        var typed = ""
+        show { AppTextField(value = value, onValueChange = { typed = it }) }
+
+        onNode(hasSetTextAction()).performTextInput("К")
+        waitForIdle()
+        value = typed
+        waitForIdle()
+        onNode(hasSetTextAction()).performTextInput("о")
+        waitForIdle()
+
+        assertEquals("Ко", typed)
     }
 
     @Test
