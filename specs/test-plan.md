@@ -147,19 +147,19 @@
 
 ## 7. Текущее состояние покрытия
 
-Состояние на 23.10.2026. В `shared/src/commonTest` 367 тестов, ещё 3 — только в Android host. Они выполняются в Android host tests и в iOS simulator tests:
+Состояние на 26.10.2026. В `shared/src/commonTest` 465 тестов, ещё 3 — только в Android host. Они выполняются в Android host tests и в iOS simulator tests:
 
 - **Domain (174):** все расчётные use case-ы, а также use case-ы машин, работ, истории, настроек, запуска и уведомлений, правила `TaskHistoryRules`. Часы и часовой пояс управляемые (`GetNowUseCase`, `GetTodayUseCase`).
 - **Data (52):** репозитории и миграции на настоящей SQLite: `TaskHistoryRepositoryImplTest` (в том числе сбой посреди транзакции через триггер SQLite), `RepositoriesTest` (в том числе подписка до записи), `MigrationTest` (с каждой прежней версии), `CarMapperTest`, `ReminderSchedulerImplTest` (текст и состав уведомлений). Подробности — в разделе «Тесты на базе» `specs/data.md`.
 - **ViewModel (84):** все шесть ViewModel-ей и `CarsViewModel` на графе Koin приложения поверх тестовой базы (`TestApp`). Сбои базы — `DatabaseFailuresTest`. Подробности — в разделе «Тесты ViewModel» `specs/presentation.md`.
 - **Логика UI (39):** `HistoryRows`, `TaskFields`, форматы ввода дат, перевод км/мили, маска номера, подбор иконок.
-- **Compose UI (71):** в `commonTest`, на Android через Robolectric: `LicensesScreenTest`, `ErrorComponentsTest` (плашка и экран ошибки), `DatabaseFailuresUiTest` (ошибки базы на экранах авто, работы и в окне записи), `TaskFormScreenTest` (экран работы), `CarFormScreenTest` (форма авто), `HistoryDialogsTest` (окна записи, фильтра и новой записи «Истории»), `CarDetailScreenTest` (экран машины и его окна), `CarsScreenTest` (список авто).
+- **Compose UI (114):** в `commonTest`, на Android через Robolectric: `LicensesScreenTest`, `ErrorComponentsTest` (плашка и экран ошибки), `DatabaseFailuresUiTest` (ошибки базы на экранах авто, работы и в окне записи), `TaskFormScreenTest` (экран работы), `CarFormScreenTest` (форма авто), `HistoryDialogsTest` (окна записи, фильтра и новой записи «Истории»), `CarDetailScreenTest` (экран машины и его окна), `CarsScreenTest` (список авто), `HistoryScreenTest` (экран «Истории»), `SettingsScreenTest` (настройки); общие компоненты — `ControlsTest` (степпер, переключатель, флажок, сегменты, галочка цифрового поля), `TimePickerDialogTest`, `PlateSemanticsTest` (скрытый номер не читается и не рисуется).
 - **Сверка лицензий (3):** `ThirdPartyNoticesTest` — только Android host, читает файлы модуля.
 - **iOS UI (1):** `ScreensWalkthroughUITests` — один сквозной проход по экранам на русском языке с перезапусками.
 
 Не покрыто:
 
-- Compose UI-тесты экранов и компонентов, кроме экрана лицензий, экрана работы, формы авто, окон «Истории», экрана машины, списка авто и состояний ошибок базы; Android UI/E2E набор;
+- Compose UI: переходы навигации и back stack, жест и кнопка «назад», нажатие вне окна, визуальные проверки номера, темы и крупный шрифт; Android UI/E2E набор;
 - платформенное расписание уведомлений (`LocalNotifications`);
 - CI, сканирование секретов, SCA и SAST;
 - проверки на физических устройствах и release-сборке.
@@ -211,13 +211,13 @@
 | Форма авто | UI-02 | `CarFormViewModelTest`, `CarFormScreenTest` | VM, UI | ✅ | — |
 | Экран работы, пресеты, удаление | UI-03 | `TaskFormViewModelTest`, `TaskFieldsTest`, `TaskFormScreenTest` | U, VM, UI | ✅ | — |
 | Пробег и единицы | UI-04 | `CarDetailViewModelTest`, `DistanceConversionTest`, `CarDetailScreenTest` | U, VM, UI | ✅ | — |
-| Фильтр истории | UI-06 | `HistoryRowsTest`, `HistoryViewModelTest`, `HistoryDialogsTest` | U, VM, UI | ✅ | — |
-| Настройки и их сохранение | UI-07 | `SettingsViewModelTest`, `AppViewModelTest`, `ScreensWalkthroughUITests` | VM, E2E (iOS) | 🟡 | нет Android, язык интерфейса не проверяется |
+| Фильтр истории | UI-06 | `HistoryRowsTest`, `HistoryViewModelTest`, `HistoryDialogsTest`, `HistoryScreenTest` | U, VM, UI | ✅ | — |
+| Настройки и их сохранение | UI-07 | `SettingsViewModelTest`, `AppViewModelTest`, `SettingsScreenTest`, `ScreensWalkthroughUITests` | VM, UI, E2E (iOS) | 🟡 | нет Android, язык интерфейса не проверяется |
 | Отмена форм и окон | UI-08 | `CarDetailViewModelTest`, `HistoryViewModelTest`, `CarDetailScreenTest`, `HistoryDialogsTest` | VM, UI | 🟡 | кнопки отмены и тап вне правки покрыты; нет нажатия вне окна и жеста «назад» |
 | Повторные действия, ошибки базы | UI-09 | `TaskFormViewModelTest`, `DatabaseFailuresTest`, `ErrorComponentsTest`, `DatabaseFailuresUiTest` | VM, UI | ✅ | — |
 | Виды списка авто, госномер | UI-10 | `CarsViewModelTest`, `PlateMaskTest`, `CarsScreenTest` | U, VM, UI | 🟡 | нет визуальных проверок номера и проверки вида после перезапуска |
 | Выбор иконки | UI-11 | `TaskFormViewModelTest`, `TaskIconsTest`, `TaskFormScreenTest` | U, VM, UI | ✅ | — |
-| Ручное добавление истории | UI-12 | `HistoryViewModelTest`, `HistoryDialogsTest` | VM, UI | ✅ | — |
+| Ручное добавление истории | UI-12 | `HistoryViewModelTest`, `HistoryDialogsTest`, `HistoryScreenTest` | VM, UI | ✅ | — |
 | Лицензии открытого ПО | UI-13, E2E-10 | `LicensesScreenTest`, `ThirdPartyNoticesTest` | UI, U | 🟡 | нет E2E из релизной сборки |
 | Скрытие номера и VIN | UI-14 | `CarsViewModelTest`, `CarDetailViewModelTest`, `CarDetailScreenTest`, `CarsScreenTest` | VM, UI | 🟡 | нет проверки после перезапуска |
 | Запрос разрешения на уведомления | UI-15, E2E-07 | `AppViewModelTest` | VM | 🟡 | платформенный запрос не проверен |
@@ -281,7 +281,7 @@
 
 ### 8.5 Compose UI и навигация
 
-- [ ] Добавить Compose UI-тесты всех экранов, диалогов и общих компонентов по их публичному поведению: семантика, обязательные подписи, ввод, ошибки, закрытие/отмена, кнопки и доступность. *Инфраструктура, экран лицензий, экран работы, форма авто, окна «Истории», экран машины, список авто и ошибки базы (`LicensesScreenTest`, `TaskFormScreenTest`, `CarFormScreenTest`, `HistoryDialogsTest`, `CarDetailScreenTest`, `CarsScreenTest`, `ErrorComponentsTest`, `DatabaseFailuresUiTest`) готовы; ошибки полей видны в семантике (`error`).*
+- [x] Добавить Compose UI-тесты всех экранов, диалогов и общих компонентов по их публичному поведению: семантика, обязательные подписи, ввод, ошибки, закрытие/отмена, кнопки и доступность. *Все экраны и их окна (`LicensesScreenTest`, `TaskFormScreenTest`, `CarFormScreenTest`, `HistoryDialogsTest`, `CarDetailScreenTest`, `CarsScreenTest`, `HistoryScreenTest`, `SettingsScreenTest`, `DatabaseFailuresUiTest`) и общие компоненты (`ErrorComponentsTest`, `ControlsTest`, `TimePickerDialogTest`, `PlateSemanticsTest`); ошибки полей видны в семантике (`error`). Найдено: `SegmentedControl` и переключатель вида списка авто не сообщают диктору выбранный вариант (нет `selected`) — не исправлено.*
 - [ ] Автоматизировать новые функции: три вида списка авто и их сохранение; ввод/отображение госномера; выбор, отмену и отображение иконки; ручное добавление истории с подсказками, авто, валидацией и необязательными полями; экран лицензий с раскрытием каждого текста; скрытие номера и VIN.
 - [ ] Проверить действие клавиши IME «Готово» на каждом подключённом поле: вызывается правильное действие формы/диалога, ошибки обязательных полей показываются, форма не отправляется повторно; на iOS — галочка «Готово» у цифровых полей.
 - [ ] Добавить визуальные проверки российского номера в обычном и компактном размерах, светлой/тёмной теме и для трёхзначного региона; проверить, что масштаб системного шрифта не меняет пропорции и длинная строка не обрезается.
