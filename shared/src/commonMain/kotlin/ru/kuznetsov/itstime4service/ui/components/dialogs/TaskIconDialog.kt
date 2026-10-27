@@ -24,7 +24,6 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_cancel
 import itstime4service.shared.generated.resources.dialog_task_icon_text
@@ -42,7 +41,7 @@ fun TaskIconDialog(
     onSelect: (TaskIcon) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    AppDialog(onDismiss = onDismiss) {
         TaskIconDialogCard(selected = selected, onSelect = onSelect, onDismiss = onDismiss)
     }
 }

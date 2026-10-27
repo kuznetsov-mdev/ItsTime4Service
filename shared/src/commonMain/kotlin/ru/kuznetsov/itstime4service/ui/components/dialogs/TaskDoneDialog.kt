@@ -26,7 +26,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import org.jetbrains.compose.resources.stringResource
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_cancel
@@ -55,7 +54,7 @@ fun TaskDoneDialog(
     saveFailed: Boolean = false,
     onSaveFailureShown: () -> Unit = {},
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    AppDialog(onDismiss = onDismiss) {
         TaskDoneDialogCard(
             taskName = taskName,
             onConfirm = onConfirm,

@@ -68,6 +68,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.androidx.navigation.compose)
+            implementation(libs.androidx.navigationevent.compose)
             implementation(libs.icons.lucide)
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.core)

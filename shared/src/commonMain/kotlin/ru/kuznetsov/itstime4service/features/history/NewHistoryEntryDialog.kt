@@ -41,7 +41,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import org.jetbrains.compose.resources.stringResource
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_add
@@ -59,6 +58,7 @@ import itstime4service.shared.generated.resources.task_name_placeholder
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
 import ru.kuznetsov.itstime4service.ui.components.buttons.PresetChip
+import ru.kuznetsov.itstime4service.ui.components.dialogs.AppDialog
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogButton
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogCard
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogFields
@@ -82,7 +82,7 @@ internal fun NewHistoryEntryDialog(
     saveFailed: Boolean = false,
     onSaveFailureShown: () -> Unit = {},
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    AppDialog(onDismiss = onDismiss) {
         NewHistoryEntryCard(
             form = form,
             cars = cars,

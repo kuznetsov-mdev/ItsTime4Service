@@ -27,7 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import org.jetbrains.compose.resources.stringResource
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_cancel
@@ -48,7 +47,7 @@ fun ConfirmDialog(
     icon: ImageVector = ItsTime4ServiceIcons.Trash,
     destructive: Boolean = true,
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    AppDialog(onDismiss = onDismiss) {
         ConfirmDialogCard(
             title = title,
             text = text,

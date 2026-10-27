@@ -27,7 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.stringResource
 import itstime4service.shared.generated.resources.Res
@@ -56,7 +55,7 @@ fun TimePickerDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    AppDialog(onDismiss = onDismiss) {
         TimePickerDialogCard(
             title = title,
             text = text,

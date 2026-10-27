@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import org.jetbrains.compose.resources.stringResource
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_cancel
@@ -22,6 +21,7 @@ import itstime4service.shared.generated.resources.field_date
 import itstime4service.shared.generated.resources.field_mileage
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
+import ru.kuznetsov.itstime4service.ui.components.dialogs.AppDialog
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogButton
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogCard
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogFields
@@ -43,7 +43,7 @@ internal fun HistoryEntryDialog(
     saveFailed: Boolean = false,
     onSaveFailureShown: () -> Unit = {},
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    AppDialog(onDismiss = onDismiss) {
         HistoryEntryCard(
             form = form,
             distanceUnit = distanceUnit,
