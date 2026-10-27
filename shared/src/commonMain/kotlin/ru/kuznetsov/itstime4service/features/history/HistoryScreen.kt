@@ -43,9 +43,8 @@ fun HistoryScreen(
     viewModel: HistoryViewModel = koinViewModel { parametersOf(initialCarId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val windows by viewModel.windows.collectAsStateWithLifecycle()
     HistoryContent(
-        state = state.copy(filterDraft = windows.filterDraft, entryForm = windows.entryForm, newEntry = windows.newEntry),
+        state = state,
         onCarMenuToggle = viewModel::onCarMenuToggle,
         onCarMenuDismiss = viewModel::onCarMenuDismiss,
         onCarSelect = viewModel::onCarSelect,

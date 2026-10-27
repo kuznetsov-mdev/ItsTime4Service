@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -44,8 +43,7 @@ import ru.kuznetsov.itstime4service.ui.format.kmIn
  * A record can also be added by hand for a car that is not sold: the window starts on the car chosen in the picker,
  * or the first one, and offers the car's task names as chips. Such a record is not tied to a task. Repeated taps
  * on "Add" while the record is being stored are ignored.
- * The drafts of the open windows are also given as [windows], straight from their [MutableStateFlow], so that the
- * screen's fields get typed text in the same frame. Both record windows close only once the record is stored; a failed write keeps them open with the "could not save"
+ * Both record windows close only once the record is stored; a failed write keeps them open with the "could not save"
  * bar until [onSaveFailureShown]. A failed read shows the load error until [onRetry] reads the data again.
  */
 class HistoryViewModel(
@@ -59,8 +57,6 @@ class HistoryViewModel(
 ) : ViewModel() {
 
     private val view = MutableStateFlow(View(selectedCarId = initialCarId))
-    private val _windows = MutableStateFlow(HistoryWindows())
-    val windows: StateFlow<HistoryWindows> = _windows.asStateFlow()
     private var isAdding = false
 
     private val rows: Flow<List<HistoryRow>> = observeAllHistory().map { records ->
@@ -75,10 +71,8 @@ class HistoryViewModel(
             rows,
             observeSettings(),
             observeCars(),
-            combine(view, _windows, ::Pair),
-        ) { cars, rows, settings, activeCars, (view, windows) ->
-            uiState(cars, rows, settings.distanceUnit, activeCars, view, windows)
-        }
+            view,
+        ) { cars, rows, settings, activeCars, view -> uiState(cars, rows, settings.distanceUnit, activeCars, view) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HistoryUiState())
 
     private fun uiState(
@@ -87,7 +81,6 @@ class HistoryViewModel(
         unit: DistanceUnit,
         activeCars: List<Car>,
         view: View,
-        windows: HistoryWindows,
     ): HistoryUiState {
         val owners = cars.map { it.toHistoryCar() }
         val selectedCarId = view.selectedCarId?.takeIf { id -> owners.any { it.id == id } }
@@ -97,12 +90,12 @@ class HistoryViewModel(
             selectedCarId = selectedCarId,
             isCarMenuOpen = view.isCarMenuOpen,
             filter = view.filter,
-            filterDraft = windows.filterDraft,
+            filterDraft = view.filterDraft,
             years = HistoryRows.grouped(HistoryRows.matching(rows, view.filter.toCriteria(selectedCarId, unit))),
             hasEntries = HistoryRows.ofCar(rows, selectedCarId).isNotEmpty(),
-            entryForm = windows.entryForm,
-            newEntry = windows.newEntry,
-            newEntrySuggestions = HistoryRows.suggestions(windows.newEntry?.let { form -> activeCars.firstOrNull { it.id == form.carId } }),
+            entryForm = view.entryForm,
+            newEntry = view.newEntry,
+            newEntrySuggestions = HistoryRows.suggestions(view.newEntry?.let { form -> activeCars.firstOrNull { it.id == form.carId } }),
             distanceUnit = unit,
             saveFailed = view.saveFailed,
         )
@@ -114,12 +107,9 @@ class HistoryViewModel(
 
     fun onCarSelect(carId: String?) = view.update { it.copy(selectedCarId = carId, isCarMenuOpen = false) }
 
-    fun onFilterOpen() {
-        view.update { it.copy(isCarMenuOpen = false) }
-        _windows.update { it.copy(filterDraft = view.value.filter) }
-    }
+    fun onFilterOpen() = view.update { it.copy(isCarMenuOpen = false, filterDraft = it.filter) }
 
-    fun onFilterChange(filter: HistoryFilter) = _windows.update {
+    fun onFilterChange(filter: HistoryFilter) = view.update {
         it.copy(
             filterDraft = filter.copy(
                 dateFrom = DateInputFormat.current.digits(filter.dateFrom),
@@ -130,24 +120,20 @@ class HistoryViewModel(
         )
     }
 
-    fun onFilterApply() {
-        val draft = _windows.value.filterDraft ?: return
+    fun onFilterApply() = view.update {
+        val draft = it.filterDraft ?: return@update it
         if (draft.isValid) {
-            view.update { it.copy(filter = draft.copy(showErrors = false)) }
-            _windows.update { it.copy(filterDraft = null) }
+            it.copy(filter = draft.copy(showErrors = false), filterDraft = null)
         } else {
-            _windows.update { it.copy(filterDraft = draft.copy(showErrors = true)) }
+            it.copy(filterDraft = draft.copy(showErrors = true))
         }
     }
 
-    fun onFilterReset() {
-        view.update { it.copy(filter = HistoryFilter()) }
-        _windows.update { it.copy(filterDraft = null) }
-    }
+    fun onFilterReset() = view.update { it.copy(filter = HistoryFilter(), filterDraft = null) }
 
-    fun onFilterDismiss() = _windows.update { it.copy(filterDraft = null) }
+    fun onFilterDismiss() = view.update { it.copy(filterDraft = null) }
 
-    fun onEntryOpen(row: HistoryRow) = _windows.update {
+    fun onEntryOpen(row: HistoryRow) = view.update {
         it.copy(
             entryForm = HistoryEntryForm(
                 entryId = row.entry.id,
@@ -162,7 +148,7 @@ class HistoryViewModel(
         )
     }
 
-    fun onEntryChange(form: HistoryEntryForm) = _windows.update {
+    fun onEntryChange(form: HistoryEntryForm) = view.update {
         it.copy(
             entryForm = form.copy(
                 date = DateInputFormat.current.digits(form.date),
@@ -173,7 +159,7 @@ class HistoryViewModel(
     }
 
     fun onEntrySave() {
-        val form = _windows.value.entryForm ?: return
+        val form = view.value.entryForm ?: return
         val date = DateInputFormat.current.parse(form.date)
         val mileage = form.mileage.toIntOrNull()
         val original = state.value.years
@@ -181,7 +167,7 @@ class HistoryViewModel(
             .firstOrNull { it.entry.id == form.entryId }
             ?.entry
         if (date == null || mileage == null || !form.isValid) {
-            _windows.update { it.copy(entryForm = form.copy(showErrors = true)) }
+            view.update { it.copy(entryForm = form.copy(showErrors = true)) }
             return
         }
         if (original == null) {
@@ -202,16 +188,15 @@ class HistoryViewModel(
         }
     }
 
-    fun onEntryDismiss() = _windows.update { it.copy(entryForm = null) }
+    fun onEntryDismiss() = view.update { it.copy(entryForm = null) }
 
     fun onNewEntryOpen() {
         val cars = state.value.activeCars
         val carId = cars.firstOrNull { it.id == state.value.selectedCarId }?.id ?: cars.firstOrNull()?.id ?: return
-        view.update { it.copy(isCarMenuOpen = false) }
-        _windows.update { it.copy(newEntry = NewHistoryEntryForm(carId = carId)) }
+        view.update { it.copy(isCarMenuOpen = false, newEntry = NewHistoryEntryForm(carId = carId)) }
     }
 
-    fun onNewEntryChange(form: NewHistoryEntryForm) = _windows.update {
+    fun onNewEntryChange(form: NewHistoryEntryForm) = view.update {
         it.copy(
             newEntry = form.copy(
                 date = DateInputFormat.current.digits(form.date),
@@ -222,11 +207,11 @@ class HistoryViewModel(
     }
 
     fun onNewEntrySave() {
-        val form = _windows.value.newEntry ?: return
+        val form = view.value.newEntry ?: return
         val date = DateInputFormat.current.parse(form.date)
         val mileage = form.mileage.toIntOrNull()
         if (date == null || mileage == null || !form.isValid) {
-            _windows.update { it.copy(newEntry = form.copy(showErrors = true)) }
+            view.update { it.copy(newEntry = form.copy(showErrors = true)) }
             return
         }
         if (isAdding) return
@@ -246,7 +231,7 @@ class HistoryViewModel(
         }
     }
 
-    fun onNewEntryDismiss() = _windows.update { it.copy(newEntry = null) }
+    fun onNewEntryDismiss() = view.update { it.copy(newEntry = null) }
 
     fun onSaveFailureShown() = view.update { it.copy(saveFailed = false) }
 
@@ -278,13 +263,16 @@ class HistoryViewModel(
     private fun String.digits(): String = filter(Char::isDigit).take(MAX_NUMBER_LENGTH)
 
     /**
-     * Screen-only state that is not stored anywhere: the chosen car, the filter and whether the last write failed.
-     * The drafts of the open windows live in [HistoryWindows].
+     * Screen-only state that is not stored anywhere: the chosen car, the filter, the open windows
+     * and whether the last write failed.
      */
     private data class View(
         val selectedCarId: String? = null,
         val isCarMenuOpen: Boolean = false,
         val filter: HistoryFilter = HistoryFilter(),
+        val filterDraft: HistoryFilter? = null,
+        val entryForm: HistoryEntryForm? = null,
+        val newEntry: NewHistoryEntryForm? = null,
         val saveFailed: Boolean = false,
     )
 

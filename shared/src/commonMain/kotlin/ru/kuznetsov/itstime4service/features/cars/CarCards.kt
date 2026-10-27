@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -67,7 +69,7 @@ import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 
 @Composable
 internal fun CarsViewToggle(selected: CarsView, onSelect: (CarsView) -> Unit, modifier: Modifier = Modifier) {
-    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    Row(modifier = modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         ViewToggleButton(ItsTime4ServiceIcons.List, stringResource(Res.string.cars_view_list), selected == CarsView.LIST) {
             onSelect(CarsView.LIST)
         }
@@ -90,7 +92,7 @@ private fun ViewToggleButton(icon: ImageVector, label: String, selected: Boolean
             .size(31.dp)
             .clip(CircleShape)
             .background(if (selected) colors.accent.copy(alpha = 0.16f) else colors.surface2)
-            .clickable(role = Role.RadioButton, onClickLabel = label, onClick = onClick),
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = label, tint = if (selected) colors.accent else colors.inkMuted, modifier = Modifier.size(16.dp))

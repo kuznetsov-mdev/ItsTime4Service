@@ -18,6 +18,8 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -112,6 +114,22 @@ class ControlsTest : UiTest() {
         onNodeWithText("км").performClick()
 
         assertEquals(listOf("option 1", "option 0"), calls)
+    }
+
+    @Test
+    fun segmentedControlMarksOnlyTheSelectedOption() = runComposeUiTest {
+        var selected by mutableStateOf(0)
+        show { SegmentedControl(options = listOf("Светлая", "Тёмная", "Системная"), selectedIndex = selected, onSelect = { selected = it }) }
+
+        onNodeWithText("Светлая").assertIsSelected()
+        onNodeWithText("Тёмная").assertIsNotSelected()
+        onNodeWithText("Системная").assertIsNotSelected()
+
+        onNodeWithText("Тёмная").performClick()
+
+        onNodeWithText("Светлая").assertIsNotSelected()
+        onNodeWithText("Тёмная").assertIsSelected()
+        onNodeWithText("Системная").assertIsNotSelected()
     }
 
     @Test

@@ -6,6 +6,8 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -126,6 +128,15 @@ class CarsScreenTest : UiTest() {
         onNodeWithContentDescription(texts.getValue("viewHistory")).performClick()
 
         assertEquals(listOf("view LIST", "view TASKS", "view TASKS_AND_HISTORY"), calls)
+    }
+
+    @Test
+    fun viewSwitchMarksOnlyTheCurrentView() = runComposeUiTest {
+        show(cars(CarsView.TASKS))
+
+        onNodeWithContentDescription(texts.getValue("viewList")).assertIsNotSelected()
+        onNodeWithContentDescription(texts.getValue("viewTasks")).assertIsSelected()
+        onNodeWithContentDescription(texts.getValue("viewHistory")).assertIsNotSelected()
     }
 
     @Test
