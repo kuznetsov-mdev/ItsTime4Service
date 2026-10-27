@@ -5,7 +5,9 @@ import XCTest
  * (the app reopens the last opened car), starts from an empty database and builds the data it needs through the UI. Covers adding a car with required-field errors, in-place
  * edits on the car screen, the task screen, the done mark and its removal, the car history with its record window
  * and filter, settings that survive a restart (miles, theme, "open by default"), deleting a car with a cancelled and
- * a confirmed dialog, the car list views with a record added by hand, and the open source licences.
+ * a confirmed dialog, the car list views with a record added by hand, the open source licences, the swipe back from
+ * the left edge on nested screens and over an open window, the done check of numeric fields, and screenshots of the
+ * screens in portrait and landscape with and without the keyboard for checking the safe area by eye.
  * Accepts the system notification prompt that appears after the first car is saved. Buttons below the screen are
  * reached by swiping up; text fields are tapped near their end but left of the iOS done check, so the cursor lands after the text, and
  * text is typed one key at a time and checked, as fast typing drops characters in Compose fields on iOS.
@@ -14,6 +16,11 @@ import XCTest
 final class ScreensWalkthroughUITests: XCTestCase {
 
     private let app = XCUIApplication()
+
+    override func tearDown() {
+        XCUIDevice.shared.orientation = .portrait
+        super.tearDown()
+    }
 
     override func setUp() {
         continueAfterFailure = false
@@ -246,6 +253,113 @@ final class ScreensWalkthroughUITests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "label MATCHES %@", ".*\\d{2}\\.\\d{2}\\.\\d{4}.*"))
     }
 
+    func testEdgeSwipeGoesBackFromNestedScreens() {
+        addCar("Kia Rio", mileage: "84300")
+
+        tap("Kia Rio")
+        XCTAssertTrue(app.buttons["Удалить авто"].waitForExistence(timeout: 3))
+        swipeBackFromEdge()
+        assertCarCount(1)
+
+        tap("Kia Rio")
+        tap("Замена масла и фильтра")
+        XCTAssertTrue(app.staticTexts["Редактирование работы"].waitForExistence(timeout: 3))
+        swipeBackFromEdge()
+        XCTAssertTrue(waitGone(app.staticTexts["Редактирование работы"]))
+        XCTAssertTrue(app.buttons["Удалить авто"].exists)
+        swipeBackFromEdge()
+        assertCarCount(1)
+
+        tap("Добавить авто")
+        XCTAssertTrue(app.staticTexts["Добавление авто"].waitForExistence(timeout: 3))
+        swipeBackFromEdge()
+        XCTAssertTrue(waitGone(app.staticTexts["Добавление авто"]))
+        assertCarCount(1)
+
+        tapTab("Настройки")
+        tap("Лицензии открытого ПО")
+        let licensesSubtitle = app.staticTexts["Приложение собрано на этих компонентах с открытым кодом"]
+        XCTAssertTrue(licensesSubtitle.waitForExistence(timeout: 3))
+        swipeBackFromEdge()
+        XCTAssertTrue(waitGone(licensesSubtitle))
+    }
+
+    func testEdgeSwipeClosesAnOpenWindowAsCancel() {
+        addCar("Kia Rio", mileage: "84300")
+        tap("Kia Rio")
+        tap("Удалить авто")
+        let title = app.staticTexts["Удалить Kia Rio?"]
+        XCTAssertTrue(title.waitForExistence(timeout: 3))
+        step("delete_window_open")
+
+        swipeBackFromEdge()
+        step("delete_window_after_swipe")
+
+        XCTAssertTrue(waitGone(title))
+        XCTAssertTrue(app.buttons["Удалить авто"].exists)
+        tap("Назад")
+        assertCarCount(1)
+    }
+
+    func testNumericFieldShowsTheDoneCheck() {
+        tap("Добавить авто")
+        XCTAssertTrue(app.staticTexts["Добавление авто"].waitForExistence(timeout: 3))
+
+        type("Kia Rio", into: textField(at: 0))
+        XCTAssertFalse(app.buttons["Выполнено"].exists)
+
+        type("84300", into: textField(at: 1))
+        step("numeric_field_done_check")
+        let check = app.buttons["Выполнено"]
+        XCTAssertTrue(check.waitForExistence(timeout: 3))
+        check.tap()
+        allowNotificationsIfAsked()
+
+        assertCarCount(1)
+    }
+
+    func testSafeAreaScreenshots() {
+        addCar("Kia Rio", mileage: "84300")
+        for orientation in [UIDeviceOrientation.portrait, .landscapeLeft] {
+            XCUIDevice.shared.orientation = orientation
+            let suffix = orientation == .portrait ? "portrait" : "landscape"
+            Thread.sleep(forTimeInterval: ROTATION_SETTLE)
+            step("safe_area_cars_\(suffix)")
+            XCTAssertTrue(app.buttons["Добавить авто"].isHittable || app.buttons["Добавить авто"].exists)
+
+            tap("Kia Rio")
+            XCTAssertTrue(app.buttons["Назад"].waitForExistence(timeout: 3))
+            XCTAssertTrue(app.buttons["Назад"].isHittable)
+            step("safe_area_car_\(suffix)")
+            tap("Назад")
+
+            tap("Добавить авто")
+            focus { textField(at: 0).tap() }
+            step("safe_area_form_keyboard_\(suffix)")
+            tap("Назад")
+
+            tapTab("Настройки")
+            app.swipeUp()
+            app.swipeUp()
+            step("safe_area_settings_bottom_\(suffix)")
+            tapTab("Авто")
+        }
+    }
+
+    private func swipeBackFromEdge() {
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.0, dy: 0.5))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5))
+        start.press(forDuration: 0.05, thenDragTo: end)
+    }
+
+    private func waitGone(_ element: XCUIElement, timeout: TimeInterval = 3) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while element.exists && Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return !element.exists
+    }
+
     private func assertCarCount(_ expected: Int, file: StaticString = #filePath, line: UInt = #line) {
         let deadline = Date().addingTimeInterval(5)
         while carButtons.count != expected && Date() < deadline {
@@ -467,3 +581,4 @@ private let MAX_SWIPES = 4
 private let DONE_CHECK_WIDTH: CGFloat = 50
 private let KEYBOARD_SETTLE: TimeInterval = 0.5
 private let KEY_INTERVAL: TimeInterval = 0.08
+private let ROTATION_SETTLE: TimeInterval = 1

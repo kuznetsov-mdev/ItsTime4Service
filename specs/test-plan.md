@@ -156,11 +156,11 @@
 - **Compose UI (119):** в `commonTest`, на Android через Robolectric: `LicensesScreenTest`, `ErrorComponentsTest` (плашка и экран ошибки), `DatabaseFailuresUiTest` (ошибки базы на экранах авто, работы и в окне записи), `TaskFormScreenTest` (экран работы), `CarFormScreenTest` (форма авто), `HistoryDialogsTest` (окна записи, фильтра и новой записи «Истории»), `CarDetailScreenTest` (экран машины и его окна), `CarsScreenTest` (список авто), `HistoryScreenTest` (экран «Истории»), `SettingsScreenTest` (настройки); общие компоненты — `ControlsTest` (степпер, переключатель, флажок, сегменты, галочка цифрового поля), `TimePickerDialogTest`, `PlateSemanticsTest` (скрытый номер не читается и не рисуется).
 - **Сверка лицензий (3):** `ThirdPartyNoticesTest` — только Android host, читает файлы модуля.
 - **Android E2E (13):** `AppFlowsTest` — только Android host, всё приложение на Robolectric (навигация, ViewModel-и, база `TestApp`), каждый сценарий на своих данных: добавление авто с ошибками, вкладки и «назад», правка на месте, правка работы, отметка и её снятие с записью истории, правка записи из истории машины, пустой результат фильтра, мили, авто при запуске, удаление с историей «продано», вид списка и ручная запись (E2E-09), лицензии. Push выключен, системный запрос разрешения не показывается.
-- **iOS UI (9):** `ScreensWalkthroughUITests` — независимые сценарии на русском языке, каждый с пустой базы: добавление авто и перезапуск, правка на месте, работы, отметка, история и фильтр, настройки после перезапуска, удаление с отменой, вид списка и ручная запись после перезапуска (E2E-09), лицензии (E2E-10).
+- **iOS UI (13):** `ScreensWalkthroughUITests` — независимые сценарии на русском языке, каждый с пустой базы; четыре из них — проверки iOS: свайп «назад» на вложенных экранах и в окне, галочка «Готово», скриншоты safe area: добавление авто и перезапуск, правка на месте, работы, отметка, история и фильтр, настройки после перезапуска, удаление с отменой, вид списка и ручная запись после перезапуска (E2E-09), лицензии (E2E-10).
 
 Не покрыто:
 
-- Compose UI: жест «назад», нажатие вне окна, восстановление после пересоздания Activity, визуальные проверки номера, темы и крупный шрифт; Android E2E на эмуляторе и в release-сборке;
+- Compose UI: системная «назад» Android и нажатие на затемнение в окне, альбомная ориентация, восстановление после пересоздания Activity, визуальные проверки номера, темы и крупный шрифт; Android E2E на эмуляторе и в release-сборке;
 - платформенное расписание уведомлений (`LocalNotifications`);
 - в CI нет формата/статического анализа, instrumented-тестов и прогона iOS UI-тестов; dependency review идёт только на PR;
 - проверки на физических устройствах и release-сборке.
@@ -214,7 +214,7 @@
 | Пробег и единицы | UI-04 | `CarDetailViewModelTest`, `DistanceConversionTest`, `CarDetailScreenTest` | U, VM, UI | ✅ | — |
 | Фильтр истории | UI-06 | `HistoryRowsTest`, `HistoryViewModelTest`, `HistoryDialogsTest`, `HistoryScreenTest` | U, VM, UI | ✅ | — |
 | Настройки и их сохранение | UI-07 | `SettingsViewModelTest`, `AppViewModelTest`, `SettingsScreenTest`, `ScreensWalkthroughUITests` | VM, UI, E2E (iOS) | 🟡 | нет Android, язык интерфейса не проверяется |
-| Отмена форм и окон | UI-08 | `CarDetailViewModelTest`, `HistoryViewModelTest`, `CarDetailScreenTest`, `HistoryDialogsTest` | VM, UI | 🟡 | кнопки отмены и тап вне правки покрыты; нет нажатия вне окна и жеста «назад» |
+| Отмена форм и окон | UI-08 | `CarDetailViewModelTest`, `HistoryViewModelTest`, `CarDetailScreenTest`, `HistoryDialogsTest`, `ScreensWalkthroughUITests` | VM, UI, E2E (iOS) | 🟡 | кнопки отмены, тап вне правки и свайп «назад» в окне (iOS) покрыты; нет нажатия на затемнение и системной «назад» Android в окне |
 | Повторные действия, ошибки базы | UI-09 | `TaskFormViewModelTest`, `DatabaseFailuresTest`, `ErrorComponentsTest`, `DatabaseFailuresUiTest` | VM, UI | ✅ | — |
 | Виды списка авто, госномер | UI-10 | `CarsViewModelTest`, `PlateMaskTest`, `CarsScreenTest` | U, VM, UI | 🟡 | нет визуальных проверок номера и проверки вида после перезапуска |
 | Выбор иконки | UI-11 | `TaskFormViewModelTest`, `TaskIconsTest`, `TaskFormScreenTest` | U, VM, UI | ✅ | — |
