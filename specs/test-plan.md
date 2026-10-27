@@ -162,7 +162,7 @@
 
 - Compose UI: жест «назад», нажатие вне окна, восстановление после пересоздания Activity, визуальные проверки номера, темы и крупный шрифт; Android E2E на эмуляторе и в release-сборке;
 - платформенное расписание уведомлений (`LocalNotifications`);
-- CI, сканирование секретов, SCA и SAST подготовлены (`.github/workflows/`), но не включены в GitHub и ни разу не запускались;
+- в CI нет формата/статического анализа, instrumented-тестов и прогона iOS UI-тестов; dependency review идёт только на PR;
 - проверки на физических устройствах и release-сборке.
 
 Шаблонные тесты `SharedCommonTest`, `SharedLogicAndroidHostTest` и `SharedLogicIOSTest` проверок не содержат.
@@ -301,8 +301,8 @@
 
 ### 8.7 CI и критерии завершения
 
-- [ ] Настроить CI на каждый PR: формат/статический анализ, все `commonTest`, Android host/instrumented UI tests, iOS simulator tests/UI tests и сборки релевантных targets. *Подготовлено, не включено: `ci.yml` — на PR и push в `main` тесты Android host (вместе с Compose UI и `AppFlowsTest`) и сборка `assembleDebug` на Ubuntu; тесты iOS simulator и `build-for-testing` схемы `iosAppUITests` на macOS. Нет: формата/статического анализа, instrumented-тестов и прогона iOS UI-тестов.*
-- [ ] Добавить секрет-сканирование, анализ зависимостей и SAST/конфигурационный анализ; зафиксировать владельцев и процесс исключений. *Подготовлено, не включено: `security.yml` — gitleaks по всей истории, граф зависимостей Gradle (на push) и dependency review на PR (падает на high), CodeQL для Kotlin на PR, push и раз в неделю. Владельцы и процесс исключений не зафиксированы.*
+- [ ] Настроить CI на каждый PR: формат/статический анализ, все `commonTest`, Android host/instrumented UI tests, iOS simulator tests/UI tests и сборки релевантных targets. *Работает в GitHub Actions с 27.10.2026: `ci.yml` — на PR и push в `main` тесты Android host (вместе с Compose UI и `AppFlowsTest`) и сборка `assembleDebug` на Ubuntu; тесты iOS simulator и `build-for-testing` схемы `iosAppUITests` на macOS. Нет: формата/статического анализа, instrumented-тестов и прогона iOS UI-тестов.*
+- [ ] Добавить секрет-сканирование, анализ зависимостей и SAST/конфигурационный анализ; зафиксировать владельцев и процесс исключений. *Работает в GitHub Actions с 27.10.2026: `security.yml` — gitleaks по всей истории, граф зависимостей Gradle (на push) и dependency review на PR (падает на high), CodeQL для Kotlin на PR, push и раз в неделю. Владельцы и процесс исключений не зафиксированы.*
 - [ ] Хранить отчёты тестов и coverage; установить baseline покрытия domain/data/presentation, контролировать ветви критических правил и не считать общий процент заменой матрицы требований.
 - [ ] Для всех строк матрицы требований получить автоматизированный `pass` на нужном уровне и платформах; все `fail` исправить, все `blocked` снабдить причиной и не включать в заявление о полном покрытии.
 - [ ] Перед релизом выполнять полный прогон на Android и iOS, включая миграцию, восстановление данных, уведомления и физический smoke; сохранять результат по ID сценариев.
