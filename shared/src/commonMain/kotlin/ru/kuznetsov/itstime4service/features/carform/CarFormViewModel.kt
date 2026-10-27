@@ -20,7 +20,9 @@ import ru.kuznetsov.itstime4service.ui.format.kmFrom
 /**
  * Drives the add-car form: the car fields and a list of task blocks filled by hand or from presets.
  * The form opens without task blocks; one appears on the add-task button or a preset chip, always expanded.
- * A block can be collapsed to two lines and expanded back.
+ * A block can be collapsed to two lines and expanded back. The add-task button adds a block only while every block is
+ * filled; otherwise it outlines the empty required fields of the unfinished blocks, without expanding collapsed ones,
+ * and scrolls to the first of them. Preset chips always add a block.
  * Saving with an empty required field — in the car or in any task block — stores nothing, switches
  * the form to showing errors and expands every collapsed block with such a field; an unwanted block has to be removed, it is not skipped silently.
  * When the form has no blocks at all, the car gets a default oil-change task counted from its current
@@ -63,7 +65,22 @@ class CarFormViewModel(
         state.copy(tasks = state.tasks.map { if (it.key == key) it.copy(fields = it.fields.withRecord(on, getToday())) else it })
     }
 
-    fun onAddTask() = _state.update { it.copy(tasks = it.tasks + TaskBlockState(key = nextKey++)) }
+    fun onAddTask() = _state.update { state ->
+        val firstUnfinished = state.tasks.firstOrNull { !it.fields.isValid }
+        if (firstUnfinished == null) {
+            state.copy(tasks = state.tasks + TaskBlockState(key = nextKey++))
+        } else {
+            state.copy(
+                tasks = state.tasks.map { block ->
+                    when {
+                        block.key == firstUnfinished.key -> block.copy(showErrors = true, revealRequest = block.revealRequest + 1)
+                        !block.fields.isValid -> block.copy(showErrors = true)
+                        else -> block
+                    }
+                },
+            )
+        }
+    }
 
     fun onAddPreset(preset: TaskPreset, name: String) = _state.update {
         it.copy(tasks = it.tasks + TaskBlockState(key = nextKey++, fields = preset.toFields(name, it.distanceUnit)))

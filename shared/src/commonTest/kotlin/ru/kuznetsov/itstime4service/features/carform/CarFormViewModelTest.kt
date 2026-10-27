@@ -71,6 +71,57 @@ class CarFormViewModelTest {
     }
 
     @Test
+    fun addTaskAddsABlockOnlyOnceEveryBlockIsFilled() = runTest {
+        val viewModel = open()
+
+        viewModel.onAddTask()
+        viewModel.onAddTask()
+
+        assertEquals(1, viewModel.state.value.tasks.size)
+        assertTrue(viewModel.block(0).showErrors)
+        assertEquals(1, viewModel.block(0).revealRequest)
+        assertFalse(viewModel.state.value.showErrors)
+
+        viewModel.typeIn(0) { it.copy(name = "Колодки", intervalKm = "30000") }
+        viewModel.onAddTask()
+
+        assertEquals(2, viewModel.state.value.tasks.size)
+        assertFalse(viewModel.block(1).showErrors)
+    }
+
+    @Test
+    fun addTaskOutlinesEveryUnfinishedBlockWithoutExpandingIt() = runTest {
+        val viewModel = open()
+        viewModel.onAddPreset(TaskPreset.OIL, "Масло")
+        viewModel.onAddPreset(TaskPreset.PADS, "Колодки")
+        viewModel.onAddPreset(TaskPreset.AIR_FILTER, "Воздушный фильтр")
+        viewModel.typeIn(0) { it.copy(name = "") }
+        viewModel.typeIn(2) { it.copy(intervalKm = "") }
+        viewModel.onToggleTask(viewModel.block(2).key)
+
+        viewModel.onAddTask()
+
+        val (first, second, third) = viewModel.state.value.tasks
+        assertEquals(3, viewModel.state.value.tasks.size)
+        assertTrue(first.showErrors && third.showErrors)
+        assertFalse(second.showErrors)
+        assertTrue(third.isCollapsed)
+        assertEquals(listOf(1, 0, 0), listOf(first.revealRequest, second.revealRequest, third.revealRequest))
+        assertFalse(viewModel.state.value.showErrors)
+    }
+
+    @Test
+    fun presetChipsAddABlockEvenNextToAnUnfinishedOne() = runTest {
+        val viewModel = open()
+
+        viewModel.onAddTask()
+        viewModel.onAddPreset(TaskPreset.OIL, "Масло")
+
+        assertEquals(2, viewModel.state.value.tasks.size)
+        assertFalse(viewModel.block(0).showErrors)
+    }
+
+    @Test
     fun inputIsCleanedAsItIsTyped() = runTest {
         val viewModel = open()
 

@@ -48,8 +48,9 @@ import kotlin.test.assertTrue
 
 /**
  * Covers the add-car form from a given state: the required car and task fields marked as errors for the screen
- * reader, the preset chips and the bottom buttons, the task blocks expanded and collapsed with their summary,
- * removing a block, the done key and typing reaching the view model, and the load error replacing the form.
+ * reader, the errors of a single block, the preset chips and the bottom buttons, the task blocks expanded and
+ * collapsed with their summary, removing a block, the done key and typing reaching the view model, and the load error
+ * replacing the form.
  */
 @OptIn(ExperimentalTestApi::class)
 class CarFormScreenTest : UiTest() {
@@ -120,6 +121,13 @@ class CarFormScreenTest : UiTest() {
     @Test
     fun emptyExpandedTaskAddsItsRequiredFieldsToTheErrors() = runComposeUiTest {
         show(CarFormUiState(brand = "Kia", mileageKm = "84300", tasks = listOf(TaskBlockState(key = 0)), showErrors = true))
+
+        onAllNodes(hasError).assertCountEquals(2)
+    }
+
+    @Test
+    fun errorsOfOneBlockOutlineOnlyItsFields() = runComposeUiTest {
+        show(CarFormUiState(tasks = listOf(TaskBlockState(key = 0, showErrors = true))))
 
         onAllNodes(hasError).assertCountEquals(2)
     }

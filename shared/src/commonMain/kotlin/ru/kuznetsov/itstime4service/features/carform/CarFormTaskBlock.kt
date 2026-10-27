@@ -72,11 +72,12 @@ internal fun TaskBlock(
     onRecordToggle: (Boolean) -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
+    revealRequest: Int = 0,
 ) {
     val colors = ItsTime4ServiceTheme.colors
     val shape = RoundedCornerShape(ItsTime4ServiceTheme.dimens.radiusL)
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
-    LaunchedEffect(Unit) { bringIntoViewRequester.bringIntoView() }
+    LaunchedEffect(revealRequest) { bringIntoViewRequester.bringIntoView() }
     Column(
         modifier = modifier
             .bringIntoViewRequester(bringIntoViewRequester)

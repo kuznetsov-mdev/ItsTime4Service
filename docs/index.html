@@ -768,6 +768,7 @@
     <div class="section-head"><h2>Этап 9: доработки после проверки на устройстве</h2></div>
     <p class="section-sub">Изменения перенесены в основной набор экранов и в интерактивный макет. Экраны ниже — светлая и тёмная тема.</p>
     <ol class="decisions">
+      <li><b>«+ Добавить работу» в форме авто</b> добавляет новый блок, только когда все блоки работ заполнены. Если есть блок с пустым обязательным полем, кнопка подсвечивает его поля красной рамкой (свёрнутый блок не разворачивается — красной рамкой обводится весь блок; экран прокручивается к первому такому блоку) и новый не добавляет; марка и пробег при этом не подсвечиваются. Чипы пресетов добавляют блок всегда.</li>
       <li><b>Масло по умолчанию — 7 500 км:</b> чип «Масло» и работа, которую форма авто подставляет без блоков работ.</li>
       <li><b>«Последний раз, км» необязателен:</b> пустое поле сохраняется как 0 — работа ещё не проводилась (например, авто только куплено).</li>
       <li><b>«Создать запись в истории»</b> — чекбокс под «Последний раз» и датой у новой работы на экране работы (33) и в каждом блоке формы авто (34); по умолчанию выключен. Включённый заполняет пустую дату сегодняшней, делает пробег и дату обязательными и показывает «Где обслуживались», «Сколько стоило», «Комментарий». Работа сохраняется вместе с записью истории о последнем выполнении.</li>
@@ -1807,7 +1808,7 @@
     }
     if (block.collapsed) {
       /* свёрнутая работа — две строки: название; интервал и последний раз */
-      var invalid = opts.showErrors && blockInvalid(block);
+      var invalid = (opts.showErrors || block.showErrors) && blockInvalid(block);
       var toggleAttr = opts.interactive ? ' data-toggle-block="' + n + '"' : '';
       var removeAttr = opts.interactive ? ' data-remove-block="' + n + '"' : '';
       return '<div class="task-block collapsed' + (invalid ? ' error' : '') + '"' + (opts.interactive ? ' data-block="' + n + '"' : '') + '>' +
@@ -1817,10 +1818,11 @@
         '<div class="collapsed-meta"' + toggleAttr + '>' + collapsedMeta(block) + '</div>' +
         '</div>';
     }
-    var nameError = opts.showErrors && blockNameMissing(block) ? ' error' : '';
-    var intervalError = opts.showErrors && blockIntervalMissing(block) ? ' error' : '';
-    var lastKmError = opts.showErrors && blockLastKmMissing(block) ? ' error' : '';
-    var lastDateError = opts.showErrors && blockLastDateMissing(block) ? ' error' : '';
+    var blockErrors = opts.showErrors || block.showErrors;
+    var nameError = blockErrors && blockNameMissing(block) ? ' error' : '';
+    var intervalError = blockErrors && blockIntervalMissing(block) ? ' error' : '';
+    var lastKmError = blockErrors && blockLastKmMissing(block) ? ' error' : '';
+    var lastDateError = blockErrors && blockLastDateMissing(block) ? ' error' : '';
     var req = block.createsRecord ? '<span class="req"> *</span>' : '';
     return '<div class="task-block" data-block="' + n + '">' +
       '<div class="task-block-head"><span class="task-block-title">Работа ' + n + '</span>' +
@@ -3089,7 +3091,17 @@
       input.addEventListener('input', function () { input.value = maskDate(input.value); });
     });
     var addTaskBtn = root.querySelector('#addTaskBtn');
-    if (addTaskBtn) addTaskBtn.addEventListener('click', function () { syncForm(); istate.scrollToBlock = istate.nextBlockN; istate.taskBlocks.push({ n: istate.nextBlockN++ }); paintInteractive(); });
+    if (addTaskBtn) addTaskBtn.addEventListener('click', function () {
+      syncForm();
+      /* незаполненная работа: подсветить её обязательные поля (свёрнутую — красной рамкой, не разворачивая) и новую не добавлять; марку и пробег не трогать */
+      var unfinished = istate.taskBlocks.filter(blockInvalid);
+      if (unfinished.length) {
+        unfinished.forEach(function (b) { b.showErrors = true; });
+        istate.scrollToBlock = unfinished[0].n;
+        paintInteractive(); return;
+      }
+      istate.scrollToBlock = istate.nextBlockN; istate.taskBlocks.push({ n: istate.nextBlockN++ }); paintInteractive();
+    });
     root.querySelectorAll('[data-preset]').forEach(function (b) {
       b.addEventListener('click', function () {
         var def = PRESET_DEFS[b.getAttribute('data-preset')];

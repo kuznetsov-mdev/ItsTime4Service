@@ -34,9 +34,13 @@ data class CarFormUiState(
  * One maintenance task block of the form.
  * [key] identifies the block while others are added and removed around it.
  * A collapsed block ([isCollapsed]) shows only the task name and a line with the interval and the last-done mileage.
+ * [showErrors] outlines the empty required fields of this block alone — set by "Add task" while the block is not filled.
+ * [revealRequest] scrolls the block into view each time it grows; the block also scrolls into view when it appears.
  */
 data class TaskBlockState(
     val key: Int,
     val fields: TaskFields = TaskFields(),
     val isCollapsed: Boolean = false,
+    val showErrors: Boolean = false,
+    val revealRequest: Int = 0,
 )
