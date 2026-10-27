@@ -147,11 +147,11 @@
 
 ## 7. Текущее состояние покрытия
 
-Состояние на 27.10.2026. В `shared/src/commonTest` 473 теста, ещё 16 — только в Android host. Они выполняются в Android host tests и в iOS simulator tests:
+Состояние на 27.10.2026. В `shared/src/commonTest` 475 тестов, ещё 16 — только в Android host. Они выполняются в Android host tests и в iOS simulator tests:
 
 - **Domain (174):** все расчётные use case-ы, а также use case-ы машин, работ, истории, настроек, запуска и уведомлений, правила `TaskHistoryRules`. Часы и часовой пояс управляемые (`GetNowUseCase`, `GetTodayUseCase`).
 - **Data (52):** репозитории и миграции на настоящей SQLite: `TaskHistoryRepositoryImplTest` (в том числе сбой посреди транзакции через триггер SQLite), `RepositoriesTest` (в том числе подписка до записи), `MigrationTest` (с каждой прежней версии), `CarMapperTest`, `ReminderSchedulerImplTest` (текст и состав уведомлений). Подробности — в разделе «Тесты на базе» `specs/data.md`.
-- **ViewModel (87):** все шесть ViewModel-ей и `CarsViewModel` на графе Koin приложения поверх тестовой базы (`TestApp`). Сбои базы — `DatabaseFailuresTest`. Подробности — в разделе «Тесты ViewModel» `specs/presentation.md`.
+- **ViewModel (89):** все шесть ViewModel-ей и `CarsViewModel` на графе Koin приложения поверх тестовой базы (`TestApp`). Сбои базы — `DatabaseFailuresTest`. Подробности — в разделе «Тесты ViewModel» `specs/presentation.md`.
 - **Логика UI (39):** `HistoryRows`, `TaskFields`, форматы ввода дат, перевод км/мили, маска номера, подбор иконок.
 - **Compose UI (119):** в `commonTest`, на Android через Robolectric: `LicensesScreenTest`, `ErrorComponentsTest` (плашка и экран ошибки), `DatabaseFailuresUiTest` (ошибки базы на экранах авто, работы и в окне записи), `TaskFormScreenTest` (экран работы), `CarFormScreenTest` (форма авто), `HistoryDialogsTest` (окна записи, фильтра и новой записи «Истории»), `CarDetailScreenTest` (экран машины и его окна), `CarsScreenTest` (список авто), `HistoryScreenTest` (экран «Истории»), `SettingsScreenTest` (настройки); общие компоненты — `ControlsTest` (степпер, переключатель, флажок, сегменты, галочка цифрового поля), `TimePickerDialogTest`, `PlateSemanticsTest` (скрытый номер не читается и не рисуется).
 - **Сверка лицензий (3):** `ThirdPartyNoticesTest` — только Android host, читает файлы модуля.

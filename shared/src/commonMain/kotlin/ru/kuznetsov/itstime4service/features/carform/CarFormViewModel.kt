@@ -22,7 +22,8 @@ import ru.kuznetsov.itstime4service.ui.format.kmFrom
  * The form opens without task blocks; one appears on the add-task button or a preset chip, always expanded.
  * A block can be collapsed to two lines and expanded back. The add-task button adds a block only while every block is
  * filled; otherwise it outlines the empty required fields of the unfinished blocks, without expanding collapsed ones,
- * and scrolls to the first of them. Preset chips always add a block.
+ * and scrolls to the first of them. A preset chip fills the topmost block whose name and interval are both empty,
+ * keeping what else was typed there, and adds a new block only when there is no such block.
  * Saving with an empty required field — in the car or in any task block — stores nothing, switches
  * the form to showing errors and expands every collapsed block with such a field; an unwanted block has to be removed, it is not skipped silently.
  * When the form has no blocks at all, the car gets a default oil-change task counted from its current
@@ -82,8 +83,25 @@ class CarFormViewModel(
         }
     }
 
-    fun onAddPreset(preset: TaskPreset, name: String) = _state.update {
-        it.copy(tasks = it.tasks + TaskBlockState(key = nextKey++, fields = preset.toFields(name, it.distanceUnit)))
+    fun onAddPreset(preset: TaskPreset, name: String) = _state.update { state ->
+        val empty = state.tasks.firstOrNull { it.fields.isNameMissing && it.fields.isIntervalMissing }
+        if (empty == null) {
+            state.copy(tasks = state.tasks + TaskBlockState(key = nextKey++, fields = preset.toFields(name, state.distanceUnit)))
+        } else {
+            state.copy(
+                tasks = state.tasks.map { block ->
+                    if (block.key == empty.key) {
+                        block.copy(
+                            fields = preset.toFields(name, state.distanceUnit, block.fields),
+                            showErrors = false,
+                            revealRequest = block.revealRequest + 1,
+                        )
+                    } else {
+                        block
+                    }
+                },
+            )
+        }
     }
 
     fun onToggleTask(key: Int) = _state.update { state ->

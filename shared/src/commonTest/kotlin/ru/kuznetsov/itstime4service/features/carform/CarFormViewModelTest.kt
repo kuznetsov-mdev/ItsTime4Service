@@ -52,22 +52,22 @@ class CarFormViewModelTest {
         val viewModel = open()
         assertTrue(viewModel.state.value.tasks.isEmpty())
 
-        viewModel.onAddTask()
         viewModel.onAddPreset(TaskPreset.PADS, "Колодки")
+        viewModel.onAddTask()
         val (first, second) = viewModel.state.value.tasks
-        assertFalse(first.isCollapsed)
-        assertEquals(TaskFields(), first.fields)
-        assertEquals("Колодки", second.fields.name)
-        assertEquals("30000", second.fields.intervalKm)
+        assertFalse(second.isCollapsed)
+        assertEquals(TaskFields(), second.fields)
+        assertEquals("Колодки", first.fields.name)
+        assertEquals("30000", first.fields.intervalKm)
         assertTrue(first.key != second.key)
 
-        viewModel.onToggleTask(second.key)
-        assertTrue(viewModel.block(1).isCollapsed)
-        viewModel.onToggleTask(second.key)
-        assertFalse(viewModel.block(1).isCollapsed)
+        viewModel.onToggleTask(first.key)
+        assertTrue(viewModel.block(0).isCollapsed)
+        viewModel.onToggleTask(first.key)
+        assertFalse(viewModel.block(0).isCollapsed)
 
-        viewModel.onRemoveTask(first.key)
-        assertEquals(listOf(second.key), viewModel.state.value.tasks.map { it.key })
+        viewModel.onRemoveTask(second.key)
+        assertEquals(listOf(first.key), viewModel.state.value.tasks.map { it.key })
     }
 
     @Test
@@ -111,14 +111,46 @@ class CarFormViewModelTest {
     }
 
     @Test
-    fun presetChipsAddABlockEvenNextToAnUnfinishedOne() = runTest {
+    fun presetChipFillsAnEmptyBlockAndKeepsWhatWasTyped() = runTest {
         val viewModel = open()
-
         viewModel.onAddTask()
+        viewModel.onAddTask()
+        viewModel.typeIn(0) { it.copy(lastDoneKm = "80000", intervalMonths = "12") }
+
         viewModel.onAddPreset(TaskPreset.OIL, "Масло")
 
-        assertEquals(2, viewModel.state.value.tasks.size)
-        assertFalse(viewModel.block(0).showErrors)
+        val block = viewModel.state.value.tasks.single()
+        assertEquals("Масло", block.fields.name)
+        assertEquals("7500", block.fields.intervalKm)
+        assertEquals("1500", block.fields.reminderWindowKm)
+        assertEquals("80000", block.fields.lastDoneKm)
+        assertEquals("12", block.fields.intervalMonths)
+        assertFalse(block.showErrors)
+    }
+
+    @Test
+    fun presetChipFillsTheTopmostEmptyBlock() = runTest {
+        val viewModel = open()
+        viewModel.onAddPreset(TaskPreset.OIL, "Масло")
+        viewModel.onAddPreset(TaskPreset.PADS, "Колодки")
+        viewModel.onAddPreset(TaskPreset.AIR_FILTER, "Воздушный фильтр")
+        viewModel.typeIn(1) { it.copy(name = "", intervalKm = "") }
+        viewModel.typeIn(2) { it.copy(name = "", intervalKm = "") }
+
+        viewModel.onAddPreset(TaskPreset.TIMING_BELT, "Ремень ГРМ")
+
+        assertEquals(listOf("Масло", "Ремень ГРМ", ""), viewModel.state.value.tasks.map { it.fields.name })
+    }
+
+    @Test
+    fun presetChipAddsABlockNextToOneThatIsOnlyPartlyEmpty() = runTest {
+        val viewModel = open()
+        viewModel.onAddTask()
+        viewModel.typeIn(0) { it.copy(name = "Колодки") }
+
+        viewModel.onAddPreset(TaskPreset.OIL, "Масло")
+
+        assertEquals(listOf("Колодки", "Масло"), viewModel.state.value.tasks.map { it.fields.name })
     }
 
     @Test
