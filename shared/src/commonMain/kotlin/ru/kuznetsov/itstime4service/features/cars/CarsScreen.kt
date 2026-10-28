@@ -40,6 +40,7 @@ import ru.kuznetsov.itstime4service.ui.components.indicators.color
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.LoadError
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
+import ru.kuznetsov.itstime4service.ui.components.screen.isCompactHeight
 import ru.kuznetsov.itstime4service.ui.format.distanceText
 import ru.kuznetsov.itstime4service.ui.format.toTier
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
@@ -99,18 +100,23 @@ private fun CarsList(
     onAddCar: () -> Unit,
     onRetry: () -> Unit,
 ) {
+    val isList = state.view == CarsView.LIST
+    val count = pluralStringResource(Res.plurals.cars_count, state.cars.size, state.cars.size)
+    val subtitle = if (isList) "$count · ${stringResource(Res.string.cars_gauge_hint)}" else null
+    val header: @Composable () -> Unit = {
+        Column {
+            CarsViewToggle(
+                selected = state.view,
+                onSelect = onViewSelect,
+                modifier = Modifier.padding(start = ScreenHorizontalPadding, end = ScreenHorizontalPadding, top = 12.dp),
+            )
+            ScreenTitle(title = stringResource(Res.string.screen_cars), subtitle = subtitle)
+        }
+    }
+    val headerScrolls = isCompactHeight() && !state.isLoading && !state.loadFailed && state.cars.isNotEmpty()
+    val side = if (isList) 14.dp else 18.dp
     Column(Modifier.fillMaxSize()) {
-        CarsViewToggle(
-            selected = state.view,
-            onSelect = onViewSelect,
-            modifier = Modifier.padding(start = ScreenHorizontalPadding, end = ScreenHorizontalPadding, top = 12.dp),
-        )
-        val isList = state.view == CarsView.LIST
-        val count = pluralStringResource(Res.plurals.cars_count, state.cars.size, state.cars.size)
-        ScreenTitle(
-            title = stringResource(Res.string.screen_cars),
-            subtitle = if (isList) "$count · ${stringResource(Res.string.cars_gauge_hint)}" else null,
-        )
+        if (!headerScrolls) header()
         if (state.isLoading) {
             Preloader(Modifier.weight(1f).fillMaxWidth())
         } else if (state.loadFailed) {
@@ -121,13 +127,10 @@ private fun CarsList(
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                contentPadding = if (isList) {
-                    PaddingValues(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 14.dp)
-                } else {
-                    PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 16.dp)
-                },
+                contentPadding = if (isList) PaddingValues(top = 14.dp, bottom = 14.dp) else PaddingValues(top = 12.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(if (isList) 10.dp else 12.dp),
             ) {
+                if (headerScrolls) item(key = HEADER_KEY) { header() }
                 items(state.cars, key = { it.id }) { car ->
                     if (isList) {
                         ListRowCard(
@@ -135,7 +138,7 @@ private fun CarsList(
                             title = car.brand,
                             subtitle = distanceText(car.mileageKm, state.distanceUnit),
                             onClick = { onOpenCar(car.id) },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.padding(horizontal = side).fillMaxWidth(),
                             trailing = {
                                 GaugeRing(
                                     value = car.gaugeValue,
@@ -152,11 +155,12 @@ private fun CarsList(
                             onOpenCar = { onOpenCar(car.id) },
                             onOpenHistory = { onOpenHistory(car.id) },
                             onPlateToggle = { onPlateToggle(car.id) },
+                            modifier = Modifier.padding(horizontal = side),
                         )
                     }
                 }
                 item(key = ADD_CAR_KEY) {
-                    AddCarRow(onClick = onAddCar, minHeight = if (isList) 66.dp else 54.dp)
+                    AddCarRow(onClick = onAddCar, modifier = Modifier.padding(horizontal = side), minHeight = if (isList) 66.dp else 54.dp)
                 }
             }
         }
@@ -240,3 +244,4 @@ private fun CarsCardsDarkPreview() = ScreenPreview(darkTheme = true) {
 }
 
 private const val ADD_CAR_KEY = "add_car"
+private const val HEADER_KEY = "header"

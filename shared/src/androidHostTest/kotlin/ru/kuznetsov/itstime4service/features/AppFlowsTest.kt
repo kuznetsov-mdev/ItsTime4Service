@@ -198,7 +198,7 @@ class AppFlowsTest : UiTest() {
         onNodeWithContentDescription(text("back")).performClick()
         waitFor(isTab(text("tabCars")))
 
-        onNodeWithText("Kia Rio").assertExists()
+        waitForText("Kia Rio")
     }
 
     @Test
@@ -325,7 +325,7 @@ class AppFlowsTest : UiTest() {
         onNodeWithContentDescription(text("back")).performClick()
         waitFor(isTab(text("tabCars")))
 
-        onNodeWithText("Kia Rio").assertExists()
+        waitForText("Kia Rio")
     }
 
     @Test

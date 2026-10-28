@@ -139,6 +139,19 @@
   .screen { width: 100%; height: 100%; background: var(--bg); border-radius: 32px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
   .phone.lg .notch { width: 100px; }
   .phone.lg .screen { border-radius: 34px; }
+  /* альбомная ориентация телефона: экран прокручивается целиком, таб-бар и FAB на месте, отступы под вырез сбоку */
+  .gallery.landscape-gallery { grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); }
+  .phone.landscape { max-width: 699px; aspect-ratio: 699 / 336; }
+  .phone.landscape .notch { top: 50%; left: 9px; transform: translateY(-50%); width: 21px; height: 98px; }
+  .phone.landscape .screen > .view { display: block; position: static; overflow-y: auto; padding: 0 30px; }
+  .phone.landscape .s-topbar { padding-top: 12px; }
+  .phone.landscape .car-list, .phone.landscape .task-list, .phone.landscape .history-list,
+  .phone.landscape .form-body, .phone.landscape .v-body { flex: none; overflow: visible; }
+  .phone.landscape .tabbar { position: sticky; bottom: 0; z-index: 5; margin: 0 -30px; }
+  .phone.landscape .kb { position: absolute; left: 0; right: 0; bottom: 0; height: 56%; z-index: 50;
+    background: #d3d6dd; border-radius: 0 0 32px 32px; display: grid; grid-template-rows: repeat(4, 1fr); gap: 6px; padding: 10px 56px 14px; }
+  .phone.landscape .kb span { background: #fff; border-radius: 6px; opacity: 0.9; }
+  .phone.landscape .kb-hint { position: absolute; right: 64px; bottom: calc(56% + 6px); font-size: 10px; color: var(--ink-faint); z-index: 51; }
 
   .view { display: flex; flex-direction: column; height: 100%; }
   .interactive .view { position: absolute; inset: 0; display: none; }
@@ -801,6 +814,21 @@
     <div class="locked-light" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery" id="gallery10Light"></div></div>
     <div style="height:28px"></div>
     <div class="locked-dark" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery" id="gallery10Dark"></div></div>
+  </div>
+
+  <!-- ================= LANDSCAPE ================= -->
+  <div class="section-block panel" id="landscapeBlock">
+    <div class="section-head"><h2>Этап 9: альбомная ориентация</h2></div>
+    <p class="section-sub">Телефон, повёрнутый горизонтально. Портретные экраны не меняются; экраны ниже — светлая и тёмная тема.</p>
+    <ol class="decisions">
+      <li><b>Экран прокручивается целиком.</b> На низком экране — телефон в альбомной ориентации — верхняя панель с «назад», заголовок, шапка и карточка пробега на экране авто и нижние кнопки форм («+ Добавить работу», «Сохранить авто», «Сохранить») уезжают вместе с содержимым (46–52). Таб-бар и FAB остаются на месте.</li>
+      <li><b>Клавиатура.</b> С открытой клавиатурой видимая часть экрана — над ней, и поле в фокусе прокручивается в неё (49).</li>
+      <li><b>Вырез и home indicator.</b> Содержимое не заходит под вырез сбоку и под home indicator — отступы те же, что задаёт система в портрете.</li>
+      <li><b>Окна</b> не меняются: поля прокручиваются внутри окна, кнопки всегда видны.</li>
+    </ol>
+    <div class="locked-light" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery landscape-gallery" id="galleryLandLight"></div></div>
+    <div style="height:28px"></div>
+    <div class="locked-dark" style="padding:22px;border-radius:18px;background:var(--bg)"><div class="gallery landscape-gallery" id="galleryLandDark"></div></div>
   </div>
 
   <!-- ================= STYLE GUIDE: TOKENS ================= -->
@@ -2360,6 +2388,37 @@
   }
   renderStage10('gallery10Light');
   renderStage10('gallery10Dark');
+  function landscapeWrap(index, name, innerHtml, opts) {
+    opts = opts || {};
+    var keyboard = opts.keyboard ? '<div class="kb-hint">клавиатура</div><div class="kb"><span></span><span></span><span></span><span></span></div>' : '';
+    var attrs = (opts.scrollTo ? ' data-scroll-to="' + opts.scrollTo + '"' : '') + (opts.keyboard ? ' data-keyboard="1"' : '');
+    return '<figure><figcaption><span class="screen-index">' + index + '</span><span class="screen-name">' + name + '</span></figcaption>' +
+      '<div class="phone landscape"><div class="notch"></div><div class="screen"' + attrs + '>' + innerHtml + keyboard + '</div></div></figure>';
+  }
+  function renderLandscape(containerId) {
+    var cars = cloneCars();
+    var sold = cloneSold();
+    var form = taskToBlock(cars[0].tasks[0], 1, true);
+    var settingsState = { themeIdx: containerId === 'galleryLandDark' ? 1 : 0, unitsIdx: 0, pushOn: true, reminderDefault: 2, reminderTime: '09:00' };
+    var root = document.getElementById(containerId);
+    root.innerHTML =
+      landscapeWrap('46', 'Мои авто', carsScreenHtml(cars, { interactive: false, viewToggle: true, addRow: true })) +
+      landscapeWrap('47', 'Экран авто', detailScreenHtml(cars[0], { interactive: false })) +
+      landscapeWrap('48', 'Экран авто: прокручено к работам', detailScreenHtml(cars[0], { interactive: false }), { scrollTo: '.task-list' }) +
+      landscapeWrap('49', 'Добавление авто: клавиатура', newScreenHtml({ interactive: false }, [{ n: 1 }]), { keyboard: true, scrollTo: '.task-block' }) +
+      landscapeWrap('50', 'Работа: прокручено к кнопкам', taskScreenHtml(cars[0], form, { interactive: false, iconPicker: 'droplet' }), { scrollTo: '.save-btn' }) +
+      landscapeWrap('51', 'История', historyScreenHtml(cars, sold, {}, { interactive: false })) +
+      landscapeWrap('52', 'Настройки', settingsScreenHtml(settingsState, { interactive: false, cars: cars }));
+    root.querySelectorAll('.phone.landscape .screen').forEach(function (screen) {
+      var view = screen.querySelector('.view');
+      if (!view) return;
+      if (screen.getAttribute('data-keyboard')) view.style.height = '44%';
+      var target = screen.getAttribute('data-scroll-to') && view.querySelector(screen.getAttribute('data-scroll-to'));
+      if (target) view.scrollTop = target.getBoundingClientRect().top - view.getBoundingClientRect().top - 12;
+    });
+  }
+  renderLandscape('galleryLandLight');
+  renderLandscape('galleryLandDark');
   /* ================= variants: mileage panel and task cards ================= */
   var vstate = { a: { km: 84300, mult: 1 }, b: { km: 84300, mult: 1 }, c: { km: 84300, history: [] }, d: { km: 84300 } };
   function vHeader(car) {

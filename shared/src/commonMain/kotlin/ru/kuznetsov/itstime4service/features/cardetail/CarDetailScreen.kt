@@ -58,6 +58,7 @@ import ru.kuznetsov.itstime4service.ui.components.indicators.color
 import ru.kuznetsov.itstime4service.ui.components.screen.LoadError
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTopBar
+import ru.kuznetsov.itstime4service.ui.components.screen.isCompactHeight
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 
@@ -156,7 +157,7 @@ internal fun CarDetailContent(
                 }
             },
     ) {
-        Column(Modifier.fillMaxSize()) {
+        val topBar: @Composable () -> Unit = {
             ScreenTopBar(onBack = onBack) {
                 AppIconButton(
                     icon = ItsTime4ServiceIcons.Clock,
@@ -169,9 +170,62 @@ internal fun CarDetailContent(
                     contentDescription = stringResource(Res.string.action_delete_car),
                 )
             }
+        }
+        val compact = isCompactHeight()
+        Column(Modifier.fillMaxSize()) {
+            if (car == null || !compact) topBar()
             if (car == null && state.isLoading) Preloader(Modifier.weight(1f).fillMaxWidth())
             if (state.loadFailed) LoadError(onRetry = onRetry, modifier = Modifier.weight(1f).fillMaxWidth())
-            if (car != null) {
+            if (car != null && compact) {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    state = taskListState,
+                    contentPadding = PaddingValues(bottom = 84.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    item(key = HEADER_KEY) {
+                        Column {
+                            topBar()
+                            CarHeader(
+                                car = car,
+                                editingField = state.editingField,
+                                editBounds = editBounds,
+                                onEdit = onEdit,
+                                onSaveBrand = onSaveBrand,
+                                onSaveVin = onSaveVin,
+                                onSavePlate = onSavePlate,
+                                onPlateHiddenToggle = onPlateHiddenToggle,
+                                onVinHiddenToggle = onVinHiddenToggle,
+                            )
+                            MileageCard(
+                                car = car,
+                                distanceUnit = state.distanceUnit,
+                                multiplier = state.mileageMultiplier,
+                                isEditing = state.editingField == EditableField.MILEAGE,
+                                editBounds = editBounds,
+                                onEdit = { onEdit(EditableField.MILEAGE) },
+                                onSave = onSaveMileage,
+                                onStep = onMileageStep,
+                                onMultiplierSelect = onMultiplierSelect,
+                                modifier = Modifier.padding(start = ScreenHorizontalPadding, end = ScreenHorizontalPadding, top = 14.dp, bottom = 6.dp),
+                            )
+                        }
+                    }
+                    if (car.tasks.isEmpty()) {
+                        item(key = EMPTY_KEY) { EmptyTasks(Modifier.padding(vertical = 24.dp)) }
+                    }
+                    items(car.tasks, key = { it.id }) { task ->
+                        TaskCard(
+                            task = task,
+                            distanceUnit = state.distanceUnit,
+                            onOpen = { onOpenTask(task.id) },
+                            onMarkDone = { if (task.isDone) onUnmarkRequest(task.id) else onMarkTaskDone(task.id) },
+                            modifier = Modifier.padding(horizontal = ScreenHorizontalPadding),
+                        )
+                    }
+                }
+            }
+            if (car != null && !compact) {
                 CarHeader(
                     car = car,
                     editingField = state.editingField,
@@ -351,3 +405,6 @@ private fun CarDetailContentLightPreview() = ScreenPreview(darkTheme = false) {
 private fun CarDetailContentDarkPreview() = ScreenPreview(darkTheme = true) {
     CarDetailPreviewContent()
 }
+
+private const val HEADER_KEY = "header"
+private const val EMPTY_KEY = "empty"

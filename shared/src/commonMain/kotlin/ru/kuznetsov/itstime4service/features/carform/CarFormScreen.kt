@@ -55,6 +55,7 @@ import ru.kuznetsov.itstime4service.ui.components.screen.LoadError
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTopBar
+import ru.kuznetsov.itstime4service.ui.components.screen.isCompactHeight
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
 import ru.kuznetsov.itstime4service.ui.format.TaskPreset
 import ru.kuznetsov.itstime4service.ui.format.chipLabel
@@ -116,7 +117,8 @@ internal fun CarFormContent(
     val typography = ItsTime4ServiceTheme.typography
     val defaultTaskName = stringResource(Res.string.task_name_oil)
     val save = { onSave(defaultTaskName) }
-    Column(modifier.fillMaxSize()) {
+    val wholeScreenScrolls = isCompactHeight() && !state.loadFailed
+    Column(modifier.fillMaxSize().then(if (wholeScreenScrolls) Modifier.verticalScroll(rememberScrollState()) else Modifier)) {
         ScreenTopBar(onBack = onBack)
         ScreenTitle(title = stringResource(Res.string.screen_add_car))
         if (state.loadFailed) {
@@ -125,8 +127,7 @@ internal fun CarFormContent(
         }
         Column(
             modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
+                .then(if (wholeScreenScrolls) Modifier else Modifier.weight(1f).verticalScroll(rememberScrollState()))
                 .padding(horizontal = ScreenHorizontalPadding)
                 .padding(top = 18.dp, bottom = 8.dp),
         ) {

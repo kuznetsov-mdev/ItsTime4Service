@@ -74,10 +74,10 @@ fun Preloader(modifier: Modifier = Modifier, delayMillis: Long = DELAY_MS) {
     val colors = ItsTime4ServiceTheme.colors
     val label = stringResource(Res.string.loading)
     val still = inPreview || ReduceMotion.isEnabled()
-    val transition = rememberInfiniteTransition()
-    val spin by transition.animateFloat(0f, 360f, infiniteRepeatable(tween(SPIN_MS, easing = LinearEasing)))
-    val bob by transition.animateFloat(-1f, 1f, infiniteRepeatable(tween(BOB_MS), RepeatMode.Reverse))
-    val dash by transition.animateFloat(0f, 1f, infiniteRepeatable(tween(DASH_MS, easing = LinearEasing)))
+    val transition = if (still) null else rememberInfiniteTransition()
+    val spin = transition?.animateFloat(0f, 360f, infiniteRepeatable(tween(SPIN_MS, easing = LinearEasing)))?.value ?: 0f
+    val bob = transition?.animateFloat(-1f, 1f, infiniteRepeatable(tween(BOB_MS), RepeatMode.Reverse))?.value ?: 0f
+    val dash = transition?.animateFloat(0f, 1f, infiniteRepeatable(tween(DASH_MS, easing = LinearEasing)))?.value ?: 0f
     Box(modifier.semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Box(

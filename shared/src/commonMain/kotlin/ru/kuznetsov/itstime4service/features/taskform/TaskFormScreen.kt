@@ -70,6 +70,7 @@ import ru.kuznetsov.itstime4service.ui.components.screen.LoadError
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTopBar
+import ru.kuznetsov.itstime4service.ui.components.screen.isCompactHeight
 import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
 import ru.kuznetsov.itstime4service.ui.format.TaskPreset
@@ -135,7 +136,8 @@ internal fun TaskFormContent(
     onRetry: () -> Unit = {},
 ) {
     val fields = state.fields
-    Column(modifier.fillMaxSize()) {
+    val wholeScreenScrolls = isCompactHeight() && !state.isLoading && !state.loadFailed
+    Column(modifier.fillMaxSize().then(if (wholeScreenScrolls) Modifier.verticalScroll(rememberScrollState()) else Modifier)) {
         ScreenTopBar(onBack = onBack) {
             if (state.isEditing) {
                 AppIconButton(
@@ -161,8 +163,7 @@ internal fun TaskFormContent(
         key(state.formKey) {
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                    .then(if (wholeScreenScrolls) Modifier else Modifier.weight(1f).verticalScroll(rememberScrollState()))
                     .padding(horizontal = ScreenHorizontalPadding)
                     .padding(top = 16.dp, bottom = 8.dp),
             ) {

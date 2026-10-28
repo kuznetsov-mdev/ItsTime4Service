@@ -34,6 +34,7 @@ import ru.kuznetsov.itstime4service.ui.components.indicators.ErrorBar
 import ru.kuznetsov.itstime4service.ui.components.indicators.Preloader
 import ru.kuznetsov.itstime4service.ui.components.screen.LoadError
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
+import ru.kuznetsov.itstime4service.ui.components.screen.isCompactHeight
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 
 @Composable
@@ -93,8 +94,8 @@ internal fun HistoryContent(
 ) {
     val canAddEntry = !state.isLoading && !state.loadFailed && state.activeCars.isNotEmpty()
     val windowOpen = state.entryForm != null || state.newEntry != null
-    Box(modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize()) {
+    val header: @Composable () -> Unit = {
+        Column {
             ScreenTitle(title = stringResource(Res.string.screen_history), modifier = Modifier.padding(top = 12.dp))
             HistoryBar(
                 state = state,
@@ -103,6 +104,12 @@ internal fun HistoryContent(
                 onCarSelect = onCarSelect,
                 onFilterOpen = onFilterOpen,
             )
+        }
+    }
+    val headerScrolls = isCompactHeight() && !state.isLoading && !state.loadFailed && state.years.isNotEmpty()
+    Box(modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            if (!headerScrolls) header()
             if (state.isLoading) {
                 Preloader(Modifier.weight(1f).fillMaxWidth())
             } else if (state.loadFailed) {
@@ -119,6 +126,7 @@ internal fun HistoryContent(
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(bottom = if (canAddEntry) 88.dp else 18.dp),
                 ) {
+                    if (headerScrolls) item(key = HEADER_KEY) { header() }
                     state.years.forEach { year ->
                         stickyHeader(key = "year-${year.year}") { YearHeader(year.year) }
                         items(year.months, key = { "month-${year.year}-${it.month}" }) { month ->
@@ -252,3 +260,5 @@ private fun HistoryContentLightPreview() = ScreenPreview(darkTheme = false) {
 private fun HistoryContentDarkPreview() = ScreenPreview(darkTheme = true) {
     HistoryPreviewContent()
 }
+
+private const val HEADER_KEY = "header"

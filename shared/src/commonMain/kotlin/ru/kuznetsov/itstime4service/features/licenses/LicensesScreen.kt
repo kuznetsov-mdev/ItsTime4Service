@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -41,24 +42,32 @@ import ru.kuznetsov.itstime4service.ui.components.ScreenPreview
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTopBar
+import ru.kuznetsov.itstime4service.ui.components.screen.isCompactHeight
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 
 @Composable
 fun LicensesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val header: @Composable () -> Unit = {
+        Column {
+            ScreenTopBar(onBack = onBack)
+            ScreenTitle(
+                title = stringResource(Res.string.settings_licenses),
+                subtitle = stringResource(Res.string.licenses_subtitle),
+            )
+        }
+    }
+    val headerScrolls = isCompactHeight()
     Column(modifier.fillMaxSize()) {
-        ScreenTopBar(onBack = onBack)
-        ScreenTitle(
-            title = stringResource(Res.string.settings_licenses),
-            subtitle = stringResource(Res.string.licenses_subtitle),
-        )
+        if (!headerScrolls) header()
         LazyColumn(
             modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = ScreenHorizontalPadding, vertical = 18.dp),
+            contentPadding = PaddingValues(vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            if (headerScrolls) item(key = HEADER_KEY) { header() }
             items(openSourceLibraries, key = { it.name }) { library ->
-                LibraryCard(library)
+                Box(Modifier.padding(horizontal = ScreenHorizontalPadding)) { LibraryCard(library) }
             }
         }
     }
@@ -145,3 +154,5 @@ private fun LicensesScreenLightPreview() = ScreenPreview(darkTheme = false) {
 private fun LicensesScreenDarkPreview() = ScreenPreview(darkTheme = true) {
     LicensesScreen(onBack = {})
 }
+
+private const val HEADER_KEY = "header"

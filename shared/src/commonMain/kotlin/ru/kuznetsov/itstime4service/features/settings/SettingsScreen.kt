@@ -71,6 +71,7 @@ import ru.kuznetsov.itstime4service.ui.components.indicators.Preloader
 import ru.kuznetsov.itstime4service.ui.components.screen.LoadError
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
+import ru.kuznetsov.itstime4service.ui.components.screen.isCompactHeight
 import ru.kuznetsov.itstime4service.ui.components.steppers.Stepper
 import ru.kuznetsov.itstime4service.ui.format.distanceText
 import ru.kuznetsov.itstime4service.ui.format.toDisplayText
@@ -154,7 +155,8 @@ internal fun SettingsContent(
             onDismiss = onReminderTimeDismiss,
         )
     }
-    Column(modifier.fillMaxSize()) {
+    val wholeScreenScrolls = isCompactHeight() && !state.loadFailed && settings != null
+    Column(modifier.fillMaxSize().then(if (wholeScreenScrolls) Modifier.verticalScroll(rememberScrollState()) else Modifier)) {
         ScreenTitle(title = stringResource(Res.string.screen_settings), modifier = Modifier.padding(top = 12.dp))
         if (state.loadFailed) {
             LoadError(onRetry = onRetry, modifier = Modifier.weight(1f).fillMaxWidth())
@@ -166,8 +168,7 @@ internal fun SettingsContent(
         }
         Column(
             modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
+                .then(if (wholeScreenScrolls) Modifier else Modifier.weight(1f).verticalScroll(rememberScrollState()))
                 .padding(horizontal = ScreenHorizontalPadding)
                 .padding(top = 18.dp, bottom = 18.dp),
             verticalArrangement = Arrangement.spacedBy(22.dp),
