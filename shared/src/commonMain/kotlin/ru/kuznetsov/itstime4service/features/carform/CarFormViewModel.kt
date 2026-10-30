@@ -16,10 +16,12 @@ import ru.kuznetsov.itstime4service.ui.error.attempt
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
 import ru.kuznetsov.itstime4service.ui.format.TaskPreset
 import ru.kuznetsov.itstime4service.ui.format.kmFrom
+import ru.kuznetsov.itstime4service.ui.format.kmIn
 
 /**
  * Drives the add-car form: the car fields and a list of task blocks filled by hand or from presets.
  * The form opens without task blocks; one appears on the add-task button or a preset chip, always expanded.
+ * Empty task blocks prefill their reminder window from settings; presets supply their own reminder window.
  * A block can be collapsed to two lines and expanded back. The add-task button adds a block only while every block is
  * filled; otherwise it outlines the empty required fields of the unfinished blocks, without expanding collapsed ones,
  * and scrolls to the first of them. A preset chip fills the topmost block whose name and interval are both empty,
@@ -69,7 +71,12 @@ class CarFormViewModel(
     fun onAddTask() = _state.update { state ->
         val firstUnfinished = state.tasks.firstOrNull { !it.fields.isValid }
         if (firstUnfinished == null) {
-            state.copy(tasks = state.tasks + TaskBlockState(key = nextKey++))
+            state.copy(
+                tasks = state.tasks + TaskBlockState(
+                    key = nextKey++,
+                    fields = TaskFields(reminderWindowKm = state.defaultReminderWindowKm.kmIn(state.distanceUnit).toString()),
+                ),
+            )
         } else {
             state.copy(
                 tasks = state.tasks.map { block ->
@@ -156,7 +163,16 @@ class CarFormViewModel(
 
     private fun observeUnit() {
         viewModelScope.launch {
-            attempt { observeSettings().collect { settings -> _state.update { it.copy(distanceUnit = settings.distanceUnit) } } }
+            attempt {
+                observeSettings().collect { settings ->
+                    _state.update {
+                        it.copy(
+                            distanceUnit = settings.distanceUnit,
+                            defaultReminderWindowKm = settings.defaultReminderWindowKm,
+                        )
+                    }
+                }
+            }
                 .onFailure { _state.update { it.copy(loadFailed = true) } }
         }
     }

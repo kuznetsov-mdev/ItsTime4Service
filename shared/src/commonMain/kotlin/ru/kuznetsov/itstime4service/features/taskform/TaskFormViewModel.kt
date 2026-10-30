@@ -19,12 +19,13 @@ import ru.kuznetsov.itstime4service.domain.usecase.UpdateTaskUseCase
 import ru.kuznetsov.itstime4service.ui.error.attempt
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
 import ru.kuznetsov.itstime4service.ui.format.TaskPreset
+import ru.kuznetsov.itstime4service.ui.format.kmIn
 import ru.kuznetsov.itstime4service.ui.format.toFields
 
 /**
  * Drives the task screen of one car.
- * Without a [taskId] it adds a task: the form starts empty, a preset chip fills the name, the interval
- * and the reminder window, and "add another" stores the task and clears the form for the next one.
+ * Without a [taskId] it adds a task: the required fields start empty, the reminder window uses the settings default,
+ * a preset chip fills the name, interval and preset reminder window, and "add another" restores the settings default.
  * With a [taskId] it edits that task and can delete it after a confirmation; its service history stays.
  * Saving with an empty required field stores nothing and switches the form to showing errors.
  * The icon is picked in a window; a task saved before icons could be picked shows one guessed from its name and
@@ -104,7 +105,8 @@ class TaskFormViewModel(
 
     private suspend fun read() {
         val car = observeCarById(carId).first()
-        val unit = observeSettings().first().distanceUnit
+        val settings = observeSettings().first()
+        val unit = settings.distanceUnit
         val task = taskId?.let { id -> car?.tasks?.firstOrNull { it.id == id } }
         original = task
         if (car == null || (taskId != null && task == null)) {
@@ -112,7 +114,13 @@ class TaskFormViewModel(
             return
         }
         _state.update {
-            it.copy(isLoading = false, carBrand = car.brand, fields = task?.toFields(unit) ?: TaskFields(), distanceUnit = unit)
+            it.copy(
+                isLoading = false,
+                carBrand = car.brand,
+                fields = task?.toFields(unit) ?: TaskFields(reminderWindowKm = settings.defaultReminderWindowKm.kmIn(unit).toString()),
+                distanceUnit = unit,
+                defaultReminderWindowKm = settings.defaultReminderWindowKm,
+            )
         }
     }
 
@@ -139,7 +147,11 @@ class TaskFormViewModel(
             }
             _state.update {
                 if (addAnother) {
-                    it.copy(fields = TaskFields(), showErrors = false, formKey = it.formKey + 1)
+                    it.copy(
+                        fields = TaskFields(reminderWindowKm = form.defaultReminderWindowKm.kmIn(form.distanceUnit).toString()),
+                        showErrors = false,
+                        formKey = it.formKey + 1,
+                    )
                 } else {
                     it.copy(isClosed = true)
                 }

@@ -1,6 +1,7 @@
 package ru.kuznetsov.itstime4service.features.carform
 
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
+import ru.kuznetsov.itstime4service.domain.model.Settings
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
 
 /**
@@ -10,7 +11,8 @@ import ru.kuznetsov.itstime4service.ui.format.TaskFields
  * [showErrors] turns on after a save attempt with a required field left empty: from then on
  * every such field is outlined in red until it is filled.
  * [isSaved] flips to `true` once the car is stored and tells the screen to close.
- * Distances are typed in [distanceUnit], the unit chosen in settings.
+ * Distances are typed in [distanceUnit], the unit chosen in settings. [defaultReminderWindowKm] is used to prefill
+ * new task blocks.
  * [loadFailed] replaces the form with the load error; [saveFailed] shows the "could not save" bar.
  */
 data class CarFormUiState(
@@ -22,6 +24,7 @@ data class CarFormUiState(
     val showErrors: Boolean = false,
     val isSaved: Boolean = false,
     val distanceUnit: DistanceUnit = DistanceUnit.KILOMETERS,
+    val defaultReminderWindowKm: Int = Settings.DEFAULT_REMINDER_WINDOW_KM,
     val loadFailed: Boolean = false,
     val saveFailed: Boolean = false,
 ) {

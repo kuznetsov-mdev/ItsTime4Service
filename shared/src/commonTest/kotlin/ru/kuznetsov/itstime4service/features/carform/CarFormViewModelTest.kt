@@ -56,7 +56,7 @@ class CarFormViewModelTest {
         viewModel.onAddTask()
         val (first, second) = viewModel.state.value.tasks
         assertFalse(second.isCollapsed)
-        assertEquals(TaskFields(), second.fields)
+        assertEquals(TaskFields(reminderWindowKm = "2000"), second.fields)
         assertEquals("Колодки", first.fields.name)
         assertEquals("30000", first.fields.intervalKm)
         assertTrue(first.key != second.key)
@@ -80,6 +80,7 @@ class CarFormViewModelTest {
         assertEquals(1, viewModel.state.value.tasks.size)
         assertTrue(viewModel.block(0).showErrors)
         assertEquals(1, viewModel.block(0).revealRequest)
+        assertEquals("2000", viewModel.block(0).fields.reminderWindowKm)
         assertFalse(viewModel.state.value.showErrors)
 
         viewModel.typeIn(0) { it.copy(name = "Колодки", intervalKm = "30000") }
@@ -87,6 +88,7 @@ class CarFormViewModelTest {
 
         assertEquals(2, viewModel.state.value.tasks.size)
         assertFalse(viewModel.block(1).showErrors)
+        assertEquals("2000", viewModel.block(1).fields.reminderWindowKm)
     }
 
     @Test
@@ -209,11 +211,12 @@ class CarFormViewModelTest {
 
     @Test
     fun distancesAreTypedInTheChosenUnitAndStoredInKilometers() = runTest {
-        app.changeSettings { it.copy(distanceUnit = DistanceUnit.MILES) }
+        app.changeSettings { it.copy(distanceUnit = DistanceUnit.MILES, defaultReminderWindowKm = 3_219) }
         val viewModel = open()
-        viewModel.until { it.distanceUnit == DistanceUnit.MILES }
+        viewModel.until { it.distanceUnit == DistanceUnit.MILES && it.defaultReminderWindowKm == 3_219 }
         viewModel.fill(mileage = "10000")
         viewModel.onAddTask()
+        assertEquals("2000", viewModel.block(0).fields.reminderWindowKm)
         viewModel.typeIn(0) { it.copy(name = "Масло", intervalKm = "5000", lastDoneKm = "8000") }
 
         viewModel.onSave("Замена масла")
@@ -223,6 +226,7 @@ class CarFormViewModelTest {
         assertEquals(16_093, car.mileageKm)
         assertEquals(8_047, car.tasks.single().intervalKm)
         assertEquals(12_875, car.tasks.single().lastDoneKm)
+        assertEquals(3_219, car.tasks.single().reminderWindowKm)
     }
 
     @Test

@@ -31,7 +31,7 @@ class SettingsRepositoryImpl(
         themeMode = ThemeMode.SYSTEM,
         distanceUnit = DistanceUnit.KILOMETERS,
         pushEnabled = true,
-        defaultReminderWindowKm = 2_000,
+        defaultReminderWindowKm = Settings.DEFAULT_REMINDER_WINDOW_KM,
         reminderTime = LocalTime(9, 0),
     )
 

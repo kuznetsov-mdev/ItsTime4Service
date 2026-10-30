@@ -20,4 +20,8 @@ data class Settings(
     val openDefaultCar: Boolean = false,
     val defaultCarId: String? = null,
     val carsView: CarsView = CarsView.LIST,
-)
+) {
+    companion object {
+        const val DEFAULT_REMINDER_WINDOW_KM = 2_000
+    }
+}

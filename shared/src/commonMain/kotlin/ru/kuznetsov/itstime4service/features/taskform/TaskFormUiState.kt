@@ -1,6 +1,7 @@
 package ru.kuznetsov.itstime4service.features.taskform
 
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
+import ru.kuznetsov.itstime4service.domain.model.Settings
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
 
 /**
@@ -10,7 +11,8 @@ import ru.kuznetsov.itstime4service.ui.format.TaskFields
  * [formKey] changes when a saved task is replaced with a fresh empty form by "add another",
  * so the screen can scroll back to the top. [isClosed] tells the screen to close: the task was saved
  * or deleted, or the car or the task no longer exists. Distances are typed in [distanceUnit], the unit
- * chosen in settings. [isPickingIcon] shows the window with the task icons.
+ * chosen in settings. [defaultReminderWindowKm] is the settings value used to prefill a new task.
+ * [isPickingIcon] shows the window with the task icons.
  * [loadFailed] replaces the form with the load error; [saveFailed] shows the "could not save" bar.
  */
 data class TaskFormUiState(
@@ -24,6 +26,7 @@ data class TaskFormUiState(
     val formKey: Int = 0,
     val isClosed: Boolean = false,
     val distanceUnit: DistanceUnit = DistanceUnit.KILOMETERS,
+    val defaultReminderWindowKm: Int = Settings.DEFAULT_REMINDER_WINDOW_KM,
     val loadFailed: Boolean = false,
     val saveFailed: Boolean = false,
 )

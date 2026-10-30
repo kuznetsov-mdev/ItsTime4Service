@@ -54,7 +54,21 @@ class TaskFormViewModelTest {
 
         assertEquals("Kia Rio", state.carBrand)
         assertFalse(state.isEditing)
-        assertEquals(TaskFields(), state.fields)
+        assertEquals(TaskFields(reminderWindowKm = "2000"), state.fields)
+    }
+
+    @Test
+    fun newTaskUsesTheConfiguredReminderWindowInTheChosenUnit() = runTest {
+        app.changeSettings { it.copy(distanceUnit = DistanceUnit.MILES, defaultReminderWindowKm = 3_219) }
+        val kia = app.addCar("Kia")
+        val viewModel = open(kia)
+
+        assertEquals("2000", viewModel.state.value.fields.reminderWindowKm)
+        viewModel.type { it.copy(name = "Oil", intervalKm = "10000") }
+        viewModel.onSave()
+
+        viewModel.until { it.isClosed }
+        assertEquals(3_219, app.car(kia)!!.tasks.single().reminderWindowKm)
     }
 
     @Test
@@ -119,6 +133,7 @@ class TaskFormViewModelTest {
         assertEquals("Колодки", task.name)
         assertEquals(30_000, task.intervalKm)
         assertEquals(0, task.lastDoneKm)
+        assertEquals(2_000, task.reminderWindowKm)
     }
 
     @Test
@@ -130,7 +145,7 @@ class TaskFormViewModelTest {
         viewModel.onSaveAndAddAnother()
 
         val state = viewModel.until { it.formKey == 1 }
-        assertEquals(TaskFields(), state.fields)
+        assertEquals(TaskFields(reminderWindowKm = "2000"), state.fields)
         assertFalse(state.showErrors)
         assertFalse(state.isClosed)
         assertEquals(listOf("Колодки"), app.car(kia)!!.tasks.map { it.name })
