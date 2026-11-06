@@ -3,6 +3,8 @@ package ru.kuznetsov.itstime4service.features.settings
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHasNoClickAction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsOn
@@ -27,6 +29,7 @@ import itstime4service.shared.generated.resources.dialog_purge_title
 import itstime4service.shared.generated.resources.reminder_time_dialog_text
 import itstime4service.shared.generated.resources.retry
 import itstime4service.shared.generated.resources.settings_delete_cars
+import itstime4service.shared.generated.resources.settings_app_version
 import itstime4service.shared.generated.resources.settings_launch
 import itstime4service.shared.generated.resources.settings_licenses
 import itstime4service.shared.generated.resources.settings_reminder_time
@@ -38,6 +41,7 @@ import org.jetbrains.compose.resources.stringResource
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.domain.model.Settings
 import ru.kuznetsov.itstime4service.domain.model.ThemeMode
+import ru.kuznetsov.itstime4service.ui.AppVersion
 import ru.kuznetsov.itstime4service.ui.test.UiTest
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 import kotlin.test.Test
@@ -66,7 +70,11 @@ class SettingsScreenTest : UiTest() {
         reminderTime = LocalTime(9, 0),
     )
 
-    private fun ComposeUiTest.show(state: SettingsUiState) = setContent {
+    private fun ComposeUiTest.show(
+        state: SettingsUiState,
+        appVersion: AppVersion = AppVersion("2.3.4", "17"),
+        darkTheme: Boolean = false,
+    ) = setContent {
         texts["dark"] = stringResource(Res.string.theme_dark)
         texts["miles"] = stringResource(Res.string.units_mi)
         texts["theme"] = stringResource(Res.string.settings_theme).uppercase()
@@ -77,6 +85,7 @@ class SettingsScreenTest : UiTest() {
         texts["reminderTime"] = stringResource(Res.string.settings_reminder_time)
         texts["timeDialogText"] = stringResource(Res.string.reminder_time_dialog_text)
         texts["licenses"] = stringResource(Res.string.settings_licenses)
+        texts["appVersion"] = stringResource(Res.string.settings_app_version, appVersion.name, appVersion.buildNumber)
         texts["sold"] = stringResource(Res.string.car_sold)
         texts["purgeKia"] = stringResource(Res.string.action_delete_car_with_history, "Kia Rio")
         texts["purgeTitle"] = stringResource(Res.string.dialog_purge_title, "Kia Rio")
@@ -84,9 +93,10 @@ class SettingsScreenTest : UiTest() {
         texts["cancel"] = stringResource(Res.string.action_cancel)
         texts["save"] = stringResource(Res.string.action_save)
         texts["retry"] = stringResource(Res.string.retry)
-        ItsTime4ServiceTheme(darkTheme = false) {
+        ItsTime4ServiceTheme(darkTheme = darkTheme) {
             SettingsContent(
                 state = state,
+                appVersion = appVersion,
                 onThemeSelect = { calls += "theme $it" },
                 onUnitSelect = { calls += "unit $it" },
                 onPushToggle = { calls += "push $it" },
@@ -226,10 +236,32 @@ class SettingsScreenTest : UiTest() {
     }
 
     @Test
+    fun appVersionShowsTheSuppliedVersionAndBuildWithoutCars() = runComposeUiTest {
+        show(loaded())
+
+        onNodeWithText(texts.getValue("appVersion"))
+            .performScrollTo()
+            .assertIsDisplayed()
+            .assertHasNoClickAction()
+        onNodeWithText(texts.getValue("licenses")).assertExists()
+    }
+
+    @Test
+    fun longAppVersionIsVisibleInDarkTheme() = runComposeUiTest {
+        show(loaded(), appVersion = AppVersion("123.456.789", "123456789"), darkTheme = true)
+
+        onNodeWithText(texts.getValue("appVersion"))
+            .performScrollTo()
+            .assertIsDisplayed()
+            .assertHasNoClickAction()
+    }
+
+    @Test
     fun loadingShowsNoSettings() = runComposeUiTest {
         show(SettingsUiState())
 
         onAllNodesWithText(texts.getValue("theme")).assertCountEquals(0)
+        onAllNodesWithText(texts.getValue("appVersion")).assertCountEquals(0)
     }
 
     @Test
@@ -240,5 +272,6 @@ class SettingsScreenTest : UiTest() {
 
         assertEquals(listOf("retry"), calls)
         onAllNodesWithText(texts.getValue("theme")).assertCountEquals(0)
+        onAllNodesWithText(texts.getValue("appVersion")).assertCountEquals(0)
     }
 }

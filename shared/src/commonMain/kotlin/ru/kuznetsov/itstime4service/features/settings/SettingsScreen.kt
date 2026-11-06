@@ -35,6 +35,7 @@ import itstime4service.shared.generated.resources.notification_time_now
 import itstime4service.shared.generated.resources.reminder_time_dialog_text
 import itstime4service.shared.generated.resources.screen_settings
 import itstime4service.shared.generated.resources.settings_about
+import itstime4service.shared.generated.resources.settings_app_version
 import itstime4service.shared.generated.resources.settings_delete_cars
 import itstime4service.shared.generated.resources.settings_delete_note
 import itstime4service.shared.generated.resources.settings_launch
@@ -60,6 +61,8 @@ import itstime4service.shared.generated.resources.units_mi
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.domain.model.Settings
 import ru.kuznetsov.itstime4service.domain.model.ThemeMode
+import ru.kuznetsov.itstime4service.ui.AppVersion
+import ru.kuznetsov.itstime4service.ui.rememberAppVersion
 import ru.kuznetsov.itstime4service.ui.components.ScreenPreview
 import ru.kuznetsov.itstime4service.ui.components.buttons.SegmentedControl
 import ru.kuznetsov.itstime4service.ui.components.cards.NotificationPreviewCard
@@ -92,6 +95,7 @@ fun SettingsScreen(
     Box(modifier.fillMaxSize()) {
         SettingsContent(
             state = state,
+            appVersion = rememberAppVersion(),
             onThemeSelect = viewModel::onThemeSelect,
             onUnitSelect = viewModel::onUnitSelect,
             onPushToggle = viewModel::onPushToggle,
@@ -118,6 +122,7 @@ fun SettingsScreen(
 @Composable
 internal fun SettingsContent(
     state: SettingsUiState,
+    appVersion: AppVersion,
     onThemeSelect: (ThemeMode) -> Unit,
     onUnitSelect: (DistanceUnit) -> Unit,
     onPushToggle: (Boolean) -> Unit,
@@ -288,6 +293,11 @@ internal fun SettingsContent(
                         modifier = Modifier.size(16.dp),
                     )
                 }
+                Text(
+                    text = stringResource(Res.string.settings_app_version, appVersion.name, appVersion.buildNumber),
+                    style = ItsTime4ServiceTheme.typography.sans.copy(fontSize = 13.sp, lineHeight = 18.sp),
+                    color = ItsTime4ServiceTheme.colors.inkMuted,
+                )
             }
         }
     }
@@ -317,6 +327,7 @@ private val previewState = SettingsUiState(
 private fun SettingsPreviewContent() {
     SettingsContent(
         state = previewState,
+        appVersion = AppVersion("1.0.0", "2"),
         onThemeSelect = {},
         onUnitSelect = {},
         onPushToggle = {},
