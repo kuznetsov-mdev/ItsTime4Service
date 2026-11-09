@@ -47,7 +47,6 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
-            implementation(libs.compose.uiTooling)
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.android)
             implementation(libs.sqldelight.androidDriver)
@@ -105,8 +104,4 @@ sqldelight {
             packageName.set("ru.kuznetsov.itstime4service.data.local")
         }
     }
-}
-
-dependencies {
-    androidRuntimeClasspath(libs.compose.uiTooling)
 }

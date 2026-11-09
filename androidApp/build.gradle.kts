@@ -1,8 +1,16 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
+}
+
+val releaseSigningProperties = Properties().apply {
+    val propertiesFile = rootProject.file("local.properties")
+    if (propertiesFile.isFile) {
+        propertiesFile.inputStream().use { load(it) }
+    }
 }
 
 kotlin {
@@ -37,9 +45,24 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    signingConfigs {
+        create("release") {
+            storeFile = releaseSigningProperties.getProperty("release.storeFile")
+                ?.takeIf { it.isNotBlank() }?.let { rootProject.file(it) }
+            storePassword = releaseSigningProperties.getProperty("release.storePassword")
+                ?.takeIf { it.isNotBlank() }
+            keyAlias = releaseSigningProperties.getProperty("release.keyAlias")
+                ?.takeIf { it.isNotBlank() }
+            keyPassword = releaseSigningProperties.getProperty("release.keyPassword")
+                ?.takeIf { it.isNotBlank() }
+        }
+    }
     buildTypes {
         release {
-            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
+            isDebuggable = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
