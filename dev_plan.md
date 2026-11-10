@@ -371,8 +371,6 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 | 10 | `app.cash.sqldelight:sqlite-driver:2.4.0` | `androidHostTest` |
 | 10 | `org.jetbrains.compose.ui:ui-test:1.12.1` (Compose UI-тесты) | `commonTest` |
 | 10 | `org.robolectric:robolectric:4.17`, `androidx.compose.ui:ui-test-manifest:1.12.1` (UI-тесты на JVM без эмулятора) | `androidHostTest` |
-
-
 | Export/import Task 1B / 4 | `dev.whyoleg.cryptography:cryptography-core:0.6.0`, JDK + JDK-BC + `org.bouncycastle:bcprov-jdk18on:1.83`, OpenSSL3 API + prebuilt-nativebuilds `0.6.0`, `com.ensody.nativebuilds:openssl-libcrypto` строго `3.6.5` | Этап 1B: test-only proof; этап 4: core в commonMain, явный JDK/BC в androidMain, API/nativebuilds/строгая libcrypto в iosMain. [История проверки](docs/research/transfer-format-compatibility.md) |
 | Export/import Task 4 | `org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0` | commonMain; JSON строки/вывод и ограниченный структурный reader, без нового Gradle plugin и аннотаций domain; [ADR](docs/adr/0001-transfer-json-codec.md) |
 
@@ -387,6 +385,9 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 ## План обновлений после первого релиза
 
 Составлен 06.11.2026 по обсуждению с пользователем. Цель — помочь владельцу автомобиля, который слабо разбирается в обслуживании: перенести готовый регламент, понять нужные действия и получать понятные напоминания. Это общий порядок релизов; детальный план, макет, спецификация и критерии приёмки каждой версии составляются отдельно перед её разработкой. Сроки пока не назначены.
+
+
+09.11.2026 начат следующий этап `1.1.0`: подготовлены [интерактивный макет](docs/index.html#interactiveApp), [постановка на разработку](specs/export-import.md) и [план этапов реализации](docs/superpowers/plans/2026-11-09-export-import.md). Сценарии встроены в основной макет приложения: «Настройки → Данные и перенос» и кнопка передачи в карточке авто, с существующими стилями и навигацией. Для предыдущих редакций пройдены серии 130/16/32 DOM-проверок Chrome; они не подтверждают последующие исправления. Production-код ещё не изменён; макет и технические решения ожидают согласования. До подключения криптографии нужна проверка Android API 24 и iOS.
 
 ### Версии
 
@@ -421,10 +422,4 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 
 **ИИ-подбор.** Пользователь указывает достаточные характеристики автомобиля: марку/модель, год, двигатель, коробку и рынок при необходимости. Помощник использует подготовленный промпт и документы производителя, показывает источники и применимость. При нехватке сведений запрашивает уточнение. Перед добавлением пользователь может проверить и выбрать работы, затем добавить их одним подтверждением. Сведения о последнем обслуживании вводит владелец; помощник их не придумывает. Проверенные регламенты для одинаковых модификаций могут повторно использоваться для экономии квоты; результат генерации не становится проверенным регламентом автоматически.
 
-Требования `1.1.0` согласованы пользователем 06.11.2026 по итогам трёх итераций: [первая](docs/research/export-import-iteration-1.md), [вторая](docs/research/export-import-iteration-2.md), [итоговая согласованная](docs/research/export-import-iteration-3.md). Разработка отложена. При возвращении к задаче составить отдельный подробный план `1.1.0`, затем подготовить макет и окончательные спецификации с форматом обмена и проверками импорта/восстановления перед реализацией.
-
-## Export/import implementation checkpoint
-
-Реализованы неизвестное обслуживание, снимок, строгий JSON/валидатор и plain/encrypted конверт. Runtime crypto и JSON зависимости/лицензии подключены; импорт/системные файлы/native UI ещё не реализованы.
-
-Проверка логического коммита: Android host suite 574 тестов, 0 failures/errors/skips; iOS production/test compilation — PASS. gradle-run workflow bbbe2f2c094da4f66d63c2ae8e8e419c, sequence 3.
+Требования `1.1.0` согласованы пользователем 06.11.2026 по итогам трёх итераций: [первая](docs/research/export-import-iteration-1.md), [вторая](docs/research/export-import-iteration-2.md), [итоговая согласованная](docs/research/export-import-iteration-3.md). 10.11.2026 пользователь разрешил реализацию. Подготовлены [постановка на разработку](specs/export-import.md) с критериями 1–17 и U1–U5 и [план реализации](docs/superpowers/plans/2026-11-09-export-import.md). Исправленный макет принят как основа разработки. Реализован фундамент неизвестного обслуживания и миграция 5→6: 516 Android host-тестов и компиляция iOS production/test прошли, независимое ревью — PASS. Формат v1 зафиксирован; проверен test-only OpenSSL 3.6.5. Реализован этап 3 — целостный полный/выборочный снимок: 545 Android host-тестов, 23 native iOS теста состава/снимка и 7 crypto proof, обе iOS production/test compilation — PASS. Подробности — в [отчёте этапа 3](docs/research/transfer-snapshot-verification.md). Кодек/конверт/шифрование этапа 4 реализованы: полный Android suite 570 тестов, R8/debug APK и 55 native iOS transfer-тестов/обе компиляции/debug+release frameworks — PASS без предупреждений; ещё 4 новых validation cases прошли отдельно на каждой платформе. [Отчёт кодека](docs/research/transfer-codec-verification.md). Импорт/файлы/native UI ещё не реализованы. Выбор конкретной одноимённой работы согласован пользователем и отражён в макете/контракте; 22 новых JS-проверки — PASS. Проверку реального API24 пользователь разрешил перенести в обязательный gate перед релизом.

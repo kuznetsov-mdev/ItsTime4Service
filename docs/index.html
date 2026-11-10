@@ -697,6 +697,50 @@
     .entering .gauge, .entering .status-donut, .entering .task-fill { animation: none; }
     .plate-flip-inner { transition: none; }
   }
+
+  .transfer-action { width: 100%; text-align: left; color: var(--ink); font-family: inherit; cursor: pointer; }
+  .transfer-action .setting-text { min-width: 0; flex: 1; }
+  .transfer-action .t1, .transfer-action .t2 { display: block; }
+  .transfer-action > .i { flex-shrink: 0; color: var(--ink-faint); }
+  .transfer-view .s-title { font-size: 20px; }
+  .transfer-step-label { font-size: 11px; color: var(--ink-muted); }
+  .transfer-body { padding: 8px 18px 16px; min-height: 0; }
+  .transfer-card { display: flex; gap: 12px; border: 1px solid var(--rule); background: var(--surface); border-radius: 14px; padding: 16px; margin: 0 0 20px; }
+  .transfer-card > div { min-width: 0; }
+  .transfer-card strong { font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
+  .transfer-card p, .transfer-copy { font-size: 12px; line-height: 1.55; color: var(--ink-muted); margin: 5px 0 0; }
+  .transfer-symbol { display: flex; flex-shrink: 0; color: var(--accent); padding-top: 2px; }
+  .transfer-group { margin: 0 0 22px; }
+  .transfer-choice { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--rule); cursor: pointer; min-height: 44px; box-sizing: border-box; }
+  .transfer-choice input { flex-shrink: 0; width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--accent); }
+  .transfer-choice strong { display: block; font-size: 12.5px; font-weight: 600; line-height: 1.5; }
+  .transfer-choice small { display: block; color: var(--ink-muted); font-size: 11.5px; line-height: 1.5; margin-top: 2px; }
+  .transfer-choice.disabled { opacity: .55; }
+  .transfer-field { display: block; margin: 14px 0; font-size: 12px; color: var(--ink-muted); }
+  .transfer-field > span { display: block; margin-bottom: 7px; }
+  .transfer-field .text-input { box-sizing: border-box; width: 100%; min-width: 0; margin: 0; font-family: inherit; color: var(--ink); background: var(--surface); }
+  .transfer-note { font-size: 12px; line-height: 1.55; color: var(--ink-muted); border-left: 3px solid var(--accent); padding: 10px 12px; background: var(--surface); border-radius: 0 10px 10px 0; margin: 12px 0 20px; }
+  .transfer-note.caution { border-color: var(--tier-soon); }
+  .transfer-footer { flex-shrink: 0; border-top: 1px solid var(--rule); background: var(--bg); padding-bottom: 2px; }
+  .transfer-footer .save-btn { margin-top: 12px; margin-bottom: 18px; }
+  .transfer-body > .outline-btn { margin: 6px 0 12px; width: 100%; }
+  .transfer-view button:disabled { opacity: .45; cursor: default; }
+  .transfer-error { color: var(--tier-due); font-size: 12px; line-height: 1.5; }
+  .transfer-error:empty { display: none; }
+  .transfer-picker-file { display: flex; align-items: center; gap: 12px; padding: 18px 12px; border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); cursor: pointer; }
+  .transfer-picker-file:has(input:checked) { border-color: var(--accent); background: var(--surface-2); }
+  .transfer-picker-file input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+  .transfer-picker-file strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+  .transfer-picker-file small { display: block; font-size: 12px; color: var(--ink-muted); margin-top: 6px; }
+  .transfer-result { text-align: center; padding: 38px 4px; }
+  .transfer-result-icon { display: inline-flex; padding: 18px; border-radius: 50%; color: var(--accent); background: var(--surface); }
+  .transfer-result h3 { font-size: 18px; margin: 20px 0 10px; }
+  .transfer-result p { color: var(--ink-muted); font-size: 12px; line-height: 1.6; }
+  .transfer-view .dialog { max-height: 86%; overflow-y: auto; }
+  .transfer-view .dialog .transfer-field { text-align: left; }
+  .transfer-view .dialog .transfer-choice { text-align: left; }
+  .transfer-view :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
 </style>
 </head>
 <body>
@@ -706,6 +750,7 @@
     <div>
       <p class="eyebrow">Портфолио-проект 3 · Дизайн-макет</p>
       <h1>Одометр — регламент ТО, который считает в <em>километрах</em></h1>
+      <p>План 1.1.0: в макете откройте «Настройки → Данные и перенос» или «Передать» в карточке авто.</p>
     </div>
   </div>
   <p class="subtitle">Единственный цветовой язык в приложении — близость регламентной работы к сроку по пробегу и по времени (что наступит раньше): пока запас большой — цвет спокойный тил, когда въезжаем в окно напоминания — янтарь, после срока — красный. Сначала — кликабельный макет: открывай авто, отмечай работы выполненными, смотри историю ТО и правь пробег на ходу. Ниже — статичные экраны в обеих темах.</p>
@@ -718,7 +763,7 @@
   <p class="legend-caption">Окно напоминания задаётся пользователем для каждой работы в тыс. км до срока; если указан ещё и интервал по времени (мес), статус берётся по тому сроку, что наступает раньше. Цвета тиров одинаковые в обеих темах — меняются только нейтральные тона фона и текста.</p>
 
   <!-- ================= INTERACTIVE ================= -->
-  <div class="section-block">
+  <div class="section-block" id="interactiveApp">
     <div class="top-row" style="margin-bottom:4px">
       <div class="section-head"><span class="theme-dot" style="background:var(--accent);box-shadow:0 0 0 3px rgba(14,165,183,0.18)"></span><h2>Интерактивный макет</h2></div>
       <button class="theme-btn" id="themeBtn" aria-label="Переключить тему"></button>
@@ -728,6 +773,7 @@
       <div class="route-pill" id="routeLabel">Мои авто</div>
       <button class="relaunch-btn" id="relaunchBtn" title="Имитирует закрытие и повторный запуск приложения">Перезапустить приложение</button>
       <div class="phone lg interactive"><div class="notch"></div><div class="screen" id="interactiveScreen"></div></div>
+      <p class="hint">Перенос данных: «Выбрать файл» открывает имитацию системного окна Android с папкой «Загрузки» и тестовым файлом. Его тип соответствует последнему сохранению в макете. До первого сохранения используется пример регламента. Предпросмотр демонстрационный; настоящие файлы не читаются.</p>
       <p class="hint">Статус и прогресс каждой работы считаются в JS из текущего пробега, интервала замены (км и/или мес) и окна напоминания — ровно то, что легло бы в таблицы <code style="font-family:var(--mono)">cars</code>, <code style="font-family:var(--mono)">maintenance_tasks</code> и <code style="font-family:var(--mono)">service_history</code>.</p>
     </div>
   </div>
@@ -1242,6 +1288,10 @@
     minus: '<line x1="5" y1="12" x2="19" y2="12"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
     moonToggle: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>',
+    share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/>',
+    download: '<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',
+    upload: '<path d="M12 16V4m-5 5 5-5 5 5M4 16v5h16v-5"/>',
+    lock: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/>',
     circleAlert: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'
   };
   function icon(name, size) {
@@ -1587,7 +1637,7 @@
       '<div class="v-hint">Шаг ' + toUnit(mult * MILEAGE_STEP).toLocaleString('ru-RU') + ' ' + unitWord() + ' · тап по числу — ввести вручную</div></div>';
     return '<div class="view" data-view="detail">' +
       '<div class="s-topbar"><button class="icon-btn"' + backAttr + '>' + icon('chevronLeft', 16) + '</button>' +
-      '<div class="icon-row"><button class="icon-btn"' + histAttr + '>' + icon('clock', 16) + '</button><button class="icon-btn"' + deleteAttr + '>' + icon('trash', 16) + '</button></div></div>' +
+      '<div class="icon-row"><button class="icon-btn" aria-label="Передать автомобиль" title="Передать автомобиль"' + (opts.interactive ? ' data-open-transfer="car"' : '') + '>' + icon('share', 16) + '</button><button class="icon-btn"' + histAttr + '>' + icon('clock', 16) + '</button><button class="icon-btn"' + deleteAttr + '>' + icon('trash', 16) + '</button></div></div>' +
       titleBlock + plateBlock + vinBlock +
       mileageCard.replace('class="v-card"', 'class="v-card" style="margin:14px 18px 6px;flex-shrink:0"') +
       '<div class="task-list with-fab" style="padding-top:0">' + rows + '</div>' + addTaskFab +
@@ -2043,6 +2093,7 @@
       '<div class="settings-group"><div class="settings-group-title">Тема</div>' + seg('theme', themeOpts, state.themeIdx) + '</div>' +
       '<div class="settings-group"><div class="settings-group-title">Единицы измерения</div>' + seg('units', unitOpts, state.unitsIdx) + '</div>' +
       launchGroup +
+      '<div class="settings-group"><div class="settings-group-title">Данные</div><button class="setting-row transfer-action"' + (opts.interactive ? ' data-open-transfer="settings"' : '') + '><span class="icon-btn">' + icon('download',16) + '</span><span class="setting-text"><span class="t1">Данные и перенос</span><span class="t2">Резервная копия и обмен регламентом</span></span>' + icon('chevronRight',16) + '</button></div>' +
       '<div class="settings-group">' +
       '<div class="settings-group-title">Уведомления</div>' +
       '<div class="setting-row"><button class="icon-btn">' + icon('bell', 16) + '</button>' +
@@ -2563,7 +2614,7 @@
   function carById(id) { return cars.find(function (c) { return c.id === id; }); }
   function currentDetailCar() { return carById(istate.detailId) || cars[0]; }
 
-  var routeNames = { cars: 'Мои авто', detail: 'Регламентные работы', history: 'История ТО', new: 'Добавление авто', settings: 'Настройки', licenses: 'Лицензии открытого ПО' };
+  var routeNames = { cars: 'Мои авто', detail: 'Регламентные работы', history: 'История ТО', new: 'Добавление авто', settings: 'Настройки', licenses: 'Лицензии открытого ПО', transfer: 'Перенос данных · 1.1.0' };
   var SCROLLABLE = '.form-body, .task-list, .history-list, .car-list, .car-t-list';
   /* вкладки слева направо: «История» → «Авто» → «Настройки»; переход вправо по меню — экраны едут влево, и наоборот */
   var TAB_ORDER = ['history', 'cars', 'settings'];
@@ -2607,6 +2658,372 @@
       { left: (to.left - barRect.left) + 'px', width: to.width + 'px' }
     ], timing).onfinish = function () { frame.style.borderColor = ''; indicator.remove(); };
   }
+  var transferState = null;
+  var transferDemoFile = { name:'Пора-на-ТО.it4s',kind:'car',protected:false,groups:{},sold:[],cars:[{brand:'Kia Rio',tasks:[{id:'oil',name:'Замена масла и фильтра',intervalKm:10000},{id:'air',name:'Воздушный фильтр',intervalKm:15000}]}] };
+  function transferEscape(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+  }
+  function transferStart(step, source) {
+    transferState = {
+      step: step || 'hub', from: source || 'settings', trail: [], carId: istate.detailId || (cars[0] && cars[0].id),
+      groups: {}, selected: {}, protected: step === 'backup', protectionOverride: false,
+      fileKind: 'car', mode: 'merge', target: cars.length ? cars[0].id : 'new', settings: true,
+      incoming: JSON.parse(JSON.stringify(transferDemoFile)), personalDecisions: {}, decisions: {}, taskTargets: {}, mileageDecision: 'current', serviceDecision: 'current', historyDecision: 'current',
+      brand: 'Kia Rio', mileage: '', description: '', password: '', repeat: '', error: '', saved: false, declined: false, confirmed: false
+    };
+    istate.screen = 'transfer';
+    paintInteractive();
+  }
+  function transferGo(step) {
+    transferState.error = '';
+    transferState.trail.push(transferState.step);
+    transferState.step = step;
+    istate.resetScroll = true;
+    paintInteractive();
+  }
+  function transferButton(label, action, secondary, disabled) {
+    return '<button class="' + (secondary ? 'outline-btn' : 'save-btn') + '" data-transfer-action="' + action + '"' + (disabled ? ' disabled' : '') + '>' + label + '</button>';
+  }
+  function transferNote(text, warning) {
+    return '<p class="transfer-note' + (warning ? ' caution' : '') + '">' + text + '</p>';
+  }
+  function transferCard(title, text, symbol) {
+    return '<div class="transfer-card"><span class="transfer-symbol">' + icon(symbol || 'car', 22) + '</span><div><strong>' + transferEscape(title) + '</strong><p>' + text + '</p></div></div>';
+  }
+  function transferCheck(key, label, detail, disabled) {
+    var s = transferState;
+    var checked = key.indexOf('group:') === 0 ? s.groups[key.slice(6)] : key.indexOf('task:') === 0 ? s.selected[key.slice(5)] !== false : s[key];
+    return '<label class="transfer-choice' + (disabled ? ' disabled' : '') + '"><input type="checkbox" data-transfer-check="' + key + '"' + (checked ? ' checked' : '') + (disabled ? ' disabled' : '') + '><span><strong>' + transferEscape(label) + '</strong>' + (detail ? '<small>' + detail + '</small>' : '') + '</span></label>';
+  }
+  function transferRadio(key, value, label, detail) {
+    return '<label class="transfer-choice"><input type="radio" name="transfer-' + key + '" data-transfer-radio="' + key + '" value="' + transferEscape(value) + '"' + ((key.indexOf('decision:') === 0 ? transferState.decisions[key.slice(9)] || 'skip' : key.indexOf('taskTarget:') === 0 ? transferState.taskTargets[key.slice(11)] || '' : key.indexOf('personal:') === 0 ? transferState.personalDecisions[key.slice(9)] || 'current' : transferState[key]) === value ? ' checked' : '') + '><span><strong>' + transferEscape(label) + '</strong>' + (detail ? '<small>' + detail + '</small>' : '') + '</span></label>';
+  }
+  function transferField(key, label, type, placeholder) {
+    return '<label class="transfer-field"><span>' + label + '</span><input class="text-input" data-transfer-field="' + key + '" type="' + (type || 'text') + '"' + (type === 'number' ? ' min="0" step="1" inputmode="numeric"' : '') + (type === 'password' ? ' autocomplete="new-password"' : '') + ' placeholder="' + (placeholder || '') + '" value="' + transferEscape(transferState[key]) + '"></label>';
+  }
+  function transferGroup(title, body) {
+    return '<div class="transfer-group"><div class="settings-group-title">' + title + '</div>' + body + '</div>';
+  }
+  function transferCar() {
+    return carById(transferState.carId) || cars[0];
+  }
+  function transferWorkList(importing) {
+    var s = transferState, car = transferCar();
+    var list = importing ? transferIncomingWorks() : (car ? car.tasks : []);
+    return list.map(function (t) { return transferCheck('task:' + t.id, t.name, 'Каждые ' + fmtKm(t.intervalKm)); }).join('');
+  }
+  function transferResetDecisions() {
+    var s = transferState;
+    s.decisions = {};
+    s.taskTargets = {};
+    s.personalDecisions = {};
+    s.mileageDecision = 'current';
+    s.serviceDecision = 'current';
+    s.historyDecision = 'current';
+    s.saved = false;
+    s.declined = false;
+    s.confirmed = false;
+  }
+  function transferSnapshotCar(car, groups, selected, full) {
+    var result = { brand: car.brand, tasks: (car.tasks || []).filter(function(t){return full || selected[t.id] !== false;}).map(function(t,index){
+      var task = {id:full ? t.id : 'work' + index,name:t.name,icon:t.icon,intervalKm:t.intervalKm,intervalMonths:t.intervalMonths};
+      if (groups.service) {task.lastKm = t.lastKm;task.lastDate = t.lastDate;}
+      return task;
+    }) };
+    if (groups.mileage) result.mileageKm = car.mileageKm;
+    if (groups.plate) result.plate = car.plate;
+    if (groups.vin) result.vin = car.vin;
+    if (groups.history) result.history = (car.history || []).map(function(h){
+      var item = {taskName:h.taskName,date:h.date,mileageKm:h.mileageKm};
+      if (groups.details) {item.costRub = h.costRub;item.service = h.service;item.comment = h.comment;}
+      return item;
+    });
+    return result;
+  }
+  function transferBuildDemoFile(kind, protectedFile) {
+    var s = transferState, full = kind === 'backup';
+    var groups = full ? {mileage:true,plate:true,vin:true,service:true,history:true,details:true} : Object.assign({},s.groups);
+    var source = full ? cars : [transferCar()];
+    return JSON.parse(JSON.stringify({ name:'Пора-на-ТО.it4s',kind:kind,protected:protectedFile,groups:groups,
+      description:full ? '' : s.description,cars:source.filter(Boolean).map(function(c){return transferSnapshotCar(c,groups,s.selected,full);}),
+      sold:full ? soldCars.map(function(c){return transferSnapshotCar(c,groups,{},true);}) : [] }));
+  }
+  function transferIncomingCar() {
+    return transferState.incoming.cars[0];
+  }
+  function transferIncomingWorks() {
+    return transferIncomingCar().tasks;
+  }
+  function transferSelectedIncomingWorks() {
+    var s = transferState;
+    return transferIncomingWorks().filter(function(t){return s.fileKind === 'backup' || s.selected[t.id] !== false;});
+  }
+  function transferConflicts() {
+    var s = transferState, target = carById(s.target);
+    return target ? transferSelectedIncomingWorks().filter(function(t){
+      return target.tasks.some(function(local){return local.name.toLowerCase() === t.name.toLowerCase();});
+    }) : [];
+  }
+  function transferTaskCandidates(task) {
+    var target = carById(transferState.target);
+    return target ? target.tasks.filter(function(local){return local.name.toLowerCase() === task.name.toLowerCase();}) : [];
+  }
+  function transferChosenTask(task) {
+    var candidates = transferTaskCandidates(task), chosen = transferState.taskTargets[task.id];
+    if (chosen) return candidates.find(function(local){return local.id === chosen;}) || null;
+    return candidates.length === 1 ? candidates[0] : null;
+  }
+  function transferTaskChoicesReady() {
+    var used = {};
+    return transferConflicts().every(function(task){
+      if (transferState.decisions[task.id] !== 'update') return true;
+      var target = transferChosenTask(task);
+      if (!target || used[target.id]) return false;
+      used[target.id] = true;
+      return true;
+    });
+  }
+  function transferTaskDescription(local,index) {
+    return 'Вариант ' + (index + 1) + ' · каждые ' + fmtKm(local.intervalKm) + (local.intervalMonths ? ' / ' + local.intervalMonths + ' мес.' : '') +
+      ' · последнее обслуживание: ' + (local.lastKm == null ? 'пробег неизвестен' : fmtKm(local.lastKm)) + (local.lastDate ? ', ' + local.lastDate : '');
+  }
+  function transferTaskTargetOptions(task) {
+    if (transferState.decisions[task.id] !== 'update') return '';
+    var candidates = transferTaskCandidates(task);
+    if (candidates.length === 1 && !transferState.taskTargets[task.id]) return transferNote('Будет обновлена работа на телефоне: ' + transferEscape(candidates[0].name) + '.');
+    return transferNote('Выберите конкретную работу на телефоне. У остальных работ параметры сохранятся.') + candidates.map(function(local,index){
+      return transferRadio('taskTarget:' + task.id,local.id,local.name,transferEscape(transferTaskDescription(local,index)));
+    }).join('');
+  }
+  function transferComposition(file) {
+    var labels = {mileage:'Текущий пробег',plate:'Госномер',vin:'VIN',service:'Последнее обслуживание работ',history:'История',details:'Стоимость, сервисы и комментарии'};
+    var included = Object.keys(labels).filter(function(key){return file.groups[key];});
+    return included.length ? included.map(function(key){return labels[key];}).join(' · ') : 'Без личных сведений и истории.';
+  }
+  function transferServiceSummary(car) {
+    return car.tasks.filter(function(t){return t.lastKm != null || t.lastDate;}).map(function(t){
+      return t.name + ': ' + (t.lastKm != null ? fmtKm(t.lastKm) : 'пробег неизвестен') + (t.lastDate ? ', ' + t.lastDate : '');
+    }).join('; ') || 'Последнее обслуживание неизвестно';
+  }
+  function transferServiceHistoryLinked() {
+    var car = transferIncomingCar();
+    return transferState.incoming.groups.service && transferState.incoming.groups.history && (car.history || []).some(function(h){
+      return car.tasks.some(function(t){return t.name === h.taskName && t.lastKm === h.mileageKm && t.lastDate === h.date;});
+    });
+  }
+  function transferPersonalItems() {
+    var s = transferState, groups = s.incoming.groups, incoming = transferIncomingCar(), target = carById(s.target);
+    var items = [];
+    function add(key,label,current,value) {items.push({key:key,label:label,current:current || 'Нет сведений',value:value || 'Нет сведений'});}
+    if (groups.mileage && target) add('mileage','Текущий пробег',fmtKm(target.mileageKm),fmtKm(incoming.mileageKm));
+    if (groups.plate) add('plate','Госномер',target && target.plate,incoming.plate);
+    if (groups.vin) add('vin','VIN',target && target.vin,incoming.vin);
+    var currentService = target ? transferServiceSummary(target) : 'Нет сведений';
+    var incomingService = transferServiceSummary(incoming);
+    var currentHistory = target ? (target.history || []).length + ' записей' : 'Нет записей';
+    var incomingHistory = (incoming.history || []).length + ' записей' + (groups.details ? ', со стоимостью, сервисами и комментариями' : ', без стоимости, сервисов и комментариев');
+    if (transferServiceHistoryLinked()) add('serviceHistory','Последнее обслуживание и история',currentService + '. История: ' + currentHistory,incomingService + '. История: ' + incomingHistory);
+    else {
+      if (groups.service) add('service','Последнее обслуживание работ',currentService,incomingService);
+      if (groups.history) add('history','История',currentHistory,incomingHistory);
+    }
+    return items;
+  }
+  function transferHasImportDecisions() {
+    return transferConflicts().length > 0 || transferPersonalItems().length > 0;
+  }
+  function transferOpenDemoFile() {
+    var s = transferState;
+    s.incoming = JSON.parse(JSON.stringify(transferDemoFile));
+    s.fileKind = s.incoming.kind;
+    s.selected = {};
+    s.target = cars.length ? cars[0].id : 'new';
+    s.brand = transferIncomingCar().brand;
+    s.mileage = s.incoming.groups.mileage ? String(transferIncomingCar().mileageKm) : '';
+    s.password = '';
+    s.repeat = '';
+    s.mode = 'merge';
+    s.settings = true;
+    transferResetDecisions();
+  }
+  function transferPassword() {
+    return transferCheck('protected', 'Защитить паролем', 'Пароль понадобится для открытия файла.') + (transferState.protected
+      ? transferField('password', 'Пароль', 'password') + transferField('repeat', 'Повторите пароль', 'password')
+      : transferNote('Любой получатель файла сможет прочитать включённые сведения.', true));
+  }
+  function transferScreenHtml() {
+    if (!transferState) return '';
+    var s = transferState, car = transferCar(), title = '', sub = '', body = '', footer = '', dialog = '';
+    var names = { hub:'Данные и перенос', backup:'Полная копия', share:'Передать регламент', exportReview:'Проверить файл', files:'Импорт из файла', picker:'Файлы', unlock:'Защищённый файл', preview:'Содержимое файла', target:'Куда добавить', conflicts:'Совпадения', review:'Проверить изменения', success:'Готово', error:'Не удалось открыть' };
+    title = names[s.step];
+    if (s.step === 'hub') {
+      sub = 'Сохраните свои данные или поделитесь регламентом.';
+      body = transferCard('Ваши данные — на устройстве', 'Копию можно перенести между Android и iPhone. Сохраняйте её вручную после важных изменений.', 'scrollText') +
+        transferGroup('Резервная копия', transferActionRow('backup', 'Сохранить полную копию', 'Перенести свои данные на другое устройство', 'download')) +
+        transferGroup('Импорт', transferActionRow('files', 'Импорт из файла', 'Полная копия или регламент — определим автоматически', 'upload')) +
+        transferGroup('Обмен регламентом', transferActionRow('share', 'Передать регламент', 'Поделиться списком работ с другим пользователем', 'share'));
+    }
+    if (s.step === 'backup') {
+      sub = 'Перенесите свои автомобили, работы, историю и настройки на другое устройство.';
+      body = transferCard('Вся информация приложения', cars.length + ' действующих авто · ' + soldCars.length + ' проданных<br>Работы, история, личные сведения и настройки.', 'scrollText') + transferGroup('Защита файла', transferPassword());
+      footer = transferButton('Далее', 'checkExport');
+    }
+    if (s.step === 'share') {
+      sub = 'Поделитесь списком работ с другим пользователем. Личные сведения добавляются отдельно.';
+      body = '<label class="transfer-field"><span>Автомобиль</span><select class="text-input" data-transfer-select="carId">' + cars.map(function(c){return '<option value="' + c.id + '"' + (s.carId === c.id ? ' selected' : '') + '>' + transferEscape(c.brand) + '</option>';}).join('') + '</select></label>' +
+        transferGroup('Работы', transferWorkList(false)) +
+        transferGroup('Дополнительные сведения', transferCheck('group:mileage','Текущий пробег') + transferCheck('group:plate','Госномер') + transferCheck('group:vin','VIN') + transferCheck('group:service','Последнее обслуживание работ','Пробег и дата последнего выполнения.') + transferCheck('group:history','История','Даты, работы и пробеги.') + (s.groups.history ? transferCheck('group:details','Стоимость, сервисы и комментарии') : '')) +
+        transferField('description', 'Модификация, условия и источник', 'text', 'Необязательно') + transferGroup('Защита файла', transferPassword());
+      footer = transferButton('Далее', 'checkExport', false, !car);
+    }
+    if (s.step === 'exportReview') {
+      sub = 'Проверьте, что получатель увидит в файле.';
+      var personal = Object.keys(s.groups).filter(function(k){return s.groups[k];});
+      var labels = {mileage:'Пробег',plate:'Госномер',vin:'VIN',service:'Последнее обслуживание',history:'История',details:'Стоимость, сервисы и комментарии'};
+      body = transferCard(s.exportKind === 'backup' ? 'Полная копия' : car.brand, s.exportKind === 'backup' ? 'Все автомобили и сведения, включая личные.' : car.tasks.filter(function(t){return s.selected[t.id] !== false;}).map(function(t){return transferEscape(t.name);}).join('<br>'), s.exportKind === 'backup' ? 'scrollText' : 'car') +
+        transferGroup('Состав файла', '<p class="transfer-copy">' + (s.exportKind === 'backup' ? 'Автомобили, работы, история и настройки.' : personal.length ? personal.map(function(k){return labels[k];}).join(' · ') : 'Только марка/модель и выбранные работы. Без пробега, VIN, номера, истории и последнего обслуживания.') + '</p>') +
+        (s.description && s.exportKind !== 'backup' ? transferNote(transferEscape(s.description)) : '') + transferNote(s.protected ? 'Файл защищён паролем. Передайте пароль получателю отдельно.' : 'Без пароля. Получатель сможет прочитать весь состав файла.', !s.protected);
+      footer = transferButton('Сохранить или отправить', 'save');
+    }
+    if (s.step === 'files') {
+      sub = 'Выберите файл. Приложение само определит: полная копия или регламент.';
+      body = transferCard('Откройте файл приложения', 'Подойдёт полная копия или переданный регламент в формате .it4s.', 'upload');
+      footer = transferButton('Выбрать файл', 'chooseFile');
+    }
+    if (s.step === 'picker') {
+      title = 'Загрузки';
+      sub = 'Файлы на устройстве';
+      body = '<div class="transfer-group"><div class="settings-group-title">Сегодня</div>' +
+        '<label class="transfer-picker-file"><input type="radio" name="picked-file" data-transfer-check="pickerSelected"' + (s.pickerSelected ? ' checked' : '') + '><span class="transfer-symbol">' + icon('scrollText',24) + '</span><span><strong>' + transferEscape(transferDemoFile.name) + '</strong><small>Файл IT4S · 12 КБ</small></span></label></div>';
+      footer = '<div class="form-actions">' + transferButton('Отмена','cancelPicker',true) + transferButton('Открыть','openFile',false,!s.pickerSelected) + '</div>';
+    }
+    if (s.step === 'unlock') {
+      sub = 'Введите пароль, заданный при сохранении копии.';
+      body = transferCard(s.incoming.name, 'Содержимое доступно после открытия.', 'lock') + transferField('password','Пароль','password') + transferNote('Демонстрация: подойдёт любой непустой тестовый пароль. Настоящий пароль здесь не вводите.');
+      footer = transferButton('Открыть файл','unlock');
+    }
+    if (s.step === 'preview') {
+      var incoming = transferIncomingCar();
+      sub = (s.fileKind === 'car' ? 'Определён регламент.' : 'Определена полная копия.') + ' Проверьте содержимое перед импортом.';
+      body = transferCard(s.incoming.name,(s.fileKind === 'car' ? transferEscape(incoming.brand) + ' · работ: ' + incoming.tasks.length : s.incoming.cars.length + ' действующих авто · ' + s.incoming.sold.length + ' проданных') + '<br>' + transferEscape(transferComposition(s.incoming)),s.fileKind === 'car' ? 'car' : 'scrollText') +
+        (s.incoming.description ? transferNote(transferEscape(s.incoming.description)) : '') +
+        (s.fileKind === 'car' ? transferNote('Проверьте применимость интервалов к вашей модификации и условиям эксплуатации.') + transferGroup('Выберите работы',transferWorkList(true)) : transferGroup('Способ восстановления',transferRadio('mode','merge','Объединить','Сравнить сведения и выбрать, что добавить.') + transferRadio('mode','replace','Заменить всё','Текущие автомобили, работы и история будут заменены.')) + transferGroup('Настройки',transferCheck('settings','Восстановить настройки','Разрешения уведомлений остаются системными.')));
+      footer = transferButton('Далее','previewNext');
+    }
+    if (s.step === 'target') {
+      var incoming = transferIncomingCar();
+      sub = s.fileKind === 'car' ? 'К какой машине добавить выбранные работы?' : 'Сопоставьте автомобиль из копии со своим.';
+      body = transferCard('В файле: ' + incoming.brand,transferEscape(s.incoming.groups.mileage ? fmtKm(incoming.mileageKm) : 'Текущий пробег не передан.'),'car') + transferGroup('На этом телефоне',cars.map(function(c){return transferRadio('target',c.id,c.brand,fmtKm(c.mileageKm) + ' · выбрать эту машину');}).join('') + transferRadio('target','new','Добавить отдельный автомобиль','Не объединять с существующим.')) +
+        (s.target === 'new' ? transferField('brand','Марка и модель') + transferField('mileage','Фактический пробег, км','number','Введите показание одометра') : transferNote('Совпадение названия не означает, что это одна машина. Выберите её самостоятельно.'));
+      footer = transferButton(s.target === 'new' ? 'Создать автомобиль' : 'Выбрать этот автомобиль','targetNext');
+    }
+    if (s.step === 'conflicts') {
+      var target = carById(s.target), conflicts = transferConflicts(), personalItems = transferPersonalItems();
+      sub = target ? 'Для ' + target.brand + '. По умолчанию сохраняются ваши сведения.' : 'Выберите, какие сведения перенести в новый автомобиль.';
+      body = conflicts.map(function(t){return transferGroup('Похожая работа: ' + transferEscape(t.name),
+        transferRadio('decision:' + t.id,'skip','Пропустить','Сохранить параметры. Личные сведения выбираются отдельно.') +
+        transferRadio('decision:' + t.id,'update','Обновить параметры','Сохранить свою историю и последнее обслуживание.') +
+        transferRadio('decision:' + t.id,'separate','Добавить отдельную','Появится ещё одна работа.') + transferTaskTargetOptions(t));}).join('') +
+        personalItems.map(function(item){return transferGroup(item.label,
+          transferRadio('personal:' + item.key,'current',target ? 'Оставить текущее' : 'Не переносить',transferEscape(item.current)) +
+          transferRadio('personal:' + item.key,'file','Взять из файла',transferEscape(item.value)));}).join('') +
+        transferNote(s.incoming.groups.service ? 'Последнее обслуживание переносится только по вашему выбору. Для совпавших работ обновление параметров само по себе его не меняет.' : 'Новые работы без сведений о выполнении получат статус «Рекомендовано обслужить».') +
+        (transferServiceHistoryLinked() ? transferNote('Последнее обслуживание и связанные записи истории применяются вместе, чтобы сохранить согласованность данных.') : '');
+      if (!transferTaskChoicesReady()) body += transferNote('Для обновления укажите конкретную работу. Одну работу на телефоне можно обновить только один раз за импорт.',true);
+      footer = transferButton('Посмотреть итог','review',false,!transferTaskChoicesReady());
+    }
+    if (s.step === 'review') {
+      var replacing = s.fileKind === 'backup' && s.mode === 'replace';
+      title = replacing ? 'Заменить все данные?' : 'Проверить изменения';
+      sub = 'Изменения применяются только после подтверждения.';
+      var decisions = {skip:'Пропустить',update:'Обновить параметры',separate:'Добавить отдельную'};
+      if (replacing) {
+        body = transferCard('Полное восстановление','Источник: ' + transferEscape(s.incoming.name) + '<br>' + s.incoming.cars.length + ' действующих авто · ' + s.incoming.sold.length + ' проданных','scrollText') +
+          transferGroup('Будет восстановлено','<p class="transfer-copy">' + s.incoming.cars.concat(s.incoming.sold).map(function(c){return transferEscape(c.brand) + ' · работ: ' + c.tasks.length + ' · история: ' + (c.history || []).length + ' записей';}).join('<br>') + '<br>' + transferEscape(transferComposition(s.incoming)) + '</p>');
+      } else {
+        var conflicts = transferConflicts();
+        body = transferCard(s.target === 'new' ? s.brand : (carById(s.target) || {}).brand,'Источник: ' + transferEscape(s.incoming.name) + '<br>Выбранных работ: ' + transferSelectedIncomingWorks().length + '<br>' + (s.target === 'new' ? 'Новая машина · ' + fmtKm(Number(s.mileage)) : 'Существующий автомобиль'),'scrollText') +
+          (conflicts.length ? conflicts.map(function(t){var chosen = transferChosenTask(t);return transferGroup(transferEscape(t.name),'<p class="transfer-copy">' + decisions[s.decisions[t.id] || 'skip'] + (s.decisions[t.id] === 'update' && chosen ? ': ' + transferEscape(chosen.name) + '<br>' + transferEscape(transferTaskDescription(chosen,transferTaskCandidates(t).indexOf(chosen))) : '') + '</p>');}).join('') : transferNote('Совпадений работ нет. Выбранные работы будут добавлены.')) +
+          transferPersonalItems().map(function(item){return transferGroup(item.label,'<p class="transfer-copy">' + ((s.personalDecisions[item.key] || 'current') === 'file' ? 'Взять из файла: ' + transferEscape(item.value) : s.target === 'new' ? 'Не переносить' : 'Оставить текущее: ' + transferEscape(item.current)) + '</p>');}).join('') +
+          (!(s.incoming.groups.service && (s.personalDecisions.service === 'file' || s.personalDecisions.serviceHistory === 'file')) ? transferNote('Для новых работ последнее обслуживание — «Не знаю». Статус: «Рекомендовано обслужить».') : '');
+      }
+      body += (s.fileKind === 'backup' ? transferGroup('Настройки','<p class="transfer-copy">' + (s.settings ? 'Восстановить из файла' : 'Оставить текущие') + '</p>') : transferNote('Порог «Напоминать за…» для новых работ — из ваших настроек.')) +
+        (replacing ? transferNote('Будут заменены все авто, работы и история на этом телефоне.',true) + transferButton(s.saved ? 'Страховочная копия сохранена' : 'Сначала сохранить текущую копию','safety',true,s.saved) + (s.saved ? '' : transferCheck('declined','Продолжить без страховочной копии')) + transferCheck('confirmed','Заменить текущие данные') : '');
+      footer = transferButton(replacing ? 'Заменить данные' : 'Применить импорт','apply',false,replacing ? (!s.confirmed || (!s.saved && !s.declined)) : !transferTaskChoicesReady());
+    }
+    if (s.step === 'success') {
+      sub = s.success === 'import' ? 'Сценарий импорта завершён.' : 'Сценарий сохранения завершён.';
+      body = '<div class="transfer-result"><span class="transfer-result-icon">' + icon('check',32) + '</span><h3>' + (s.success === 'import' ? 'Данные импортированы' : 'Файл сохранён') + '</h3><p>Это демонстрация интерфейса. Данные приложения и настоящие файлы не изменялись.</p></div>';
+      footer = transferButton('Готово','finish');
+    }
+    if (s.step === 'error') {
+      body = transferCard('Файл повреждён', 'Не удалось прочитать копию. Выберите другой файл. Ваши данные не изменены.', 'circleAlert');
+      footer = transferButton('Выбрать другой файл','chooseOther');
+    }
+    if (s.modal) {
+      dialog = '<div class="dialog-scrim"><div class="dialog" role="dialog" aria-modal="true" aria-label="Сохранение файла"><div class="dialog-icon">' + icon('download',20) + '</div><div class="dialog-title">' + (s.modal === 'safetyPassword' ? 'Защитить страховочную копию?' : 'Сохранить файл') + '</div><div class="dialog-text">' + (s.modal === 'safetyPassword' ? 'Сохраните текущие данные перед заменой. Пароль включён по умолчанию.' : 'Здесь откроется системное меню сохранения и отправки файла. В макете можно подтвердить или отменить результат.') + '</div>' + (s.modal === 'safetyPassword' ? transferPassword() + '<p class="transfer-error" role="alert">' + transferEscape(s.error) + '</p>' : '') + '<div class="dialog-actions"><button class="dialog-btn" data-transfer-action="cancelSave">Отмена</button><button class="dialog-btn primary" data-transfer-action="' + (s.modal === 'safetyPassword' ? 'safetySave' : 'saved') + '">' + (s.modal === 'safetyPassword' ? 'Далее' : 'Сохранено') + '</button></div></div></div>';
+    }
+    return '<div class="view transfer-view" data-view="transfer"><div class="s-topbar"><button class="icon-btn" data-transfer-action="back" aria-label="Назад">' + icon('chevronLeft',16) + '</button><span class="transfer-step-label">' + (s.step === 'picker' ? 'Системный выбор файла' : s.step === 'hub' || s.step === 'success' ? '' : 'Перенос данных') + '</span></div><div class="s-title">' + title + '</div><div class="s-sub">' + sub + '</div><div class="form-body transfer-body">' + body + '<p class="transfer-error" role="alert">' + transferEscape(s.error) + '</p></div>' + (footer ? '<div class="transfer-footer">' + footer + '</div>' : '') + dialog + '</div>';
+  }
+  function transferActionRow(action, title, detail, symbol) {
+    return '<button class="setting-row transfer-action" data-transfer-action="' + action + '"><span class="icon-btn">' + icon(symbol,18) + '</span><span class="setting-text"><span class="t1">' + title + '</span><span class="t2">' + detail + '</span></span>' + icon('chevronRight',16) + '</button>';
+  }
+  function wireTransfer(root) {
+    root.querySelectorAll('[data-open-transfer]').forEach(function(b){ b.onclick = function(){ transferStart(b.dataset.openTransfer === 'car' ? 'share' : 'hub', b.dataset.openTransfer === 'car' ? 'detail' : 'settings'); }; });
+    if (!transferState) return;
+    var s = transferState;
+    root.querySelectorAll('[data-transfer-field]').forEach(function(el){el.oninput = function(){s[el.dataset.transferField] = el.value;};});
+    root.querySelectorAll('[data-transfer-select]').forEach(function(el){el.onchange = function(){s[el.dataset.transferSelect] = el.value; s.selected = {};paintInteractive();};});
+    root.querySelectorAll('[data-transfer-check]').forEach(function(el){el.onchange = function(){
+      var key = el.dataset.transferCheck;
+      if (key.indexOf('group:') === 0) {
+        s.groups[key.slice(6)] = el.checked;
+        if (!s.groups.history) s.groups.details = false;
+        if (!s.protectionOverride) s.protected = Object.keys(s.groups).some(function(k){return s.groups[k];});
+      } else if (key.indexOf('task:') === 0) s.selected[key.slice(5)] = el.checked;
+      else {s[key] = el.checked; if (key === 'protected') {s.protectionOverride = true; s.password = ''; s.repeat = '';}}
+      paintInteractive();
+    };});
+    root.querySelectorAll('[data-transfer-radio]').forEach(function(el){el.onchange = function(){var key = el.dataset.transferRadio;if (key.indexOf('decision:') === 0) {s.decisions[key.slice(9)] = el.value;if (el.value !== 'update') delete s.taskTargets[key.slice(9)];}else if (key.indexOf('taskTarget:') === 0) s.taskTargets[key.slice(11)] = el.value;else if (key.indexOf('personal:') === 0) s.personalDecisions[key.slice(9)] = el.value;else s[key] = el.value;if (key === 'target') transferResetDecisions();paintInteractive();};});
+    root.querySelectorAll('[data-transfer-action]').forEach(function(el){el.onclick = function(){
+      if (el.disabled) return;
+      var action = el.dataset.transferAction;
+      function validPassword() { if (s.protected && (!s.password || s.password !== s.repeat)) {s.error = 'Введите пароль и одинаковое подтверждение.';paintInteractive();return false;} return true; }
+      function finish() {var from = s.from; s.password = '';s.repeat = ''; transferState = null; istate.screen = from;paintInteractive();}
+      if (action === 'finish') {finish();return;}
+      if (action === 'back') {if (s.step === 'success') {finish();return;}s.error = ''; if (s.trail.length) {s.step = s.trail.pop(); istate.resetScroll = true;paintInteractive();} else finish();return;}
+      if (action === 'backup' || action === 'share') {s.password = '';s.repeat = '';s.protected = action === 'backup';s.exportKind = action === 'backup' ? 'backup' : 'car';s.protectionOverride = false;transferGo(action);return;}
+      if (action === 'checkExport') {if (!validPassword()) return; s.exportKind = s.step === 'backup' ? 'backup' : 'car'; transferGo('exportReview');return;}
+      if (action === 'save') {s.modal = 'save';paintInteractive();return;}
+      if (action === 'chooseFile') {s.pickerSelected = false;transferGo('picker');return;}
+      if (action === 'cancelPicker') {s.step = s.trail.pop() || 'files';s.error = '';paintInteractive();return;}
+      if (action === 'openFile') {
+        if (!s.pickerSelected) return;
+        transferOpenDemoFile();
+        s.step = s.trail.pop() || 'files';
+        transferGo(s.incoming.protected ? 'unlock' : 'preview');return;
+      }
+      if (action === 'chooseOther') {s.step = 'files';s.error = '';paintInteractive();return;}
+      if (action === 'unlock') {if (!s.password) {s.error = 'Введите тестовый пароль.';paintInteractive();return;}s.password = '';transferGo('preview');return;}
+      if (action === 'previewNext') {transferGo(s.fileKind === 'backup' && s.mode === 'replace' ? 'review' : 'target');return;}
+      if (action === 'targetNext') {
+        if (s.target === 'new' && (!s.brand.trim() || !/^\d+$/.test(s.mileage) || !Number.isSafeInteger(Number(s.mileage)))) {s.error = 'Укажите марку и фактический пробег целым числом.';paintInteractive();return;}
+        transferGo(transferHasImportDecisions() ? 'conflicts' : 'review');return;
+      }
+      if (action === 'safety') {s.protected = true;s.password = '';s.repeat = '';s.modal = 'safetyPassword';paintInteractive();return;}
+      if (action === 'safetySave') {if (!validPassword()) return;s.modal = 'safetySave';s.error = '';paintInteractive();return;}
+      if (action === 'cancelSave') {s.modal = null;s.password = '';s.repeat = '';s.error = '';paintInteractive();return;}
+      if (action === 'saved') {
+        if (s.modal === 'safetySave') {transferDemoFile = transferBuildDemoFile('backup',s.protected);s.saved = true;s.modal = null;s.password = '';s.repeat = '';paintInteractive();return;}
+        transferDemoFile = transferBuildDemoFile(s.exportKind,s.protected);
+        s.modal = null;s.success = 'export';s.password = '';s.repeat = '';transferGo('success');return;
+      }
+      if (action === 'review' && !transferTaskChoicesReady()) return;
+      if (action === 'apply') {if (s.step !== 'review') return;if (s.fileKind === 'backup' && s.mode === 'replace') {if (!s.confirmed || (!s.saved && !s.declined)) return;}else if (!transferTaskChoicesReady()) return;s.success = 'import';transferGo('success');return;}
+      transferGo(action);
+    };});
+  }
+
   function paintInteractive() {
     var root = document.getElementById('interactiveScreen');
     var detailCar = currentDetailCar();
@@ -2632,7 +3049,7 @@
       (detailCar && istate.taskForm ? taskScreenHtml(detailCar, istate.taskForm, { interactive: true, showErrors: istate.taskFormErrors, confirmDeleteTask: istate.confirmDeleteTask, iconPicker: istate.taskForm.icon || 'wrench', iconDialog: istate.iconDialog }) : '') +
       newScreenHtml({ interactive: true, form: istate.form, showErrors: istate.formErrors }, istate.taskBlocks) +
       settingsScreenHtml(istate.settings, { interactive: true, cars: cars, sold: soldCars }) +
-      licensesScreenHtml({ interactive: true, open: istate.licenseOpen });
+      licensesScreenHtml({ interactive: true, open: istate.licenseOpen }) + transferScreenHtml();
     root.parentElement.classList.add('interactive');
     wireInteractive();
     document.querySelectorAll('#interactiveScreen .view').forEach(function (v) {
@@ -2658,6 +3075,7 @@
 
   function wireInteractive() {
     var root = document.getElementById('interactiveScreen');
+    wireTransfer(root);
 
     root.querySelectorAll('[data-open-car]').forEach(function (row) {
       row.addEventListener('click', function () {
@@ -3325,6 +3743,7 @@
     setTimeout(function () { relaunching = false; relaunch(); }, 1200);
   });
   function relaunch() {
+    transferState = null;
     var st = istate.settings;
     var target = carById(st.openDefault ? st.defaultCarId : istate.lastOpenedCarId);
     istate.editingMileage = false; istate.editingBrand = false; istate.editingVin = false; istate.brandError = false;
