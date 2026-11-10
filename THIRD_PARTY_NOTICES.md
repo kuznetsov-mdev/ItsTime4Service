@@ -8,6 +8,12 @@ Each one is used under its own license.
 | [Kotlin standard library](https://github.com/JetBrains/kotlin) | Apache License 2.0 |
 | [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) | Apache License 2.0 |
 | [kotlinx-datetime](https://github.com/Kotlin/kotlinx-datetime) | Apache License 2.0 |
+| [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) | Apache License 2.0 |
+| [kotlinx-io](https://github.com/Kotlin/kotlinx-io) | Apache License 2.0 |
+| [cryptography-kotlin](https://github.com/whyoleg/cryptography-kotlin) | Apache License 2.0 |
+| [Bouncy Castle](https://www.bouncycastle.org/) | Bouncy Castle Licence |
+| [OpenSSL](https://github.com/openssl/openssl) | Apache License 2.0 |
+| [Native Builds](https://github.com/ensody/native-builds) | Apache License 2.0 |
 | [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform) (runtime, foundation, ui, material3, resources) | Apache License 2.0 |
 | [AndroidX](https://github.com/androidx/androidx) (core, appcompat, activity, lifecycle, navigation, work) | Apache License 2.0 |
 | [Koin](https://github.com/InsertKoinIO/koin) | Apache License 2.0 |
@@ -90,3 +96,31 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Bouncy Castle
+
+Pinned bcprov-jdk18on 1.83 license text, extracted from its LICENSE class.
+
+```
+Copyright (c) 2000-2023 The Legion of the Bouncy Castle Inc. (https://www.bouncycastle.org)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial
+portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+```
+
+## Transfer dependencies
+
+cryptography-kotlin 0.6.0 and OpenSSL 3.6.5 license texts are bundled from their pinned upstream releases. Native Builds distributes the OpenSSL static library under Apache License 2.0; its license is also included in the app resources. The app lists the transfer dependencies alongside the existing components.

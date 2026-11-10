@@ -5,6 +5,10 @@
 xcuserdata
 !src/**/build/
 local.properties
+.env
+.env.*
+google-services.json
+GoogleService-Info.plist
 *.jks
 *.keystore
 .idea

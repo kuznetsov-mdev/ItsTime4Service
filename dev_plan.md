@@ -372,6 +372,10 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 | 10 | `org.jetbrains.compose.ui:ui-test:1.12.1` (Compose UI-тесты) | `commonTest` |
 | 10 | `org.robolectric:robolectric:4.17`, `androidx.compose.ui:ui-test-manifest:1.12.1` (UI-тесты на JVM без эмулятора) | `androidHostTest` |
 
+
+| Export/import Task 1B / 4 | `dev.whyoleg.cryptography:cryptography-core:0.6.0`, JDK + JDK-BC + `org.bouncycastle:bcprov-jdk18on:1.83`, OpenSSL3 API + prebuilt-nativebuilds `0.6.0`, `com.ensody.nativebuilds:openssl-libcrypto` строго `3.6.5` | Этап 1B: test-only proof; этап 4: core в commonMain, явный JDK/BC в androidMain, API/nativebuilds/строгая libcrypto в iosMain. [История проверки](docs/research/transfer-format-compatibility.md) |
+| Export/import Task 4 | `org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0` | commonMain; JSON строки/вывод и ограниченный структурный reader, без нового Gradle plugin и аннотаций domain; [ADR](docs/adr/0001-transfer-json-codec.md) |
+
 ## Верификация
 
 - После этапа 2: превью всех компонентов в обеих темах рендерятся без ошибок (`./gradlew :shared:assembleDebug` или Preview в IDE).
@@ -421,6 +425,6 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 
 ## Export/import implementation checkpoint
 
-Реализованы неизвестное обслуживание и read-only полный/выборочный снимок SQLite. JSON/крипто зависимости ещё не подключены; кодек и импорт не реализованы.
+Реализованы неизвестное обслуживание, снимок, строгий JSON/валидатор и plain/encrypted конверт. Runtime crypto и JSON зависимости/лицензии подключены; импорт/системные файлы/native UI ещё не реализованы.
 
-Проверка логического коммита: Android host suite 539 тестов, 0 failures/errors/skips; iOS production/test compilation — PASS. gradle-run workflow bbbe2f2c094da4f66d63c2ae8e8e419c, sequence 2.
+Проверка логического коммита: Android host suite 574 тестов, 0 failures/errors/skips; iOS production/test compilation — PASS. gradle-run workflow bbbe2f2c094da4f66d63c2ae8e8e419c, sequence 3.

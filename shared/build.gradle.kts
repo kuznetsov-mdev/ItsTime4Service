@@ -20,6 +20,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "Shared"
             isStatic = true
+            binaryOption("bundleId", "ru.kuznetsov.itstime4service.shared")
         }
     }
     
@@ -46,6 +47,9 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
+            implementation(libs.cryptography.jdk)
+            implementation(libs.cryptography.jdk.bc)
+            implementation(libs.bouncycastle)
             implementation(libs.compose.uiToolingPreview)
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.android)
@@ -56,8 +60,12 @@ kotlin {
         }
         iosMain.dependencies {
             implementation(libs.sqldelight.nativeDriver)
+            implementation(libs.cryptography.openssl3.api)
+            implementation(libs.cryptography.openssl3.nativebuilds)
+            implementation(libs.openssl.libcrypto)
         }
         commonMain.dependencies {
+            implementation(libs.cryptography.core)
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
@@ -77,16 +85,26 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.sqldelight.runtime)
             implementation(libs.sqldelight.coroutinesExtensions)
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
+            implementation(libs.cryptography.core)
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.compose.uiTest)
         }
         getByName("androidHostTest").dependencies {
+            implementation(libs.cryptography.jdk)
+            implementation(libs.cryptography.jdk.bc)
+            implementation(libs.bouncycastle)
             implementation(libs.sqldelight.sqliteDriver)
             implementation(libs.robolectric)
             implementation(libs.androidx.compose.uiTestManifest)
+        }
+        iosTest.dependencies {
+            implementation(libs.cryptography.openssl3.api)
+            implementation(libs.cryptography.openssl3.nativebuilds)
+            implementation(libs.openssl.libcrypto)
         }
     }
 }
