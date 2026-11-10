@@ -35,7 +35,7 @@ class TaskFieldsTest {
     fun withoutRecordOnlyNameAndIntervalAreRequired() {
         assertTrue(oil.isValid)
         val task = oil.toNewTask(DistanceUnit.KILOMETERS)!!
-        assertEquals(0, task.lastDoneKm)
+        assertNull(task.lastDoneKm)
         assertNull(task.lastDoneDate)
         assertNull(task.record)
     }
@@ -98,4 +98,20 @@ class TaskFieldsTest {
         assertEquals(16_093_438, task.intervalKm)
         assertEquals(9_999_999, task.intervalKm.kmIn(DistanceUnit.MILES))
     }
+    @Test
+    fun unknownChoiceDropsFactsWithoutCreatingHistory() {
+        val fields = oil.copy(lastDoneKm = "80000", lastDoneDate = "01032026", unknownService = true)
+        val task = fields.toNewTask(DistanceUnit.KILOMETERS)!!
+        assertNull(task.lastDoneKm)
+        assertNull(task.lastDoneDate)
+        assertNull(task.record)
+    }
+
+    @Test
+    fun explicitZeroIsKnownAndIndependentDateSurvives() {
+        val task = oil.copy(lastDoneKm = "0", lastDoneDate = "01032026").toNewTask(DistanceUnit.KILOMETERS)!!
+        assertEquals(0, task.lastDoneKm)
+        assertEquals(LocalDate(2026, 3, 1), task.lastDoneDate)
+    }
+
 }

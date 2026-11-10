@@ -9,7 +9,8 @@ CREATE TABLE service_history (
     task_id TEXT,
     comment TEXT,
     prev_last_done_km INTEGER,
-    prev_last_done_date TEXT
+    prev_last_done_date TEXT,
+    rollback_available INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0
 );
 
 CREATE INDEX service_history_car_id ON service_history (car_id);
@@ -24,8 +25,8 @@ countByCar:
 SELECT COUNT(*) FROM service_history WHERE car_id = ?;
 
 insert:
-INSERT INTO service_history (id, car_id, task_name, date, mileage_km, cost_rub, service_name, task_id, comment, prev_last_done_km, prev_last_done_date)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO service_history (id, car_id, task_name, date, mileage_km, cost_rub, service_name, task_id, comment, prev_last_done_km, prev_last_done_date, rollback_available)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 update:
 UPDATE service_history

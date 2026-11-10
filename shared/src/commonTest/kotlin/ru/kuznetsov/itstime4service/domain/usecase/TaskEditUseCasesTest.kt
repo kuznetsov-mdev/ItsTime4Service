@@ -60,11 +60,11 @@ class TaskEditUseCasesTest {
     }
 
     @Test
-    fun typedDateReachesRecordEvenWhenTaskDropsIt() = runTest {
+    fun typedDateIsKeptWithoutTimeInterval() = runTest {
         updateTask("kia", "oil", edit(intervalMonths = null, lastDoneDate = LocalDate(2026, 2, 20)))
 
         val (task, recordDate) = repository.updatedTasks.single()
-        assertNull(task.lastDoneDate)
+        assertEquals(LocalDate(2026, 2, 20), task.lastDoneDate)
         assertEquals(LocalDate(2026, 2, 20), recordDate)
     }
 }

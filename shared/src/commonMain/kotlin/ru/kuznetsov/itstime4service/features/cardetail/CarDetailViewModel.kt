@@ -230,6 +230,7 @@ class CarDetailViewModel(
             mileageKm = mileageKm,
             dueCount = alerts.due,
             soonCount = alerts.soon,
+            recommendedCount = alerts.recommended,
             taskCount = alerts.taskCount,
             tasks = sortedTaskStats(this, today).map { (task, stat) ->
                 TaskItem(

@@ -16,6 +16,8 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.v2.runComposeUiTest
+import itstime4service.shared.generated.resources.service_unknown
+import itstime4service.shared.generated.resources.service_specify
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_cancel
 import itstime4service.shared.generated.resources.action_pick_task_icon
@@ -50,6 +52,8 @@ class TaskFormScreenTest : UiTest() {
     private val hasError = SemanticsMatcher.keyIsDefined(SemanticsProperties.Error)
 
     private fun ComposeUiTest.show(state: TaskFormUiState) = setContent {
+        texts["unknown"] = stringResource(Res.string.service_unknown)
+        texts["specify"] = stringResource(Res.string.service_specify).uppercase()
         texts["delete"] = stringResource(Res.string.action_remove_task)
         texts["record"] = stringResource(Res.string.task_create_record)
         texts["service"] = stringResource(Res.string.field_service_name)
@@ -153,4 +157,20 @@ class TaskFormScreenTest : UiTest() {
         assertTrue(typed!!.name.contains("Motul") && typed!!.name.contains("Масло"))
         assertEquals(listOf("save"), calls)
     }
+    @Test
+    fun unknownChoiceReachesFieldsAndDisablesRecordCreation() = runComposeUiTest {
+        show(newTask(TaskFields(name = "Oil", intervalKm = "10000", createsRecord = true, lastDoneKm = "80000", lastDoneDate = "01032026")))
+        onNodeWithText(texts.getValue("unknown")).performScrollTo().performClick()
+        assertTrue(typed!!.unknownService)
+        assertEquals(false, typed!!.createsRecord)
+    }
+
+    @Test
+    fun unknownStateHidesFactInputsAndHistoryCreation() = runComposeUiTest {
+        show(newTask(TaskFields(name = "Oil", intervalKm = "10000", unknownService = true)))
+        onAllNodesWithText(texts.getValue("record")).assertCountEquals(0)
+        onAllNodesWithText(texts.getValue("specify")).assertCountEquals(0)
+        onNodeWithText(texts.getValue("unknown")).assertExists()
+    }
+
 }

@@ -37,14 +37,14 @@ class PlanRemindersUseCase(
                 for (task in car.tasks) {
                     val stat = calculateTaskStatus(car.mileageKm, task, day)
                     val allowedFrom = nextAllowedDay[task.id]
-                    if (stat.status == TaskStatus.OK || (allowedFrom != null && day < allowedFrom)) continue
+                    if (!stat.hasKnownReminder || (allowedFrom != null && day < allowedFrom)) continue
                     if (plan.size == MAX_REMINDERS) return plan
                     plan += PlannedReminder(
                         carId = car.id,
                         taskId = task.id,
                         carBrand = car.brand,
                         taskName = task.name,
-                        status = stat.status,
+                        status = if (stat.status == TaskStatus.RECOMMENDED) TaskStatus.SOON else stat.status,
                         remainingKm = stat.remainingKm,
                         remainingMonths = stat.remainingMonths,
                         fireAt = LocalDateTime(day, settings.reminderTime),

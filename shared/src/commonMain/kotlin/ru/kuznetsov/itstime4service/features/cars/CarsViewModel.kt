@@ -101,9 +101,10 @@ class CarsViewModel(
             status = alerts.worstStatus,
             dueCount = alerts.due,
             soonCount = alerts.soon,
+            recommendedCount = alerts.recommended,
             taskCount = alerts.taskCount,
             upcomingTasks = sortedTaskStats(this, today).take(CARD_LINES).map { (task, stat) ->
-                UpcomingTask(name = task.name, remainingKm = stat.remainingKm, status = stat.status)
+                UpcomingTask(name = task.name, remainingKm = stat.remainingKm, status = stat.status, remainingMonths = stat.remainingMonths)
             },
             recentRecords = history.take(CARD_LINES).map { RecentRecord(taskName = it.entry.taskName, date = it.entry.date) },
             plateLook = plate?.let { detectPlateStyle(it, deviceRegion()).toLook(it) },

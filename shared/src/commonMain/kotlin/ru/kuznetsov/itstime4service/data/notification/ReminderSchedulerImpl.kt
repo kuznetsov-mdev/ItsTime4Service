@@ -2,6 +2,7 @@ package ru.kuznetsov.itstime4service.data.notification
 
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
+import itstime4service.shared.generated.resources.task_remaining_months
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.app_name
 import itstime4service.shared.generated.resources.distance_mi
@@ -47,11 +48,13 @@ class ReminderSchedulerImpl(
 
     private suspend fun stateText(reminder: PlannedReminder, distanceUnit: DistanceUnit): String {
         val remainingMonths = reminder.remainingMonths
+        val remainingKm = reminder.remainingKm
         return when {
-            reminder.remainingKm <= 0 ->
-                text(Res.string.task_overdue_by, listOf(distanceText(-reminder.remainingKm, distanceUnit)))
+            remainingKm != null && remainingKm <= 0 ->
+                text(Res.string.task_overdue_by, listOf(distanceText(-remainingKm, distanceUnit)))
             remainingMonths != null && remainingMonths <= 0 -> text(Res.string.task_time_expired, emptyList())
-            else -> text(Res.string.task_remaining, listOf(distanceText(reminder.remainingKm, distanceUnit)))
+            remainingKm != null -> text(Res.string.task_remaining, listOf(distanceText(remainingKm, distanceUnit)))
+            else -> text(Res.string.task_remaining_months, listOf(requireNotNull(remainingMonths)))
         }
     }
 

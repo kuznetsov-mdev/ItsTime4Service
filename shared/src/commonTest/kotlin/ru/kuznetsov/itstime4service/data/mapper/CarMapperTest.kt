@@ -21,6 +21,7 @@ class CarMapperTest {
         plate = "А123ВС77",
         plate_hidden = plateHidden,
         vin_hidden = vinHidden,
+        maintenance_description = null,
     )
 
     @Test

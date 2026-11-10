@@ -15,29 +15,28 @@ import kotlin.math.roundToInt
  */
 class CalculateTaskStatusUseCase {
     operator fun invoke(mileageKm: Int, task: MaintenanceTask, today: LocalDate): TaskStat {
-        val dueAtKm = task.lastDoneKm + task.intervalKm
-        val remainingKm = dueAtKm - mileageKm
-        val kmStatus = statusOf(remainingKm, task.reminderWindowKm)
-        val progress = if (task.intervalKm > 0) {
-            ((mileageKm - task.lastDoneKm).toFloat() / task.intervalKm).coerceIn(0f, 1f)
-        } else {
-            0f
+        val dueAtKm = task.lastDoneKm?.let { it + task.intervalKm }
+        val remainingKm = dueAtKm?.minus(mileageKm)
+        val progress = task.lastDoneKm?.let { lastDone ->
+            if (task.intervalKm > 0) ((mileageKm - lastDone).toFloat() / task.intervalKm).coerceIn(0f, 1f) else 0f
         }
-
-        val intervalMonths = task.intervalMonths
-        val lastDoneDate = task.lastDoneDate
-        if (intervalMonths == null || intervalMonths <= 0 || lastDoneDate == null) {
-            return TaskStat(dueAtKm, remainingKm, remainingMonths = null, status = kmStatus, progress = progress)
-        }
-
-        val reminderMonths = if (task.intervalKm > 0) {
+        val intervalMonths = task.intervalMonths?.takeIf { it > 0 }
+        val remainingMonths = intervalMonths?.let { months -> task.lastDoneDate?.let { months - monthsBetween(it, today) } }
+        val reminderMonths = if (intervalMonths != null && task.intervalKm > 0) {
             maxOf(1, (intervalMonths * task.reminderWindowKm.toDouble() / task.intervalKm).roundToInt())
-        } else {
-            1
+        } else 1
+        val kmStatus = remainingKm?.let { statusOf(it, task.reminderWindowKm) }
+        val timeStatus = remainingMonths?.let { statusOf(it, reminderMonths) }
+        val missing = task.lastDoneKm == null || (intervalMonths != null && task.lastDoneDate == null)
+        val status = when {
+            kmStatus == TaskStatus.DUE || timeStatus == TaskStatus.DUE -> TaskStatus.DUE
+            missing -> TaskStatus.RECOMMENDED
+            kmStatus == TaskStatus.SOON || timeStatus == TaskStatus.SOON -> TaskStatus.SOON
+            else -> TaskStatus.OK
         }
-        val remainingMonths = intervalMonths - monthsBetween(lastDoneDate, today)
-        val timeStatus = statusOf(remainingMonths, reminderMonths)
-        return TaskStat(dueAtKm, remainingKm, remainingMonths, maxOf(kmStatus, timeStatus), progress)
+        val knownReminder = kmStatus == TaskStatus.SOON || kmStatus == TaskStatus.DUE ||
+            timeStatus == TaskStatus.SOON || timeStatus == TaskStatus.DUE
+        return TaskStat(dueAtKm, remainingKm, remainingMonths, status, progress, knownReminder)
     }
 
     private fun statusOf(remaining: Int, reminderWindow: Int): TaskStatus = when {

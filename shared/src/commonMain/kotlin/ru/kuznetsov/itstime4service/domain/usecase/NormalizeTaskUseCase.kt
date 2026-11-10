@@ -7,7 +7,7 @@ import kotlin.math.roundToInt
  * Validates a task entered in the car form and brings it to the shape that is stored.
  * Returns `null` when the name is blank or the mileage interval is not positive.
  * The name is trimmed; a task without a reminder window gets 15% of its interval;
- * a non-positive time interval counts as absent; a last-done date is kept only for tasks with a time interval.
+ * a non-positive time interval counts as absent; a known last-done date is kept independently of the time interval.
  * A task with a history record is also rejected when its last-done mileage is not positive; the record's blank texts
  * and a non-positive cost become `null`.
  */
@@ -15,13 +15,13 @@ class NormalizeTaskUseCase {
     operator fun invoke(task: NewMaintenanceTask): NewMaintenanceTask? {
         val name = task.name.trim()
         if (name.isEmpty() || task.intervalKm <= 0) return null
-        if (task.record != null && task.lastDoneKm <= 0) return null
+        if (task.record != null && (task.lastDoneKm ?: 0) <= 0) return null
         val intervalMonths = task.intervalMonths?.takeIf { it > 0 }
         return task.copy(
             name = name,
             reminderWindowKm = task.reminderWindowKm ?: (task.intervalKm * DEFAULT_REMINDER_SHARE).roundToInt(),
             intervalMonths = intervalMonths,
-            lastDoneDate = task.lastDoneDate.takeIf { intervalMonths != null },
+            lastDoneDate = task.lastDoneDate,
             record = task.record?.let {
                 it.copy(
                     serviceName = it.serviceName.orNullIfBlank(),

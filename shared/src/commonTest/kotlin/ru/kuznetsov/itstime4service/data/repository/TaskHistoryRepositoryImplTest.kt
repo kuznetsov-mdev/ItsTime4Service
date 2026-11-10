@@ -76,13 +76,13 @@ class TaskHistoryRepositoryImplTest {
     }
 
     @Test
-    fun markingDoneKeepsDateOfTaskWithoutTimeInterval() = runTest {
+    fun markingDoneStoresDateOfTaskWithoutTimeInterval() = runTest {
         val id = addKia(oil(intervalMonths = null))
         val taskId = car(id).tasks.single().id
 
         taskHistory.markTaskDone(id, taskId, LocalDate(2026, 10, 20), null, null, null)
 
-        assertNull(car(id).tasks.single().lastDoneDate)
+        assertEquals(LocalDate(2026, 10, 20), car(id).tasks.single().lastDoneDate)
     }
 
     @Test
@@ -301,4 +301,46 @@ class TaskHistoryRepositoryImplTest {
         assertEquals(1, car(id).tasks.size)
         assertEquals(1, records(id).size)
     }
+    @Test
+    fun undoRestoresUnknownService() = runTest {
+        val unknown = oil().copy(lastDoneKm = null, lastDoneDate = null)
+        val id = addKia(unknown)
+        val taskId = car(id).tasks.single().id
+        assertTrue(records(id).isEmpty())
+        assertTrue(taskHistory.markTaskDone(id, taskId, doneDate, null, null, null))
+        val mark = records(id).single()
+        assertTrue(mark.rollbackAvailable)
+        assertNull(mark.prevLastDoneKm)
+        assertNull(mark.prevLastDoneDate)
+        assertTrue(taskHistory.unmarkTaskDone(id, taskId))
+        assertNull(car(id).tasks.single().lastDoneKm)
+        assertNull(car(id).tasks.single().lastDoneDate)
+        assertTrue(records(id).isEmpty())
+    }
+
+    @Test
+    fun unknownMileageKeepsIndependentDateAndDescription() = runTest {
+        val id = taskHistory.addCar(NewCar("Kia", 84300, null,
+            listOf(oil().copy(lastDoneKm = null)), maintenanceDescription = "Author schedule"))
+        val task = car(id).tasks.single()
+        assertNull(task.lastDoneKm)
+        assertEquals(doneDate, task.lastDoneDate)
+        assertEquals("Author schedule", car(id).maintenanceDescription)
+        taskHistory.markTaskDone(id, task.id, LocalDate(2026, 11, 10), null, null, null)
+        taskHistory.unmarkTaskDone(id, task.id)
+        assertNull(car(id).tasks.single().lastDoneKm)
+        assertEquals(doneDate, car(id).tasks.single().lastDoneDate)
+    }
+
+    @Test
+    fun manualHistoryDoesNotBecomeUndoableOrPopulateUnknown() = runTest {
+        val id = addKia(oil().copy(lastDoneKm = null, lastDoneDate = null))
+        val taskId = car(id).tasks.single().id
+        history.addEntry(id, "Oil", doneDate, 84300, null, null, null)
+        assertFalse(records(id).single().rollbackAvailable)
+        assertFalse(taskHistory.unmarkTaskDone(id, taskId))
+        assertNull(car(id).tasks.single().lastDoneKm)
+        assertEquals(1, records(id).size)
+    }
+
 }

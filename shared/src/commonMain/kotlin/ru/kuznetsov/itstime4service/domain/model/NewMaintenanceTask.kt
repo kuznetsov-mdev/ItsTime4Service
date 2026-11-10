@@ -11,7 +11,7 @@ import kotlinx.datetime.LocalDate
 data class NewMaintenanceTask(
     val name: String,
     val intervalKm: Int,
-    val lastDoneKm: Int = 0,
+    val lastDoneKm: Int? = null,
     val reminderWindowKm: Int? = null,
     val intervalMonths: Int? = null,
     val lastDoneDate: LocalDate? = null,

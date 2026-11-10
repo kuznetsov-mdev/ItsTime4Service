@@ -65,7 +65,7 @@ class TaskHistoryRulesTest {
     fun clearedLastDoneMileageKeepsRecordMileage() {
         val newDate = LocalDate(2026, 2, 20)
 
-        assertEquals(record("r", 80_000, newDate), TaskHistoryRules.entryAfterTaskEdit(listOf(record("r")), oil, 0, newDate))
+        assertEquals(record("r", 80_000, newDate), TaskHistoryRules.entryAfterTaskEdit(listOf(record("r")), oil, null, newDate))
     }
 
     @Test
@@ -127,4 +127,9 @@ class TaskHistoryRulesTest {
 
         assertFalse(TaskHistoryRules.taskFollowsEntryEdit(listOf(manual), manual, manual.copy(mileageKm = 79_000), null))
     }
+    @Test
+    fun explicitZeroMovesLinkedRecordToKnownZero() {
+        assertEquals(0, TaskHistoryRules.entryAfterTaskEdit(listOf(record("r")), oil, 0, doneDate)?.mileageKm)
+    }
+
 }

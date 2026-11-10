@@ -1,5 +1,6 @@
 package ru.kuznetsov.itstime4service.features.cardetail
 
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
+import itstime4service.shared.generated.resources.task_remaining_months
+import itstime4service.shared.generated.resources.service_unknown
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_done_unmark
 import itstime4service.shared.generated.resources.action_edit_mileage
@@ -135,8 +138,9 @@ internal fun MileageCard(
             StatusDonut(
                 due = car.dueCount,
                 soon = car.soonCount,
+                recommended = car.recommendedCount,
                 total = car.taskCount,
-                contentDescription = stringResource(Res.string.alert_count_due, car.dueCount + car.soonCount, car.taskCount),
+                contentDescription = stringResource(Res.string.alert_count_due, car.dueCount + car.soonCount + car.recommendedCount, car.taskCount),
             )
         }
         Row(
@@ -204,7 +208,8 @@ internal fun TaskCard(
     val typography = ItsTime4ServiceTheme.typography
     val tier = task.status.toTier()
     val shape = RoundedCornerShape(ItsTime4ServiceTheme.dimens.radiusL)
-    val remaining = kotlin.math.abs(task.remainingKm).kmIn(distanceUnit).grouped()
+    val remainingKm = task.remainingKm
+    val remaining = remainingKm?.let { kotlin.math.abs(it).kmIn(distanceUnit).grouped() } ?: stringResource(Res.string.service_unknown)
     val unit = unitGenitive(distanceUnit)
     Column(
         modifier = modifier
@@ -227,7 +232,7 @@ internal fun TaskCard(
                     color = tier.color,
                 )
                 Text(
-                    stringResource(if (task.remainingKm <= 0) Res.string.task_overdue_suffix else Res.string.task_left_suffix, unit),
+                    if (remainingKm != null) stringResource(if (remainingKm <= 0) Res.string.task_overdue_suffix else Res.string.task_left_suffix, unit) else "",
                     style = typography.sans.copy(fontSize = 11.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold),
                     color = tier.color,
                     modifier = Modifier.padding(start = 3.dp, bottom = 1.dp),
@@ -270,7 +275,9 @@ internal fun TaskCard(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ProgressBar(value = task.progress, tier = tier, modifier = Modifier.weight(1f))
+            val progress = task.progress
+            if (progress != null) ProgressBar(value = progress, tier = tier, modifier = Modifier.weight(1f))
+            else Spacer(Modifier.weight(1f))
             DoneCircle(isDone = task.isDone, onClick = onMarkDone)
         }
     }
@@ -305,7 +312,7 @@ private fun taskMeta(task: TaskItem, distanceUnit: DistanceUnit): String {
         parts += if (remainingMonths <= 0) {
             stringResource(Res.string.task_time_expired)
         } else {
-            stringResource(Res.string.task_or_months, remainingMonths)
+            stringResource(if (task.remainingKm == null) Res.string.task_remaining_months else Res.string.task_or_months, remainingMonths)
         }
     }
     return parts.joinToString(" · ")

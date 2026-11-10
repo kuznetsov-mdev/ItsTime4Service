@@ -33,7 +33,7 @@ class TaskHistoryRepositoryImpl(
     override suspend fun addCar(car: NewCar): String = withContext(dispatcher) {
         val carId = Uuid.random().toString()
         carQueries.transaction {
-            carQueries.insert(carId, car.brand, car.mileageKm.toLong(), car.vin, car.plate)
+            carQueries.insert(carId, car.brand, car.mileageKm.toLong(), car.vin, car.plate, car.maintenanceDescription)
             car.tasks.forEach { insertTask(carId, it) }
         }
         carId
@@ -69,7 +69,7 @@ class TaskHistoryRepositoryImpl(
             taskQueries.update(
                 name = task.name,
                 interval_km = task.intervalKm.toLong(),
-                last_done_km = task.lastDoneKm.toLong(),
+                last_done_km = task.lastDoneKm?.toLong(),
                 reminder_window_km = task.reminderWindowKm.toLong(),
                 interval_months = task.intervalMonths?.toLong(),
                 last_done_date = task.lastDoneDate?.toString(),
@@ -92,7 +92,7 @@ class TaskHistoryRepositoryImpl(
         carQueries.transactionWithResult {
             val car = carQueries.selectById(carId).executeAsOneOrNull() ?: return@transactionWithResult false
             val task = taskQueries.selectById(taskId, carId).executeAsOneOrNull() ?: return@transactionWithResult false
-            val lastDoneDate = if (task.interval_months != null) date.toString() else task.last_done_date
+            val lastDoneDate = date.toString()
             taskQueries.markDone(car.mileage_km, lastDoneDate, taskId, carId)
             historyQueries.insert(
                 id = Uuid.random().toString(),
@@ -106,6 +106,7 @@ class TaskHistoryRepositoryImpl(
                 comment = comment,
                 prev_last_done_km = task.last_done_km,
                 prev_last_done_date = task.last_done_date,
+                rollback_available = true,
             )
             true
         }
@@ -117,8 +118,8 @@ class TaskHistoryRepositoryImpl(
             val tasks = taskQueries.selectByCar(carId).executeAsList()
             val entry = TaskHistoryRules.doneMarks(car.toDomain(tasks), history(carId))[taskId]
                 ?: return@transactionWithResult false
-            val prevLastDoneKm = entry.prevLastDoneKm ?: return@transactionWithResult false
-            taskQueries.markDone(prevLastDoneKm.toLong(), entry.prevLastDoneDate?.toString(), taskId, carId)
+            val prevLastDoneKm = entry.prevLastDoneKm
+            taskQueries.markDone(prevLastDoneKm?.toLong(), entry.prevLastDoneDate?.toString(), taskId, carId)
             historyQueries.deleteById(entry.id)
             true
         }
@@ -139,8 +140,8 @@ class TaskHistoryRepositoryImpl(
             val taskFollows = TaskHistoryRules.taskFollowsEntryEdit(history(original.carId), original, stored, task)
             updateEntryRow(stored)
             if (taskFollows && task != null) {
-                val lastDoneDate = if (task.intervalMonths != null) stored.date else task.lastDoneDate
-                taskQueries.markDone(stored.mileageKm.toLong(), lastDoneDate?.toString(), task.id, original.carId)
+                val lastDoneDate = stored.date
+                taskQueries.markDone(stored.mileageKm.toLong(), lastDoneDate.toString(), task.id, original.carId)
             }
             true
         }
@@ -168,25 +169,27 @@ class TaskHistoryRepositoryImpl(
             car_id = carId,
             name = task.name,
             interval_km = task.intervalKm.toLong(),
-            last_done_km = task.lastDoneKm.toLong(),
+            last_done_km = task.lastDoneKm?.toLong(),
             reminder_window_km = (task.reminderWindowKm ?: 0).toLong(),
             interval_months = task.intervalMonths?.toLong(),
             last_done_date = task.lastDoneDate?.toString(),
             icon = task.icon?.name,
         )
         val record = task.record ?: return
+        val recordMileage = requireNotNull(task.lastDoneKm)
         historyQueries.insert(
             id = Uuid.random().toString(),
             car_id = carId,
             task_name = task.name,
             date = record.date.toString(),
-            mileage_km = task.lastDoneKm.toLong(),
+            mileage_km = recordMileage.toLong(),
             cost_rub = record.costRub?.toLong(),
             service_name = record.serviceName,
             task_id = taskId,
             comment = record.comment,
             prev_last_done_km = null,
             prev_last_done_date = null,
+            rollback_available = false,
         )
     }
 }

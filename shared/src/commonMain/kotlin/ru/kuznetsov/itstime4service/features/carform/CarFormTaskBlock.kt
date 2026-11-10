@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
+import itstime4service.shared.generated.resources.service_unknown
+import itstime4service.shared.generated.resources.service_specify
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_collapse_task
 import itstime4service.shared.generated.resources.action_expand_task
@@ -51,6 +53,7 @@ import ru.kuznetsov.itstime4service.ui.components.fields.LabeledMiniField
 import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
 import ru.kuznetsov.itstime4service.ui.components.indicators.AppCheckbox
 import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
+import ru.kuznetsov.itstime4service.ui.components.fields.FieldLabel
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
 import ru.kuznetsov.itstime4service.ui.format.grouped
 import ru.kuznetsov.itstime4service.ui.format.unitGenitive
@@ -165,47 +168,55 @@ internal fun TaskBlock(
                 modifier = Modifier.weight(1f),
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-            LabeledMiniField(
-                label = stringResource(Res.string.field_last_done, unitLabel(distanceUnit)),
-                value = fields.lastDoneKm,
-                onValueChange = { onChange(fields.copy(lastDoneKm = it)) },
-                onDone = onDone,
-                placeholder = "78000",
-                keyboardType = KeyboardType.Number,
-                isError = showErrors && fields.isLastDoneMissing,
-                required = fields.createsRecord,
-                modifier = Modifier.weight(1f),
-            )
-            LabeledMiniField(
-                label = stringResource(Res.string.field_last_done_date),
-                value = fields.lastDoneDate,
-                onValueChange = { onChange(fields.copy(lastDoneDate = it)) },
-                onDone = onDone,
-                placeholder = stringResource(Res.string.date_placeholder),
-                keyboardType = KeyboardType.Number,
-                isError = showErrors && fields.isLastDoneDateMissing,
-                required = fields.createsRecord,
-                visualTransformation = DateInputFormat.current.visualTransformation,
-                modifier = Modifier.weight(1f),
-            )
-        }
         AppCheckbox(
-            checked = fields.createsRecord,
-            onCheckedChange = onRecordToggle,
-            label = stringResource(Res.string.task_create_record),
+            checked = fields.unknownService,
+            onCheckedChange = { onChange(fields.copy(unknownService = it, createsRecord = false)) },
+            label = stringResource(Res.string.service_unknown),
         )
-        if (fields.createsRecord) {
-            ServiceRecordFields(
-                serviceName = fields.serviceName,
-                cost = fields.cost,
-                comment = fields.comment,
-                onServiceNameChange = { onChange(fields.copy(serviceName = it)) },
-                onCostChange = { onChange(fields.copy(cost = it)) },
-                onCommentChange = { onChange(fields.copy(comment = it)) },
-                onDone = onDone,
-                modifier = Modifier.fillMaxWidth(),
+        if (!fields.unknownService) {
+            FieldLabel(stringResource(Res.string.service_specify))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
+                LabeledMiniField(
+                    label = stringResource(Res.string.field_last_done, unitLabel(distanceUnit)),
+                    value = fields.lastDoneKm,
+                    onValueChange = { onChange(fields.copy(lastDoneKm = it)) },
+                    onDone = onDone,
+                    placeholder = "78000",
+                    keyboardType = KeyboardType.Number,
+                    isError = showErrors && fields.isLastDoneMissing,
+                    required = fields.createsRecord,
+                    modifier = Modifier.weight(1f),
+                )
+                LabeledMiniField(
+                    label = stringResource(Res.string.field_last_done_date),
+                    value = fields.lastDoneDate,
+                    onValueChange = { onChange(fields.copy(lastDoneDate = it)) },
+                    onDone = onDone,
+                    placeholder = stringResource(Res.string.date_placeholder),
+                    keyboardType = KeyboardType.Number,
+                    isError = showErrors && fields.isLastDoneDateMissing,
+                    required = fields.createsRecord,
+                    visualTransformation = DateInputFormat.current.visualTransformation,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            AppCheckbox(
+                checked = fields.createsRecord,
+                onCheckedChange = onRecordToggle,
+                label = stringResource(Res.string.task_create_record),
             )
+            if (fields.createsRecord) {
+                ServiceRecordFields(
+                    serviceName = fields.serviceName,
+                    cost = fields.cost,
+                    comment = fields.comment,
+                    onServiceNameChange = { onChange(fields.copy(serviceName = it)) },
+                    onCostChange = { onChange(fields.copy(cost = it)) },
+                    onCommentChange = { onChange(fields.copy(comment = it)) },
+                    onDone = onDone,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
         LabeledMiniField(
             label = stringResource(Res.string.field_reminder_window, unitGenitive(distanceUnit)),
@@ -222,7 +233,7 @@ internal fun TaskBlock(
 @Composable
 private fun collapsedSummary(fields: TaskFields, distanceUnit: DistanceUnit): String {
     val interval = fields.intervalKm.toIntOrNull()?.takeIf { it > 0 }
-    val lastDone = fields.lastDoneKm.toIntOrNull()
+    val lastDone = fields.lastDoneKm.toIntOrNull().takeUnless { fields.unknownService }
     val unit = unitGenitive(distanceUnit)
     return listOf(
         interval?.let { stringResource(Res.string.task_every, "${it.grouped()} $unit") }

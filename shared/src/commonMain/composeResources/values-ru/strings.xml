@@ -228,4 +228,8 @@
     <string name="load_failed_text">Записи на месте, их не удалось прочитать. Попробуйте ещё раз.</string>
     <string name="retry">Повторить</string>
     <string name="field_required">Обязательное поле</string>
+    <string name="service_unknown">Не знаю</string>
+    <string name="service_specify">Указать пробег и дату</string>
+    <string name="status_recommended">Рекомендовано обслужить</string>
+    <string name="task_remaining_months">Осталось %1$d мес</string>
 </resources>

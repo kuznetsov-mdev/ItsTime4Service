@@ -43,6 +43,9 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.abs
 import kotlinx.datetime.number
 import org.jetbrains.compose.resources.stringResource
+import itstime4service.shared.generated.resources.task_remaining_months
+import itstime4service.shared.generated.resources.task_time_expired
+import itstime4service.shared.generated.resources.service_unknown
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_add_car
 import itstime4service.shared.generated.resources.action_hide_plate
@@ -188,8 +191,9 @@ internal fun CarCard(
             StatusDonut(
                 due = car.dueCount,
                 soon = car.soonCount,
+                recommended = car.recommendedCount,
                 total = car.taskCount,
-                contentDescription = stringResource(Res.string.alert_count_due, car.dueCount + car.soonCount, car.taskCount),
+                contentDescription = stringResource(Res.string.alert_count_due, car.dueCount + car.soonCount + car.recommendedCount, car.taskCount),
             )
         }
         Box(Modifier.fillMaxWidth().height(1.dp).background(colors.rule))
@@ -202,9 +206,17 @@ internal fun CarCard(
                 modifier = Modifier.weight(1f),
             ) {
                 car.upcomingTasks.forEach { task ->
+                    val remainingKm = task.remainingKm
+                    val remainingMonths = task.remainingMonths
+                    val remainingText = when {
+                        remainingKm != null -> (if (remainingKm <= 0) "−" else "") + abs(remainingKm).kmIn(distanceUnit).grouped()
+                        remainingMonths != null && remainingMonths <= 0 -> stringResource(Res.string.task_time_expired)
+                        remainingMonths != null -> stringResource(Res.string.task_remaining_months, remainingMonths)
+                        else -> stringResource(Res.string.service_unknown)
+                    }
                     CardLine(
                         text = task.name,
-                        value = (if (task.remainingKm <= 0) "−" else "") + abs(task.remainingKm).kmIn(distanceUnit).grouped(),
+                        value = remainingText,
                         valueColor = task.status.toTier().color,
                     )
                 }

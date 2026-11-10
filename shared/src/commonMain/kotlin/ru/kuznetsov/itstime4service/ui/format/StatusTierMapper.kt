@@ -7,4 +7,5 @@ fun TaskStatus.toTier(): StatusTier = when (this) {
     TaskStatus.OK -> StatusTier.Ok
     TaskStatus.SOON -> StatusTier.Soon
     TaskStatus.DUE -> StatusTier.Due
+    TaskStatus.RECOMMENDED -> StatusTier.Recommended
 }

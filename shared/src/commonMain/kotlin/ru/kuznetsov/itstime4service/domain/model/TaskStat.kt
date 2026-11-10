@@ -7,9 +7,10 @@ package ru.kuznetsov.itstime4service.domain.model
  * [progress] is the share of the mileage interval already driven, clamped to 0..1.
  */
 data class TaskStat(
-    val dueAtKm: Int,
-    val remainingKm: Int,
+    val dueAtKm: Int?,
+    val remainingKm: Int?,
     val remainingMonths: Int?,
     val status: TaskStatus,
-    val progress: Float,
+    val progress: Float?,
+    val hasKnownReminder: Boolean = status == TaskStatus.SOON || status == TaskStatus.DUE,
 )

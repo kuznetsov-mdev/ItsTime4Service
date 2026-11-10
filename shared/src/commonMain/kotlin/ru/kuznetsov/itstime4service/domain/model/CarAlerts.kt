@@ -8,12 +8,14 @@ data class CarAlerts(
     val soon: Int,
     val due: Int,
     val taskCount: Int,
+    val recommended: Int = 0,
 ) {
-    val total: Int get() = soon + due
+    val total: Int get() = soon + due + recommended
 
     val worstStatus: TaskStatus
         get() = when {
             due > 0 -> TaskStatus.DUE
+            recommended > 0 -> TaskStatus.RECOMMENDED
             soon > 0 -> TaskStatus.SOON
             else -> TaskStatus.OK
         }

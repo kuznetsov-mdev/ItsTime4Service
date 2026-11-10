@@ -224,4 +224,8 @@
     <string name="load_failed_text">Your records are still there, they just could not be read. Please try again.</string>
     <string name="retry">Retry</string>
     <string name="field_required">Required field</string>
+    <string name="service_unknown">I don’t know</string>
+    <string name="service_specify">Specify mileage and date</string>
+    <string name="status_recommended">Service recommended</string>
+    <string name="task_remaining_months">%1$d mo left</string>
 </resources>

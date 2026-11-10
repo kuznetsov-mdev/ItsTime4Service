@@ -6,7 +6,8 @@ CREATE TABLE cars (
     is_sold INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
     plate TEXT,
     plate_hidden INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
-    vin_hidden INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0
+    vin_hidden INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
+    maintenance_description TEXT
 );
 
 selectAll:
@@ -19,7 +20,7 @@ selectAllWithSold:
 SELECT * FROM cars ORDER BY is_sold, rowid;
 
 insert:
-INSERT INTO cars (id, brand, mileage_km, vin, plate) VALUES (?, ?, ?, ?, ?);
+INSERT INTO cars (id, brand, mileage_km, vin, plate, maintenance_description) VALUES (?, ?, ?, ?, ?, ?);
 
 updateMileage:
 UPDATE cars SET mileage_km = ? WHERE id = ?;

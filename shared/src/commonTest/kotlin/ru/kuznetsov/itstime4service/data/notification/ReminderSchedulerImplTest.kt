@@ -21,7 +21,7 @@ class ReminderSchedulerImplTest {
     private val scheduler = ReminderSchedulerImpl(queue) { resource, args -> "${resource.key}(${args.joinToString()})" }
     private val fireAt = LocalDateTime(2026, 10, 24, 9, 0)
 
-    private fun reminder(taskId: String = "oil", remainingKm: Int, remainingMonths: Int? = null) = PlannedReminder(
+    private fun reminder(taskId: String = "oil", remainingKm: Int?, remainingMonths: Int? = null) = PlannedReminder(
         carId = "kia",
         taskId = taskId,
         carBrand = "Kia",
@@ -94,6 +94,22 @@ class ReminderSchedulerImplTest {
         assertEquals(
             listOf(listOf("oil@2026-10-24T09:00", "pads@2026-10-27T09:00"), emptyList()),
             queue.calls.map { plan -> plan.map { it.id } },
+        )
+    }
+
+    @Test
+    fun knownTimeWithoutMileageUsesTimeText() = runTest {
+        assertEquals(
+            "notification_reminder_text(Kia, Oil, task_remaining_months(2))",
+            textOf(reminder(remainingKm = null, remainingMonths = 2)),
+        )
+    }
+
+    @Test
+    fun knownOverdueTimeWithoutMileageDoesNotInventDistance() = runTest {
+        assertEquals(
+            "notification_reminder_text(Kia, Oil, task_time_expired())",
+            textOf(reminder(remainingKm = null, remainingMonths = -1)),
         )
     }
 

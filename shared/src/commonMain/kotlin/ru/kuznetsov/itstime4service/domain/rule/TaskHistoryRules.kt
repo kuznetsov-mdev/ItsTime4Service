@@ -24,7 +24,7 @@ object TaskHistoryRules {
             ?.value
 
     fun doneMarks(car: Car, history: List<ServiceHistoryEntry>): Map<String, ServiceHistoryEntry> {
-        val marks = history.filter { it.carId == car.id && it.mileageKm == car.mileageKm && it.prevLastDoneKm != null }
+        val marks = history.filter { it.carId == car.id && it.mileageKm == car.mileageKm && it.rollbackAvailable }
         return car.tasks
             .filter { task -> task.lastDoneKm == car.mileageKm }
             .mapNotNull { task -> marks.lastOrNull { it.taskId == task.id }?.let { task.id to it } }
@@ -34,12 +34,12 @@ object TaskHistoryRules {
     fun entryAfterTaskEdit(
         history: List<ServiceHistoryEntry>,
         original: MaintenanceTask,
-        lastDoneKm: Int,
+        lastDoneKm: Int?,
         recordDate: LocalDate?,
     ): ServiceHistoryEntry? {
         val entry = linkedEntry(history, original) ?: return null
         return entry.copy(
-            mileageKm = lastDoneKm.takeIf { it > 0 && it != original.lastDoneKm } ?: entry.mileageKm,
+            mileageKm = lastDoneKm?.takeIf { it >= 0 && it != original.lastDoneKm } ?: entry.mileageKm,
             date = recordDate?.takeIf { it != original.lastDoneDate } ?: entry.date,
         ).takeIf { it != entry }
     }

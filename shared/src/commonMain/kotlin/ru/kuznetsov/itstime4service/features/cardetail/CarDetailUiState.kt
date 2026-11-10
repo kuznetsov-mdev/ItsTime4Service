@@ -57,6 +57,7 @@ data class CarDetails(
     val soonCount: Int,
     val taskCount: Int,
     val tasks: List<TaskItem>,
+    val recommendedCount: Int = 0,
 )
 
 /**
@@ -69,10 +70,10 @@ data class TaskItem(
     val id: String,
     val name: String,
     val intervalKm: Int,
-    val remainingKm: Int,
+    val remainingKm: Int?,
     val remainingMonths: Int?,
     val status: TaskStatus,
-    val progress: Float,
+    val progress: Float?,
     val isDone: Boolean = false,
     val icon: TaskIcon = TaskIcon.WRENCH,
 )

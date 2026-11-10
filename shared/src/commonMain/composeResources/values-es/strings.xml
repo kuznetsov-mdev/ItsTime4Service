@@ -226,4 +226,8 @@
     <string name="load_failed_text">Tus registros siguen ahí, solo no se pudieron leer. Inténtalo de nuevo.</string>
     <string name="retry">Reintentar</string>
     <string name="field_required">Campo obligatorio</string>
+    <string name="service_unknown">No lo sé</string>
+    <string name="service_specify">Indicar kilometraje y fecha</string>
+    <string name="status_recommended">Se recomienda mantenimiento</string>
+    <string name="task_remaining_months">Quedan %1$d meses</string>
 </resources>

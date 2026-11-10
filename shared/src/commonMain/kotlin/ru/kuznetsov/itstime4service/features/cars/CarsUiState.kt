@@ -37,6 +37,7 @@ data class CarItem(
     val status: TaskStatus,
     val dueCount: Int = 0,
     val soonCount: Int = 0,
+    val recommendedCount: Int = 0,
     val taskCount: Int = 0,
     val upcomingTasks: List<UpcomingTask> = emptyList(),
     val recentRecords: List<RecentRecord> = emptyList(),
@@ -49,8 +50,9 @@ data class CarItem(
  */
 data class UpcomingTask(
     val name: String,
-    val remainingKm: Int,
+    val remainingKm: Int?,
     val status: TaskStatus,
+    val remainingMonths: Int? = null,
 )
 
 /**

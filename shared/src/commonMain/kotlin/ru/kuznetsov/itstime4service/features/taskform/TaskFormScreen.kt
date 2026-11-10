@@ -31,6 +31,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import itstime4service.shared.generated.resources.service_unknown
+import itstime4service.shared.generated.resources.service_specify
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_add_more
 import itstime4service.shared.generated.resources.action_cancel
@@ -222,39 +224,47 @@ internal fun TaskFormContent(
                         )
                     }
                 }
-                Row(
-                    modifier = Modifier.padding(bottom = if (state.isEditing) 18.dp else 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.Bottom,
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        FieldLabel(
-                            stringResource(Res.string.field_last_done, unitLabel(state.distanceUnit)),
-                            required = fields.createsRecord,
-                        )
-                        AppNumberField(
-                            value = fields.lastDoneKm,
-                            onValueChange = { onFieldsChange(fields.copy(lastDoneKm = it)) },
-                            onDone = onSave,
-                            placeholder = "78000",
-                            isError = state.showErrors && fields.isLastDoneMissing,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                    Column(Modifier.weight(1f)) {
-                        FieldLabel(stringResource(Res.string.field_last_done_date_short), required = fields.createsRecord)
-                        AppNumberField(
-                            value = fields.lastDoneDate,
-                            onValueChange = { onFieldsChange(fields.copy(lastDoneDate = it)) },
-                            onDone = onSave,
-                            placeholder = stringResource(Res.string.date_placeholder),
-                            isError = state.showErrors && fields.isLastDoneDateMissing,
-                            visualTransformation = DateInputFormat.current.visualTransformation,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
+                AppCheckbox(
+                    checked = fields.unknownService,
+                    onCheckedChange = { onFieldsChange(fields.copy(unknownService = it, createsRecord = false)) },
+                    label = stringResource(Res.string.service_unknown),
+                )
+                if (!fields.unknownService) {
+                    FieldLabel(stringResource(Res.string.service_specify))
+                    Row(
+                        modifier = Modifier.padding(bottom = if (state.isEditing) 18.dp else 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.Bottom,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            FieldLabel(
+                                stringResource(Res.string.field_last_done, unitLabel(state.distanceUnit)),
+                                required = fields.createsRecord,
+                            )
+                            AppNumberField(
+                                value = fields.lastDoneKm,
+                                onValueChange = { onFieldsChange(fields.copy(lastDoneKm = it)) },
+                                onDone = onSave,
+                                placeholder = "78000",
+                                isError = state.showErrors && fields.isLastDoneMissing,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                        Column(Modifier.weight(1f)) {
+                            FieldLabel(stringResource(Res.string.field_last_done_date_short), required = fields.createsRecord)
+                            AppNumberField(
+                                value = fields.lastDoneDate,
+                                onValueChange = { onFieldsChange(fields.copy(lastDoneDate = it)) },
+                                onDone = onSave,
+                                placeholder = stringResource(Res.string.date_placeholder),
+                                isError = state.showErrors && fields.isLastDoneDateMissing,
+                                visualTransformation = DateInputFormat.current.visualTransformation,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
                     }
                 }
-                if (!state.isEditing) {
+                if (!state.isEditing && !fields.unknownService) {
                     AppCheckbox(
                         checked = fields.createsRecord,
                         onCheckedChange = onRecordToggle,

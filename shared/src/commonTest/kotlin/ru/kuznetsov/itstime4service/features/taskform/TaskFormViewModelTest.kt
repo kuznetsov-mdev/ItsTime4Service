@@ -15,6 +15,7 @@ import ru.kuznetsov.itstime4service.ui.format.TaskFields
 import ru.kuznetsov.itstime4service.ui.format.TaskPreset
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.assertNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -132,7 +133,7 @@ class TaskFormViewModelTest {
         val task = app.car(kia)!!.tasks.single()
         assertEquals("Колодки", task.name)
         assertEquals(30_000, task.intervalKm)
-        assertEquals(0, task.lastDoneKm)
+        assertNull(task.lastDoneKm)
         assertEquals(2_000, task.reminderWindowKm)
     }
 

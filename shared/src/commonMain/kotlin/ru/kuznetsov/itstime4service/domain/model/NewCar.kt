@@ -9,4 +9,5 @@ data class NewCar(
     val vin: String?,
     val tasks: List<NewMaintenanceTask>,
     val plate: String? = null,
+    val maintenanceDescription: String? = null,
 )

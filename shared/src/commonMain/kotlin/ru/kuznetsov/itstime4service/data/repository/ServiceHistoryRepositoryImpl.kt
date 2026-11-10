@@ -54,6 +54,7 @@ class ServiceHistoryRepositoryImpl(
             comment = comment,
             prev_last_done_km = null,
             prev_last_done_date = null,
+            rollback_available = false,
         )
     }
 }

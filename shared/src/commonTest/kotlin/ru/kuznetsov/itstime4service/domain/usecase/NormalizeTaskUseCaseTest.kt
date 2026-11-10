@@ -71,13 +71,13 @@ class NormalizeTaskUseCaseTest {
     }
 
     @Test
-    fun lastDoneDateIsDroppedWithoutTimeInterval() {
-        assertNull(normalizeTask(task(lastDoneDate = lastDoneDate))?.lastDoneDate)
+    fun lastDoneDateIsKeptWithoutTimeInterval() {
+        assertEquals(lastDoneDate, normalizeTask(task(lastDoneDate = lastDoneDate))?.lastDoneDate)
     }
 
     @Test
-    fun lastDoneDateIsDroppedWithNonPositiveTimeInterval() {
-        assertNull(normalizeTask(task(intervalMonths = 0, lastDoneDate = lastDoneDate))?.lastDoneDate)
+    fun lastDoneDateIsKeptWithNonPositiveTimeInterval() {
+        assertEquals(lastDoneDate, normalizeTask(task(intervalMonths = 0, lastDoneDate = lastDoneDate))?.lastDoneDate)
     }
 
     @Test

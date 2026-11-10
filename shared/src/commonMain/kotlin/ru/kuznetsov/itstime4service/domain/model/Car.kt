@@ -14,4 +14,5 @@ data class Car(
     val plate: String? = null,
     val plateHidden: Boolean = false,
     val vinHidden: Boolean = false,
+    val maintenanceDescription: String? = null,
 )

@@ -125,4 +125,21 @@ class PlanRemindersUseCaseTest {
         assertEquals(PlanRemindersUseCase.MAX_REMINDERS, plan.size)
         assertEquals(LocalDate(2026, 10, 27), plan.last().fireAt.date)
     }
+    @Test
+    fun unknownOnlyHasNoRepeatedNotifications() {
+        val unknown = okTask.copy(lastDoneKm = null)
+        assertTrue(planReminders(listOf(car(unknown)), settings(), morning, emptyMap()).isEmpty())
+    }
+
+    @Test
+    fun unknownMileageStillNotifiesFromKnownTimeWindow() {
+        val timed = task("timed", 84000, 12, LocalDate(2025, 12, 20)).copy(lastDoneKm = null)
+        val plan = planReminders(listOf(car(timed)), settings(), morning, emptyMap())
+        assertEquals(LocalDate(2026, 10, 20), plan.first().fireAt.date)
+        assertEquals(TaskStatus.SOON, plan.first().status)
+        assertEquals(null, plan.first().remainingKm)
+        assertEquals(2, plan.first().remainingMonths)
+        assertEquals(LocalDate(2026, 10, 23), plan[1].fireAt.date)
+    }
+
 }

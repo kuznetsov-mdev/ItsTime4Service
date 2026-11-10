@@ -91,11 +91,11 @@ class CalculateTaskStatusUseCaseTest {
     }
 
     @Test
-    fun timeIsIgnoredWithoutLastDoneDate() {
+    fun missingApplicableDateRecommendsService() {
         val stat = calculateTaskStatus(55_000, task(intervalMonths = 1), today)
 
         assertNull(stat.remainingMonths)
-        assertEquals(TaskStatus.OK, stat.status)
+        assertEquals(TaskStatus.RECOMMENDED, stat.status)
     }
 
     @Test

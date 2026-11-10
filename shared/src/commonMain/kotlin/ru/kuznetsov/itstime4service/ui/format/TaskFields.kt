@@ -13,8 +13,7 @@ import ru.kuznetsov.itstime4service.domain.model.TaskIcon
  * Distances are typed in the unit chosen in settings and converted to kilometers on save; a distance that was
  * shown and left as it was keeps its stored kilometers, so rounding back and forth does not shift it.
  * The last-done date is kept as its typed digits in the [DateInputFormat] of the app language.
- * The name and the mileage interval are required. An empty last-done mileage is stored as zero,
- * which means the task has not been done yet.
+ * The name and the mileage interval are required. Empty last-done facts are unknown; an explicit zero is preserved.
  * A new task starts with a wrench [icon]; a task saved before icons could be picked keeps `null` until one is picked.
  * With [createsRecord] a new task is stored together with a history record of its last service: the last-done mileage
  * and date become required, and [serviceName], [cost] and [comment] go to the record. Turning it on fills an empty
@@ -29,6 +28,7 @@ data class TaskFields(
     val reminderWindowKm: String = "",
     val icon: TaskIcon? = TaskIcon.WRENCH,
     val createsRecord: Boolean = false,
+    val unknownService: Boolean = false,
     val serviceName: String = "",
     val cost: String = "",
     val comment: String = "",
@@ -41,6 +41,7 @@ data class TaskFields(
 
     fun withRecord(on: Boolean, today: LocalDate): TaskFields = copy(
         createsRecord = on,
+        unknownService = if (on) false else unknownService,
         lastDoneDate = if (on && lastDoneDate.isEmpty()) DateInputFormat.current.digitsOf(today) else lastDoneDate,
     )
 
@@ -59,12 +60,12 @@ data class TaskFields(
         return NewMaintenanceTask(
             name = name,
             intervalKm = keepKm(original?.intervalKm, intervalKm.toInt(), unit),
-            lastDoneKm = lastDoneKm.toIntOrNull()?.let { keepKm(original?.lastDoneKm, it, unit) } ?: 0,
+            lastDoneKm = if (unknownService) null else lastDoneKm.toIntOrNull()?.let { keepKm(original?.lastDoneKm, it, unit) },
             reminderWindowKm = reminderWindowKm.toIntOrNull()?.let { keepKm(original?.reminderWindowKm, it, unit) },
             intervalMonths = intervalMonths.toIntOrNull(),
-            lastDoneDate = date,
+            lastDoneDate = date.takeUnless { unknownService },
             icon = icon,
-            record = if (createsRecord && date != null) NewTaskRecord(date, serviceName, cost.toIntOrNull(), comment) else null,
+            record = if (createsRecord && !unknownService && date != null) NewTaskRecord(date, serviceName, cost.toIntOrNull(), comment) else null,
         )
     }
 
@@ -79,8 +80,9 @@ fun MaintenanceTask.toFields(unit: DistanceUnit): TaskFields = TaskFields(
     name = name,
     intervalKm = intervalKm.kmIn(unit).toString(),
     intervalMonths = intervalMonths?.toString().orEmpty(),
-    lastDoneKm = lastDoneKm.kmIn(unit).toString(),
+    lastDoneKm = lastDoneKm?.kmIn(unit)?.toString().orEmpty(),
     lastDoneDate = lastDoneDate?.let { DateInputFormat.current.digitsOf(it) }.orEmpty(),
     reminderWindowKm = reminderWindowKm.kmIn(unit).toString(),
     icon = icon,
+    unknownService = lastDoneKm == null && lastDoneDate == null,
 )

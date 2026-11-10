@@ -50,8 +50,8 @@ class MigrationTest {
     }
 
     @Test
-    fun currentVersionIsFive() {
-        assertEquals(5L, schema.version)
+    fun currentVersionIsSix() {
+        assertEquals(6L, schema.version)
     }
 
     @Test
@@ -172,4 +172,32 @@ class MigrationTest {
         assertTrue(taskHistory.unmarkTaskDone("kia", "oil"))
         assertEquals(1, ServiceHistoryRepositoryImpl(db.database).observeHistory("kia").first().size)
     }
+    @Test
+    fun versionFiveKeepsZeroOrderLinksAndValidRollback() = runTest {
+        val db = TestDatabase()
+        versionOne(db)
+        schema.migrate(db.driver, 1, 5)
+        db.execute("UPDATE maintenance_tasks SET last_done_km = 0, icon = 'WRENCH' WHERE id = 'pads'")
+        db.execute("UPDATE cars SET mileage_km = 80000, plate_hidden = 1, vin_hidden = 1 WHERE id = 'kia'")
+        db.execute("UPDATE service_history SET task_id = 'oil', prev_last_done_km = 0, prev_last_done_date = '2025-01-01' WHERE id = 'h1'")
+        db.execute("INSERT INTO service_history (id, car_id, task_name, date, mileage_km) VALUES ('h2', 'kia', 'Deleted task', '2026-04-01', 81000)")
+        schema.migrate(db.driver, 5, schema.version)
+        val cars = CarRepositoryImpl(db.database)
+        val kia = cars.observeCarById("kia").first()!!
+        assertEquals(listOf("oil", "pads"), kia.tasks.map { it.id })
+        assertEquals(0, kia.tasks[1].lastDoneKm)
+        assertTrue(kia.plateHidden)
+        assertTrue(kia.vinHidden)
+        assertNull(kia.maintenanceDescription)
+        val history = ServiceHistoryRepositoryImpl(db.database)
+        val entries = history.observeHistory("kia").first()
+        assertEquals(listOf("h1", "h2"), entries.map { it.id })
+        assertTrue(entries.first().rollbackAvailable)
+        assertFalse(entries.last().rollbackAvailable)
+        assertTrue(TaskHistoryRepositoryImpl(db.database).unmarkTaskDone("kia", "oil"))
+        assertEquals(0, cars.observeCarById("kia").first()!!.tasks.first().lastDoneKm)
+        assertEquals(LocalDate(2025, 1, 1), cars.observeCarById("kia").first()!!.tasks.first().lastDoneDate)
+        assertEquals("h2", history.observeHistory("kia").first().single().id)
+    }
+
 }

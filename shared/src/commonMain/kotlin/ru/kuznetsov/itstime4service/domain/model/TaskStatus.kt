@@ -1,7 +1,6 @@
 package ru.kuznetsov.itstime4service.domain.model
 
-/**
- * How urgent a task is.
- * Declared from least to most urgent, so the worse of two statuses is `maxOf(a, b)`.
- */
-enum class TaskStatus { OK, SOON, DUE }
+/** Explicit urgency independent of enum declaration order. */
+enum class TaskStatus(val priority: Int) {
+    OK(3), SOON(2), DUE(0), RECOMMENDED(1),
+}

@@ -17,6 +17,7 @@ internal fun Cars.toDomain(tasks: List<Maintenance_tasks>) = Car(
     plate = plate,
     plateHidden = plate_hidden,
     vinHidden = vin_hidden,
+    maintenanceDescription = maintenance_description,
 )
 
 internal fun Cars.toSummary() = CarSummary(
@@ -30,7 +31,7 @@ internal fun Maintenance_tasks.toDomain() = MaintenanceTask(
     id = id,
     name = name,
     intervalKm = interval_km.toInt(),
-    lastDoneKm = last_done_km.toInt(),
+    lastDoneKm = last_done_km?.toInt(),
     reminderWindowKm = reminder_window_km.toInt(),
     intervalMonths = interval_months?.toInt(),
     lastDoneDate = last_done_date?.let(LocalDate::parse),

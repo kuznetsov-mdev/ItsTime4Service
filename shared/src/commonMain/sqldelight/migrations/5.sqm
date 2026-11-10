@@ -1,0 +1,19 @@
+CREATE TABLE maintenance_tasks_nullable (
+    id TEXT NOT NULL PRIMARY KEY,
+    car_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    interval_km INTEGER NOT NULL,
+    last_done_km INTEGER,
+    reminder_window_km INTEGER NOT NULL,
+    interval_months INTEGER,
+    last_done_date TEXT,
+    icon TEXT
+);
+INSERT INTO maintenance_tasks_nullable (rowid, id, car_id, name, interval_km, last_done_km, reminder_window_km, interval_months, last_done_date, icon)
+SELECT rowid, id, car_id, name, interval_km, last_done_km, reminder_window_km, interval_months, last_done_date, icon FROM maintenance_tasks ORDER BY rowid;
+DROP TABLE maintenance_tasks;
+ALTER TABLE maintenance_tasks_nullable RENAME TO maintenance_tasks;
+CREATE INDEX maintenance_tasks_car_id ON maintenance_tasks (car_id);
+ALTER TABLE service_history ADD COLUMN rollback_available INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0;
+UPDATE service_history SET rollback_available = 1 WHERE prev_last_done_km IS NOT NULL;
+ALTER TABLE cars ADD COLUMN maintenance_description TEXT;

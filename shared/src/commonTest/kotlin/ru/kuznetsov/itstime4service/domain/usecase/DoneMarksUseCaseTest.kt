@@ -29,6 +29,7 @@ class DoneMarksUseCaseTest {
         mileageKm: Int = 84_300,
         taskId: String? = "oil",
         prevLastDoneKm: Int? = 74_000,
+        rollbackAvailable: Boolean = true,
     ) = ServiceHistoryEntry(
         id = id,
         carId = "car",
@@ -37,6 +38,7 @@ class DoneMarksUseCaseTest {
         mileageKm = mileageKm,
         taskId = taskId,
         prevLastDoneKm = prevLastDoneKm,
+        rollbackAvailable = rollbackAvailable,
     )
 
     @Test
@@ -60,8 +62,8 @@ class DoneMarksUseCaseTest {
     }
 
     @Test
-    fun recordWithoutPreviousValuesIsNotAMark() {
-        assertTrue(doneMarks(car(), listOf(entry(prevLastDoneKm = null))).isEmpty())
+    fun recordWithDisabledRollbackIsNotAMark() {
+        assertTrue(doneMarks(car(), listOf(entry(rollbackAvailable = false))).isEmpty())
     }
 
     @Test
@@ -76,4 +78,10 @@ class DoneMarksUseCaseTest {
 
         assertEquals(mapOf("oil" to mark), doneMarks(car(), listOf(old, mark)))
     }
+    @Test
+    fun explicitValidRollbackAllowsPreviousUnknownMileage() {
+        val mark = entry(prevLastDoneKm = null, rollbackAvailable = true)
+        assertEquals(mapOf("oil" to mark), doneMarks(car(), listOf(mark)))
+    }
+
 }

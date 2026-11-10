@@ -15,6 +15,7 @@ class CarAlertsUseCase(
     operator fun invoke(car: Car, today: LocalDate): CarAlerts {
         val statuses = car.tasks.map { task -> calculateTaskStatus(car.mileageKm, task, today).status }
         return CarAlerts(
+            recommended = statuses.count { it == TaskStatus.RECOMMENDED },
             soon = statuses.count { it == TaskStatus.SOON },
             due = statuses.count { it == TaskStatus.DUE },
             taskCount = statuses.size,

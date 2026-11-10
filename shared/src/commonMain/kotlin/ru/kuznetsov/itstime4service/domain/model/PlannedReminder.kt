@@ -13,7 +13,7 @@ data class PlannedReminder(
     val carBrand: String,
     val taskName: String,
     val status: TaskStatus,
-    val remainingKm: Int,
+    val remainingKm: Int?,
     val remainingMonths: Int?,
     val fireAt: LocalDateTime,
 )

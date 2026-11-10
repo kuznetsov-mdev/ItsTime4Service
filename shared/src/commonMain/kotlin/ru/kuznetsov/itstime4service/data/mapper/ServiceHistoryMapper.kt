@@ -16,4 +16,5 @@ internal fun Service_history.toDomain() = ServiceHistoryEntry(
     taskId = task_id,
     prevLastDoneKm = prev_last_done_km?.toInt(),
     prevLastDoneDate = prev_last_done_date?.let(LocalDate::parse),
+    rollbackAvailable = rollback_available,
 )

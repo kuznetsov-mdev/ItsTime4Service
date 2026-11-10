@@ -33,6 +33,7 @@ fun StatusDonut(
     total: Int,
     contentDescription: String,
     modifier: Modifier = Modifier,
+    recommended: Int = 0,
 ) {
     val colors = ItsTime4ServiceTheme.colors
     val dueColor = StatusTier.Due.color
@@ -41,13 +42,13 @@ fun StatusDonut(
     val worst = IndicatorAnimation.color(
         when {
             due > 0 -> dueColor
-            soon > 0 -> soonColor
+            soon + recommended > 0 -> soonColor
             else -> okColor
         },
     )
     val dueShare = IndicatorAnimation.fraction(if (total > 0) due.toFloat() / total else 0f)
-    val soonShare = IndicatorAnimation.fraction(if (total > 0) soon.toFloat() / total else 0f)
-    val okShare = IndicatorAnimation.fraction(if (total > 0) (total - due - soon).toFloat() / total else 0f)
+    val soonShare = IndicatorAnimation.fraction(if (total > 0) (soon + recommended).toFloat() / total else 0f)
+    val okShare = IndicatorAnimation.fraction(if (total > 0) (total - due - soon - recommended).toFloat() / total else 0f)
     Box(
         modifier = modifier
             .size(48.dp)
@@ -71,7 +72,7 @@ fun StatusDonut(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                "${due + soon}/$total",
+                "${due + soon + recommended}/$total",
                 style = ItsTime4ServiceTheme.typography.display.copy(fontSize = 13.sp, lineHeight = 16.sp),
                 color = worst,
             )

@@ -23,6 +23,7 @@ class UpdateHistoryEntryUseCaseTest {
         mileageKm = 84_300,
         taskId = "oil",
         prevLastDoneKm = 74_000,
+        rollbackAvailable = true,
     )
 
     @Test
