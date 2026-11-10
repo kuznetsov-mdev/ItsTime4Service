@@ -2,6 +2,7 @@ package ru.kuznetsov.itstime4service.di
 
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
+import ru.kuznetsov.itstime4service.domain.transfer.CreateTransferSnapshotUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.AddCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.AddHistoryEntryUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.AddTaskUseCase
@@ -40,6 +41,7 @@ import ru.kuznetsov.itstime4service.domain.usecase.UpdateSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateTaskUseCase
 
 val domainModule = module {
+    factoryOf(::CreateTransferSnapshotUseCase)
     factoryOf(::CalculateTaskStatusUseCase)
     factoryOf(::SortedTaskStatsUseCase)
     factoryOf(::CarAlertsUseCase)

@@ -421,6 +421,6 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 
 ## Export/import implementation checkpoint
 
-Реализован фундамент неизвестного обслуживания: nullable пробег/дата, RECOMMENDED, rollback eligibility и миграция 5→6. Снимок/кодек/импорт/файлы ещё не реализованы.
+Реализованы неизвестное обслуживание и read-only полный/выборочный снимок SQLite. JSON/крипто зависимости ещё не подключены; кодек и импорт не реализованы.
 
-Проверка логического коммита: Android host suite 516 тестов, 0 failures/errors/skips; iOS production/test compilation — PASS. gradle-run workflow bbbe2f2c094da4f66d63c2ae8e8e419c, sequence 1.
+Проверка логического коммита: Android host suite 539 тестов, 0 failures/errors/skips; iOS production/test compilation — PASS. gradle-run workflow bbbe2f2c094da4f66d63c2ae8e8e419c, sequence 2.

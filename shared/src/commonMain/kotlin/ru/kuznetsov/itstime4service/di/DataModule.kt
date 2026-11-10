@@ -12,12 +12,14 @@ import ru.kuznetsov.itstime4service.data.repository.ReminderRepositoryImpl
 import ru.kuznetsov.itstime4service.data.repository.ServiceHistoryRepositoryImpl
 import ru.kuznetsov.itstime4service.data.repository.SettingsRepositoryImpl
 import ru.kuznetsov.itstime4service.data.repository.TaskHistoryRepositoryImpl
+import ru.kuznetsov.itstime4service.data.transfer.TransferRepositoryImpl
 import ru.kuznetsov.itstime4service.domain.repository.CarRepository
 import ru.kuznetsov.itstime4service.domain.repository.ReminderRepository
 import ru.kuznetsov.itstime4service.domain.repository.ReminderScheduler
 import ru.kuznetsov.itstime4service.domain.repository.ServiceHistoryRepository
 import ru.kuznetsov.itstime4service.domain.repository.SettingsRepository
 import ru.kuznetsov.itstime4service.domain.repository.TaskHistoryRepository
+import ru.kuznetsov.itstime4service.domain.transfer.TransferRepository
 
 val dataModule = module {
     single<CoroutineDispatcher> { databaseDispatcher }
@@ -28,4 +30,5 @@ val dataModule = module {
     single { SettingsRepositoryImpl(get(), get()) } bind SettingsRepository::class
     single { ReminderRepositoryImpl(get(), get()) } bind ReminderRepository::class
     single { ReminderSchedulerImpl(get()) } bind ReminderScheduler::class
+    single { TransferRepositoryImpl(get(), get()) } bind TransferRepository::class
 }

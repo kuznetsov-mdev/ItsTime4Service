@@ -6,12 +6,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.LocalTime
 import ru.kuznetsov.itstime4service.data.local.ItsTime4ServiceDatabase
 import ru.kuznetsov.itstime4service.data.mapper.toDomain
-import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.domain.model.Settings
-import ru.kuznetsov.itstime4service.domain.model.ThemeMode
 import ru.kuznetsov.itstime4service.domain.repository.SettingsRepository
 
 /**
@@ -27,20 +24,12 @@ class SettingsRepositoryImpl(
 
     private val queries = database.settingsQueries
 
-    private val defaultSettings = Settings(
-        themeMode = ThemeMode.SYSTEM,
-        distanceUnit = DistanceUnit.KILOMETERS,
-        pushEnabled = true,
-        defaultReminderWindowKm = Settings.DEFAULT_REMINDER_WINDOW_KM,
-        reminderTime = LocalTime(9, 0),
-    )
-
     override fun observeSettings(): Flow<Settings> =
-        queries.select().asFlow().mapToOneOrNull(dispatcher).map { it?.toDomain() ?: defaultSettings }
+        queries.select().asFlow().mapToOneOrNull(dispatcher).map { it?.toDomain() ?: Settings.DEFAULT }
 
     override suspend fun updateSettings(change: (Settings) -> Settings): Unit = withContext(dispatcher) {
         queries.transaction {
-            val settings = change(queries.select().executeAsOneOrNull()?.toDomain() ?: defaultSettings)
+            val settings = change(queries.select().executeAsOneOrNull()?.toDomain() ?: Settings.DEFAULT)
             queries.upsert(
                 theme_mode = settings.themeMode.name,
                 distance_unit = settings.distanceUnit.name,

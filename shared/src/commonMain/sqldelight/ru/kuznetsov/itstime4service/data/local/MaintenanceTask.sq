@@ -15,6 +15,9 @@ CREATE INDEX maintenance_tasks_car_id ON maintenance_tasks (car_id);
 selectAll:
 SELECT * FROM maintenance_tasks ORDER BY rowid;
 
+selectOwnership:
+SELECT id, car_id FROM maintenance_tasks;
+
 selectByCar:
 SELECT * FROM maintenance_tasks WHERE car_id = ? ORDER BY rowid;
 

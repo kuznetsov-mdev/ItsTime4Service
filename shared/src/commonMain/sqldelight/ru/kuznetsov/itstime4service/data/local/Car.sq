@@ -19,6 +19,9 @@ SELECT * FROM cars WHERE id = ? AND is_sold = 0;
 selectAllWithSold:
 SELECT * FROM cars ORDER BY is_sold, rowid;
 
+selectByIdWithSold:
+SELECT * FROM cars WHERE id = ?;
+
 insert:
 INSERT INTO cars (id, brand, mileage_km, vin, plate, maintenance_description) VALUES (?, ?, ?, ?, ?, ?);
 

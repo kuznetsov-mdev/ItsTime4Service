@@ -461,3 +461,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration) {
 ## Миграция 5 → 6: неизвестное обслуживание
 
 `5.sqm` сохраняет все столбцы и исходные rowid `maintenance_tasks` при перестроении таблицы с nullable `last_done_km`, затем восстанавливает индекс `maintenance_tasks_car_id`. Явный ноль остаётся нулём. UUID, связи, порядок работ и история сохраняются. `service_history.rollback_available` хранит Boolean NOT NULL DEFAULT 0; у прежних записей он устанавливается в 1 ровно при прежнем `prev_last_done_km IS NOT NULL`, сохраняя старую семантику отмены, в том числе откат к нулю. Новые реальные отметки устанавливают true даже при неизвестном предыдущем пробеге; вручную добавленная история и начальная запись работы — false. Чтение и откат используют этот флаг. `cars.maintenance_description` — nullable TEXT с авторским сопроводительным описанием регламента.
+
+## Целостный снимок для переноса
+
+TransferRepositoryImpl читает исходные таблицы одной транзакцией на database dispatcher. TransferSnapshotMapper сохраняет nullable факты, порядок, проданные машины, rollback, скрытые поля и effective Settings.DEFAULT для полной копии; выборочный состав использует file-local IDs и явные группы. Напоминания фильтруются и переводятся в UTC с одним захваченным clock/zone. Добавлены selectByIdWithSold/selectOwnership без изменения схемы. Кодек/шифрование/импорт ещё не реализованы.

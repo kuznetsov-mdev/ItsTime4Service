@@ -23,5 +23,12 @@ data class Settings(
 ) {
     companion object {
         const val DEFAULT_REMINDER_WINDOW_KM = 2_000
+        val DEFAULT = Settings(
+            themeMode = ThemeMode.SYSTEM,
+            distanceUnit = DistanceUnit.KILOMETERS,
+            pushEnabled = true,
+            defaultReminderWindowKm = DEFAULT_REMINDER_WINDOW_KM,
+            reminderTime = LocalTime(9, 0),
+        )
     }
 }

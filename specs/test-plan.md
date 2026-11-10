@@ -317,3 +317,8 @@
 ## Task 2 / 1.1.0: неизвестное обслуживание
 
 Трассировка export-import 9/12/16: `UnknownServiceTest` проверяет unknownServiceDoesNotUseZero, knownDueCriterionWinsOverMissingCriterion, legacyZeroIsPreserved. `TaskHistoryRepositoryImplTest` проверяет undoRestoresUnknownService, независимую известную дату, описание регламента и отсутствие фиктивной истории/отмены ручной записи. `MigrationTest.versionFiveKeepsZeroOrderLinksAndValidRollback` проверяет migration 5→6, прежний ноль, UUID/порядок/связи, hidden flags и старый допустимый откат. `PlanRemindersUseCaseTest` проверяет отсутствие спама для unknown-only и вход известного временного критерия в SOON при неизвестном пробеге. Существующие правила форм/нормализации обновлены на nullable и независимую дату. Обязательные проверки: Android host suite и iOS production/test compilation; результаты фиксируются в task-2-report.md. Итог 10.11.2026: 516 Android host-тестов, 0 ошибок/пропусков; обе iOS production/test compilation прошли. Workflow `1d32674583f8f6ba958e71c284d95485`, sequence 7, exit 0, предупреждений нет.
+
+
+## Task 3 / 1.1.0: снимок и выбор состава
+
+ExportSelectionTest (5) и TransferSnapshotTest (18): независимость групп, отсутствие/null, privacy/file-local IDs, история удалённых работ/проданных машин, порядок/rollback/settings, пределы чисел/UTF-8/коллекций, DST/напоминания, транзакция/ошибка/отмена. Crypto proof и кодек в эту часть не входят.
