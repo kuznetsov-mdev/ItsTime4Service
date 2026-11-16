@@ -50,8 +50,8 @@ class MigrationTest {
     }
 
     @Test
-    fun currentVersionIsSix() {
-        assertEquals(6L, schema.version)
+    fun currentVersionIsSeven() {
+        assertEquals(7L, schema.version)
     }
 
     @Test
@@ -198,6 +198,32 @@ class MigrationTest {
         assertEquals(0, cars.observeCarById("kia").first()!!.tasks.first().lastDoneKm)
         assertEquals(LocalDate(2025, 1, 1), cars.observeCarById("kia").first()!!.tasks.first().lastDoneDate)
         assertEquals("h2", history.observeHistory("kia").first().single().id)
+    }
+
+    @Test
+    fun versionSixAddsEmptyImportLedgerWithoutChangingUnknownServiceAndRowOrder() = runTest {
+        val db = TestDatabase()
+        try {
+            versionOne(db)
+            schema.migrate(db.driver, 1, 6)
+            db.execute("UPDATE maintenance_tasks SET last_done_km = NULL WHERE id = 'oil'")
+            db.execute("UPDATE cars SET maintenance_description = 'Synthetic template' WHERE id = 'kia'")
+            db.execute("INSERT INTO planned_reminders (task_id, fire_at) VALUES ('oil', '2026-11-01T01:30')")
+            schema.migrate(db.driver, 6, schema.version)
+            val kia = CarRepositoryImpl(db.database).observeCarById("kia").first()!!
+            assertEquals(listOf("oil", "pads"), kia.tasks.map { it.id })
+            assertNull(kia.tasks.first().lastDoneKm)
+            assertEquals("Synthetic template", kia.maintenanceDescription)
+            val reminder = db.database.plannedReminderQueries.selectAll().executeAsList().single()
+            assertEquals("2026-11-01T01:30", reminder.fire_at)
+            assertNull(reminder.shown_at_utc)
+            assertTrue(db.database.transferQueries.selectSources().executeAsList().isEmpty())
+            assertTrue(db.database.transferQueries.selectProvenance().executeAsList().isEmpty())
+            assertTrue(db.database.transferQueries.selectPendingOperations().executeAsList().isEmpty())
+            assertEquals("h1", db.database.serviceHistoryQueries.selectByCar("kia").executeAsList().single().id)
+        } finally {
+            db.driver.close()
+        }
     }
 
 }

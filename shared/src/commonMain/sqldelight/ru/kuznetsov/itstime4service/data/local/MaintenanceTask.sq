@@ -41,3 +41,6 @@ DELETE FROM maintenance_tasks WHERE id = ? AND car_id = ?;
 
 deleteByCar:
 DELETE FROM maintenance_tasks WHERE car_id = ?;
+
+deleteAll:
+DELETE FROM maintenance_tasks;

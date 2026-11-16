@@ -1,7 +1,11 @@
 package ru.kuznetsov.itstime4service.di
 
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
+import ru.kuznetsov.itstime4service.domain.transfer.PrepareImportUseCase
+import ru.kuznetsov.itstime4service.domain.transfer.ApplyImportUseCase
+import ru.kuznetsov.itstime4service.domain.transfer.ReconcileImportNotificationsUseCase
 import ru.kuznetsov.itstime4service.domain.transfer.CreateTransferSnapshotUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.AddCarUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.AddHistoryEntryUseCase
@@ -41,6 +45,9 @@ import ru.kuznetsov.itstime4service.domain.usecase.UpdateSettingsUseCase
 import ru.kuznetsov.itstime4service.domain.usecase.UpdateTaskUseCase
 
 val domainModule = module {
+    factoryOf(::PrepareImportUseCase)
+    factoryOf(::ApplyImportUseCase)
+    singleOf(::ReconcileImportNotificationsUseCase)
     factoryOf(::CreateTransferSnapshotUseCase)
     factoryOf(::CalculateTaskStatusUseCase)
     factoryOf(::SortedTaskStatsUseCase)
@@ -76,6 +83,6 @@ val domainModule = module {
     factoryOf(::AddHistoryEntryUseCase)
     factory { GetNowUseCase() }
     factoryOf(::PlanRemindersUseCase)
-    factoryOf(::SyncRemindersUseCase)
-    factoryOf(::KeepRemindersInSyncUseCase)
+    singleOf(::SyncRemindersUseCase)
+    factory { KeepRemindersInSyncUseCase(get(), get(), get(), get()) }
 }

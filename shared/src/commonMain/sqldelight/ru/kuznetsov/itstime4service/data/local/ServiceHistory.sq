@@ -41,3 +41,9 @@ DELETE FROM service_history WHERE id = ?;
 
 deleteByCar:
 DELETE FROM service_history WHERE car_id = ?;
+
+updateImported:
+UPDATE service_history SET task_name = ?, date = ?, mileage_km = ?, cost_rub = ?, service_name = ?, task_id = ?, comment = ?, prev_last_done_km = ?, prev_last_done_date = ?, rollback_available = ? WHERE id = ? AND car_id = ?;
+
+deleteAll:
+DELETE FROM service_history;

@@ -1,6 +1,7 @@
 CREATE TABLE planned_reminders (
     task_id TEXT NOT NULL,
-    fire_at TEXT NOT NULL
+    fire_at TEXT NOT NULL,
+    shown_at_utc TEXT
 );
 
 selectAll:
@@ -12,3 +13,9 @@ VALUES (?, ?);
 
 deleteAll:
 DELETE FROM planned_reminders;
+
+selectForTransfer:
+SELECT * FROM planned_reminders ORDER BY rowid;
+
+insertShown:
+INSERT INTO planned_reminders (task_id, fire_at, shown_at_utc) VALUES (?, ?, ?);

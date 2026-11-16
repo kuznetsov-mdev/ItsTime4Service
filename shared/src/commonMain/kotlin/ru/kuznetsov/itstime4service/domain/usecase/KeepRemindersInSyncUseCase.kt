@@ -1,6 +1,7 @@
 package ru.kuznetsov.itstime4service.domain.usecase
 
 import kotlinx.coroutines.CancellationException
+import ru.kuznetsov.itstime4service.domain.transfer.ReconcileImportNotificationsUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
@@ -22,8 +23,10 @@ class KeepRemindersInSyncUseCase(
     private val observeCars: ObserveCarsUseCase,
     private val observeSettings: ObserveSettingsUseCase,
     private val syncReminders: SyncRemindersUseCase,
+    private val reconcileImports: ReconcileImportNotificationsUseCase? = null,
 ) {
     suspend operator fun invoke(permissionGrants: Flow<Unit>) {
+        reconcileImports?.retryPending()
         val reminderSettings = observeSettings().distinctUntilChanged { old, new ->
             old.pushEnabled == new.pushEnabled &&
                 old.reminderTime == new.reminderTime &&

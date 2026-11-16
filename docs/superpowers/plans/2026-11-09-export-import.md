@@ -10,7 +10,7 @@
 
 **Spec:** [Постановка на разработку](../../../specs/export-import.md), [согласованные требования](../../research/export-import-iteration-3.md), [макет](../../index.html#interactiveApp).
 
-**Status:** Реализация запущена пользователем 10.11.2026 после ревью макета и постановки. Реализованы этапы 2–4: неизвестное обслуживание, согласованный снимок и рабочий кодек/конверт/шифрование. Последний полный Android suite — 574 теста (проверка перед коммитом, sequence 25), R8 и debug APK — PASS; iOS — 55 transfer-тестов, обе production/test compilation и debug/release frameworks — PASS без предупреждений. Дополнительно 4 новых теста границ валидатора прошли отдельно на каждой платформе. [Отчёт этапа 4](../../research/transfer-codec-verification.md). Пользователь явно разрешил продолжать разработку, перенеся реальный API24 в обязательные проверки перед релизом. Уточнён выбор конкретной работы среди одноимённых; макет/контракт обновлены, 22 JS-проверки — PASS. Следующий этап — планирование и атомарное применение импорта; файлы/UI и release gates ещё не завершены.
+**Status:** Реализация запущена пользователем 10.11.2026 после ревью макета и постановки. Реализованы этапы 2–4: неизвестное обслуживание, согласованный снимок и рабочий кодек/конверт/шифрование. Последний полный Android suite — 574 теста (проверка перед коммитом, sequence 25), R8 и debug APK — PASS; iOS — 55 transfer-тестов, обе production/test compilation и debug/release frameworks — PASS без предупреждений. Дополнительно 4 новых теста границ валидатора прошли отдельно на каждой платформе. [Отчёт этапа 4](../../research/transfer-codec-verification.md). Пользователь явно разрешил продолжать разработку, перенеся реальный API24 в обязательные проверки перед релизом. Уточнён выбор конкретной работы среди одноимённых; макет/контракт обновлены, 22 JS-проверки — PASS. 16.11.2026 этап 5 реализован основной сессией и готов к приёмке: полный Android suite 634/0/0/0, native iOS 106/0/0/0, обе iOS production/test compilation PASS без предупреждений. Миграция 6→7 включает журнал/provenance и точный UTC-след импортированных напоминаний. [Отчёт этапа 5](../../research/transfer-import-verification.md). Следующий этап — 6, системные файловые адаптеры; UI и release gates ещё не завершены. Пользователь разрешил коммит этапа 5 16.11.2026: `data: Add atomic transfer import`.
 
 ## Global Constraints
 
@@ -93,6 +93,16 @@
 
 ### Task 5: План конфликтов и атомарное применение
 
+Детализация 16.11.2026 (самостоятельное выполнение основной сессией):
+- [x] `ImportDecision.kt`, `ImportPlan.kt`, `ImportPlanner.kt`: чистое планирование всех машин, конкретные цели работ, независимые личные группы, связанные конфликты, sold/rollback; `PrepareImportUseCase.kt` и `ApplyImportUseCase.kt` — доменные входы.
+- [x] `data/transfer/ImportFingerprint.kt`: версионированное типизированное кодирование SHA-256 снимка, решений и всех текущих строк, включая будущие напоминания и provenance. Порядок списков сохраняется, ключи map/set сортируются.
+- [x] `ImportStore.kt` и `6.sqm`: согласованное чтение, delta-запись без перестановки существующих строк, provenance с отдельными экземплярами, durable operation journal и pending notifications в одной транзакции. Повтор операции проверяется до stale digest.
+- [x] `ReconcileImportNotificationsUseCase.kt`: отдельный повтор синхронизации после commit, без повторной записи импорта; привязки DI.
+- [x] Domain/data regression tests: отсутствующие группы, одноимённые работы, stale/cross-car/duplicate targets, многомашинный merge, safety, rollback, идемпотентность/перезапуск, rollback транзакции при ошибке/отмене, настройки и часовые пояса. Проверить миграции 5→7 и 6→7.
+- [x] Через `gradle-run`: целевые transfer/migration tests, полный Android host suite, iOS production/test compilation и native import tests; обновить спеки/тест-план/отчёт. Коммит — только после отдельного разрешения пользователя.
+
+Уточнение реализации UTC: миграция `6.sqm` также добавляет nullable `planned_reminders.shown_at_utc`, а `ReminderRecord.shownAt` сохраняет точный импортированный Instant через обычную пересборку. Регрессионный тест воспроизвёл потерю одного часа во второй половине DST overlap при хранении только naive local time; исходная политика старых строк с NULL сохраняется. Wire v1 не меняется.
+
 **Files:** создать `domain/transfer/PrepareImportUseCase.kt`, `ImportPlan.kt`, `ImportDecision.kt`, `ApplyImportUseCase.kt`; дополнить `TransferRepositoryImpl` и SQL-таблицы идентичности/завершённых операций через следующую отдельную миграцию после шага 2.
 **Tests:** `commonTest/.../domain/transfer/PrepareImportTest.kt`, `data/transfer/ApplyImportTest.kt`.
 **Consumes:** проверенный документ, текущий согласованный снимок и выбор пользователя.
@@ -102,11 +112,11 @@
 
 При детализации planner сохранить независимость Q16/Q17: пропуск/обновление параметров не является выбором личных фактов. Для принятых фактов также требуется корректное конкретное сопоставление работы; имя может только предложить кандидатов. Не применять сведения к случайной одноимённой работе и не привязывать принятие обслуживания к обязательному изменению интервала. История остаётся независимой от выбора/создания работ по Q18. Это требования уже согласованной итерации 3, не повод спрашивать их повторно.
 
-- [ ] Проверить `missingGroupDoesNotClear`, `sameBrandDoesNotMergeSilently`, `newHistoryDoesNotInferLastService`, `conflictedUndoIsDisabledWithoutLosingHistory`, `soldStateListsRemovedTasksBeforeApply`.
-- [ ] Проверить `stateChangedAfterPreviewRequiresReview`, `writeFailureRollsBackEverything`, `repeatedConfirmHasOneResult`, `restartAfterCommitDoesNotRepeat`, `notificationFailureDoesNotReimport`. Явное добавление отдельной копии — отдельная осознанная операция.
-- [ ] Проверить объединение полной копии из нескольких машин: отдельное сопоставление/решения для каждой, общий предпросмотр и единая транзакция. Частичный сценарий первой машины в HTML-макете не заменяет этот тест.
-- [ ] Реализовать добавления/пропуски/изменения с Q15–Q21/Q26, сохранить допустимые ссылки и порядок. Согласовать связанные конфликты как группу, чтобы не записать несовместимые историю и последнее обслуживание.
-- [ ] Выполнить полный набор domain/data тестов и тесты обеих миграций до подключения UI.
+- [x] Проверить `missingGroupDoesNotClear`, `sameBrandDoesNotMergeSilently`, `newHistoryDoesNotInferLastService`, `conflictedUndoIsDisabledWithoutLosingHistory`, `soldStateListsRemovedTasksBeforeApply`.
+- [x] Проверить `stateChangedAfterPreviewRequiresReview`, `writeFailureRollsBackEverything`, `repeatedConfirmHasOneResult`, `restartAfterCommitDoesNotRepeat`, `notificationFailureDoesNotReimport`. Явное добавление отдельной копии — отдельная осознанная операция.
+- [x] Проверить объединение полной копии из нескольких машин: отдельное сопоставление/решения для каждой, общий предпросмотр и единая транзакция. Частичный сценарий первой машины в HTML-макете не заменяет этот тест.
+- [x] Реализовать добавления/пропуски/изменения с Q15–Q21/Q26, сохранить допустимые ссылки и порядок. Согласовать связанные конфликты как группу, чтобы не записать несовместимые историю и последнее обслуживание.
+- [x] Выполнить полный набор domain/data тестов и тесты обеих миграций до подключения UI.
 
 ### Task 6: Файловые адаптеры Android и iOS
 

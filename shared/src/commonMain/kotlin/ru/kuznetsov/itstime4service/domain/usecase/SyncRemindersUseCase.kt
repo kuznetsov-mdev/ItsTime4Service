@@ -1,5 +1,7 @@
 package ru.kuznetsov.itstime4service.domain.usecase
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import ru.kuznetsov.itstime4service.domain.model.Car
 import ru.kuznetsov.itstime4service.domain.model.ReminderRecord
 import ru.kuznetsov.itstime4service.domain.model.Settings
@@ -17,7 +19,9 @@ class SyncRemindersUseCase(
     private val reminderRepository: ReminderRepository,
     private val reminderScheduler: ReminderScheduler,
 ) {
-    suspend operator fun invoke(cars: List<Car>, settings: Settings) {
+    private val mutex = Mutex()
+
+    suspend operator fun invoke(cars: List<Car>, settings: Settings): Unit = mutex.withLock {
         val now = getNow()
         val taskIds = cars.flatMap { car -> car.tasks.map { it.id } }.toSet()
         val lastShown = reminderRepository.getRecords()

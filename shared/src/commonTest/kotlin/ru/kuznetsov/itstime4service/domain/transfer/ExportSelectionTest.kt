@@ -53,7 +53,7 @@ class ExportSelectionTest {
         assertEquals(2, repository.calls)
     }
 
-    private class RecordingRepository : TransferRepository {
+    private class RecordingRepository : TransferRepository, ImportRepository by UnusedImportRepository {
         var calls = 0
 
         override suspend fun readSnapshot(selection: ExportSelection): TransferOutcome<TransferSnapshot> {

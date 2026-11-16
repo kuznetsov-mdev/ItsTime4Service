@@ -7,10 +7,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
 import ru.kuznetsov.itstime4service.data.local.ItsTime4ServiceDatabase
 import ru.kuznetsov.itstime4service.data.repository.databaseDispatcher
 import ru.kuznetsov.itstime4service.domain.transfer.ExportSelection
@@ -32,7 +29,7 @@ class TransferRepositoryImpl(
     private val dispatcher: CoroutineDispatcher = databaseDispatcher,
     private val clock: Clock = Clock.System,
     private val timeZone: () -> TimeZone = { TimeZone.currentSystemDefault() },
-) : TransferRepository {
+) : TransferRepository, ru.kuznetsov.itstime4service.domain.transfer.ImportRepository by TransferImportRepository(database, dispatcher, clock, timeZone) {
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun readSnapshot(selection: ExportSelection): TransferOutcome<TransferSnapshot> {
         val capturedSelection = when (selection) {
@@ -109,29 +106,15 @@ class TransferRepositoryImpl(
         zone: TimeZone,
         context: CoroutineContext,
     ): List<TransferReminder> {
-        val active = taskIds.toSet()
-        val cutoff = now.toLocalDateTime(zone)
-        val latest = mutableMapOf<String, LocalDateTime>()
+        val collector = TransferReminderCollector(taskIds, now, createdAt, zone)
         database.plannedReminderQueries.selectAll().execute { cursor ->
             while (cursor.next().value) {
                 context.ensureActive()
-                val task = requireNotNull(cursor.getString(0))
-                if (task !in active) continue
-                val local = snapshotValue {
-                    LocalDateTime.parse(requireNotNull(cursor.getString(1))).also { require(it.year in 1..9999) }
-                }
-                if (local > cutoff) continue
-                val instant = Instant.fromEpochMilliseconds(local.toInstant(zone).toEpochMilliseconds())
-                if (instant > createdAt) continue
-                snapshotValue { require(instant.toLocalDateTime(TimeZone.UTC).year in 1..9999) }
-                val previous = latest[task]
-                if (previous == null || local > previous) latest[task] = local
+                collector.add(requireNotNull(cursor.getString(0)), requireNotNull(cursor.getString(1)), cursor.getString(2))
             }
             QueryResult.Value(Unit)
         }.value
-        return taskIds.mapNotNull { task ->
-            latest[task]?.let { TransferReminder(task, Instant.fromEpochMilliseconds(it.toInstant(zone).toEpochMilliseconds())) }
-        }
+        return collector.result()
     }
 
     private fun <T : Any> ExecutableQuery<T>.bounded(

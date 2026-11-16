@@ -42,3 +42,9 @@ UPDATE cars SET is_sold = 1 WHERE id = ?;
 
 deleteById:
 DELETE FROM cars WHERE id = ?;
+
+updateImported:
+UPDATE cars SET brand = ?, mileage_km = ?, vin = ?, is_sold = ?, plate = ?, plate_hidden = ?, vin_hidden = ?, maintenance_description = ? WHERE id = ?;
+
+deleteAll:
+DELETE FROM cars;

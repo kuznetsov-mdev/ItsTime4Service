@@ -1,0 +1,51 @@
+CREATE TABLE transfer_sources (
+    snapshot_id TEXT NOT NULL PRIMARY KEY,
+    source_digest TEXT NOT NULL
+);
+
+CREATE TABLE transfer_provenance (
+    snapshot_id TEXT NOT NULL,
+    source_digest TEXT NOT NULL,
+    entity_kind TEXT NOT NULL,
+    incoming_id TEXT NOT NULL,
+    target_car_id TEXT NOT NULL,
+    local_id TEXT NOT NULL,
+    instance_id TEXT NOT NULL,
+    PRIMARY KEY (snapshot_id, entity_kind, incoming_id, target_car_id, local_id)
+);
+
+CREATE TABLE transfer_operations (
+    operation_id TEXT NOT NULL PRIMARY KEY,
+    snapshot_id TEXT NOT NULL,
+    source_digest TEXT NOT NULL,
+    database_digest TEXT NOT NULL,
+    decisions_digest TEXT NOT NULL,
+    changes_digest TEXT NOT NULL,
+    mode TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    notification_state TEXT NOT NULL
+);
+
+selectSources:
+SELECT * FROM transfer_sources ORDER BY snapshot_id;
+
+selectProvenance:
+SELECT * FROM transfer_provenance ORDER BY snapshot_id, entity_kind, incoming_id, target_car_id, local_id;
+
+insertSource:
+INSERT OR IGNORE INTO transfer_sources VALUES (?, ?);
+
+insertProvenance:
+INSERT OR IGNORE INTO transfer_provenance VALUES (?, ?, ?, ?, ?, ?, ?);
+
+selectOperation:
+SELECT * FROM transfer_operations WHERE operation_id = ?;
+
+insertOperation:
+INSERT INTO transfer_operations VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateNotificationState:
+UPDATE transfer_operations SET notification_state = ? WHERE operation_id = ?;
+
+selectPendingOperations:
+SELECT operation_id FROM transfer_operations WHERE notification_state != 'APPLIED' ORDER BY rowid;
