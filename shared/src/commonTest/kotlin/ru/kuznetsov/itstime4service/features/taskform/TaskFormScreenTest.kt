@@ -1,5 +1,9 @@
 package ru.kuznetsov.itstime4service.features.taskform
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ComposeUiTest
@@ -20,6 +24,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.v2.runComposeUiTest
 import itstime4service.shared.generated.resources.service_unknown
 import itstime4service.shared.generated.resources.service_specify
+import itstime4service.shared.generated.resources.action_save
+import itstime4service.shared.generated.resources.field_comment
 import kotlinx.datetime.LocalDate
 import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
 import itstime4service.shared.generated.resources.action_done
@@ -57,9 +63,12 @@ class TaskFormScreenTest : UiTest() {
 
     private val hasError = SemanticsMatcher.keyIsDefined(SemanticsProperties.Error)
 
-    private fun ComposeUiTest.show(state: TaskFormUiState) = setContent {
+    private fun ComposeUiTest.show(state: TaskFormUiState, afterSave: (TaskFormUiState) -> TaskFormUiState = { it }) = setContent {
+        var current by remember { mutableStateOf(state) }
         texts["date"] = stringResource(Res.string.field_last_done_date_short)
         texts["done"] = stringResource(Res.string.action_done)
+        texts["save"] = stringResource(Res.string.action_save)
+        texts["comment"] = stringResource(Res.string.field_comment)
         texts["unknown"] = stringResource(Res.string.service_unknown)
         texts["specify"] = stringResource(Res.string.service_specify).uppercase()
         texts["delete"] = stringResource(Res.string.action_remove_task)
@@ -72,7 +81,7 @@ class TaskFormScreenTest : UiTest() {
         texts["disc"] = stringResource(TaskIcon.DISC.label)
         ItsTime4ServiceTheme(darkTheme = false) {
             TaskFormContent(
-                state = state,
+                state = current,
                 onBack = { calls += "back" },
                 onFieldsChange = { typed = it },
                 onPreset = { preset, name -> calls += "preset $preset $name" },
@@ -80,7 +89,7 @@ class TaskFormScreenTest : UiTest() {
                 onRecordToggle = { calls += "record $it" },
                 onIconPickerDismiss = { calls += "iconDismiss" },
                 onIconSelect = { calls += "icon $it" },
-                onSave = { calls += "save" },
+                onSave = { calls += "save"; current = afterSave(current) },
                 onSaveAndAddAnother = { calls += "addAnother" },
                 onDeleteRequest = { calls += "delete" },
                 onDeleteDismiss = {},
@@ -108,6 +117,29 @@ class TaskFormScreenTest : UiTest() {
         onNodeWithText(texts.getValue("done")).performClick()
         assertEquals(format.digitsOf(LocalDate(2024, 2, 29)), typed?.lastDoneDate)
         assertTrue(calls.isEmpty())
+    }
+
+    @Test
+    fun repeatedInvalidSavesRevealNameAfterScrollingAway() = runComposeUiTest {
+        show(newTask(fields = TaskFields(createsRecord = true))) {
+            it.copy(showErrors = true, validationRequest = it.validationRequest + 1)
+        }
+        repeat(2) {
+            onNodeWithText(texts.getValue("comment"), substring = true).performScrollTo()
+            onNodeWithText(texts.getValue("save")).performClick()
+            onAllNodes(hasError and hasSetTextAction())[0].assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun invalidSaveRevealsRequiredServiceDateWithoutOpeningCalendar() = runComposeUiTest {
+        show(newTask(fields = TaskFields(name = "Oil", intervalKm = "7500", lastDoneKm = "84000", createsRecord = true))) {
+            it.copy(showErrors = true, validationRequest = it.validationRequest + 1)
+        }
+        onNodeWithText(texts.getValue("oilChip")).performScrollTo()
+        onNodeWithText(texts.getValue("save")).performClick()
+        onAllNodes(hasError)[0].assertIsDisplayed()
+        onAllNodes(hasError and hasSetTextAction()).assertCountEquals(0)
     }
 
     @Test

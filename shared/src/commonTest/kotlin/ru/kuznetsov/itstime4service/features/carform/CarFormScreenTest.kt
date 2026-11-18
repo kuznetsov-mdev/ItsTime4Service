@@ -1,5 +1,9 @@
 package ru.kuznetsov.itstime4service.features.carform
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ComposeUiTest
@@ -67,7 +71,8 @@ class CarFormScreenTest : UiTest() {
 
     private val hasError = SemanticsMatcher.keyIsDefined(SemanticsProperties.Error)
 
-    private fun ComposeUiTest.show(state: CarFormUiState) = setContent {
+    private fun ComposeUiTest.show(state: CarFormUiState, afterSave: (CarFormUiState) -> CarFormUiState = { it }) = setContent {
+        var current by remember { mutableStateOf(state) }
         val km = unitGenitive(DistanceUnit.KILOMETERS)
         texts["addTask"] = stringResource(Res.string.action_add_task_button)
         texts["date"] = stringResource(Res.string.field_last_done_date)
@@ -93,7 +98,7 @@ class CarFormScreenTest : UiTest() {
         ).joinToString(" · ")
         ItsTime4ServiceTheme(darkTheme = false) {
             CarFormContent(
-                state = state,
+                state = current,
                 onBack = { calls += "back" },
                 onBrandChange = { calls += "brand $it" },
                 onMileageChange = { calls += "mileage $it" },
@@ -105,7 +110,7 @@ class CarFormScreenTest : UiTest() {
                 onToggleTask = { calls += "toggle $it" },
                 onRemoveTask = { calls += "remove $it" },
                 onTaskRecordToggle = { key, on -> calls += "record $key $on" },
-                onSave = { calls += "save $it" },
+                onSave = { calls += "save $it"; current = afterSave(current) },
                 onRetry = { calls += "retry" },
             )
         }
@@ -124,6 +129,27 @@ class CarFormScreenTest : UiTest() {
         onNodeWithText("29", substring = true).performClick()
         onNodeWithText(texts.getValue("done")).performClick()
         assertEquals(format.digitsOf(LocalDate(2024, 2, 29)), changedTask?.lastDoneDate)
+    }
+
+    @Test
+    fun invalidSaveRevealsCarBrandBeforeTasks() = runComposeUiTest {
+        show(CarFormUiState(tasks = listOf(TaskBlockState(1)))) {
+            it.copy(showErrors = true, validationRequest = it.validationRequest + 1)
+        }
+        onNodeWithContentDescription(texts.getValue("collapse")).performScrollTo()
+        onNodeWithText(texts.getValue("save")).performClick()
+        onAllNodes(hasError and hasSetTextAction())[0].assertIsDisplayed()
+    }
+
+    @Test
+    fun invalidSaveExpandsTaskAndRevealsItsFirstMissingField() = runComposeUiTest {
+        show(CarFormUiState(brand = "Kia", mileageKm = "84000", tasks = listOf(TaskBlockState(1, isCollapsed = true)))) {
+            it.copy(showErrors = true, tasks = it.tasks.map { task ->
+                task.copy(isCollapsed = false, validationRequest = task.validationRequest + 1)
+            })
+        }
+        onNodeWithText(texts.getValue("save")).performClick()
+        onAllNodes(hasError and hasSetTextAction())[0].assertIsDisplayed()
     }
 
     @Test

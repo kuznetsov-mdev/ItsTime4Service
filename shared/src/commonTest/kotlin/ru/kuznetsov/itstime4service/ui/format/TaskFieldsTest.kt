@@ -32,6 +32,19 @@ class TaskFieldsTest {
     }
 
     @Test
+    fun firstMissingFieldFollowsVisualOrder() {
+        var fields = TaskFields(createsRecord = true)
+        assertEquals(TaskRequiredField.NAME, fields.firstMissingField)
+        fields = fields.copy(name = "Oil")
+        assertEquals(TaskRequiredField.INTERVAL, fields.firstMissingField)
+        fields = fields.copy(intervalKm = "7500")
+        assertEquals(TaskRequiredField.LAST_DONE_MILEAGE, fields.firstMissingField)
+        fields = fields.copy(lastDoneKm = "80000")
+        assertEquals(TaskRequiredField.LAST_DONE_DATE, fields.firstMissingField)
+        assertNull(fields.copy(lastDoneDate = "29022024").firstMissingField)
+    }
+
+    @Test
     fun withoutRecordOnlyNameAndIntervalAreRequired() {
         assertTrue(oil.isValid)
         val task = oil.toNewTask(DistanceUnit.KILOMETERS)!!

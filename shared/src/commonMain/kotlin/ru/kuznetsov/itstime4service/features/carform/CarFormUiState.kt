@@ -13,6 +13,7 @@ import ru.kuznetsov.itstime4service.ui.format.TaskFields
  * [isSaved] flips to `true` once the car is stored and tells the screen to close.
  * Distances are typed in [distanceUnit], the unit chosen in settings. [defaultReminderWindowKm] is used to prefill
  * new task blocks.
+ * [validationRequest] changes on each rejected save to reveal the first missing field, including repeated attempts.
  * [loadFailed] replaces the form with the load error; [saveFailed] shows the "could not save" bar.
  */
 data class CarFormUiState(
@@ -27,6 +28,7 @@ data class CarFormUiState(
     val defaultReminderWindowKm: Int = Settings.DEFAULT_REMINDER_WINDOW_KM,
     val loadFailed: Boolean = false,
     val saveFailed: Boolean = false,
+    val validationRequest: Int = 0,
 ) {
     val isBrandMissing: Boolean get() = brand.isBlank()
     val isMileageMissing: Boolean get() = (mileageKm.toIntOrNull() ?: 0) <= 0
@@ -38,6 +40,7 @@ data class CarFormUiState(
  * [key] identifies the block while others are added and removed around it.
  * A collapsed block ([isCollapsed]) shows only the task name and a line with the interval and the last-done mileage.
  * [showErrors] outlines the empty required fields of this block alone — set by "Add task" while the block is not filled.
+ * [validationRequest] changes only when this block owns the first missing field of a rejected save.
  * [revealRequest] scrolls the block into view each time it grows; the block also scrolls into view when it appears.
  */
 data class TaskBlockState(
@@ -46,4 +49,5 @@ data class TaskBlockState(
     val isCollapsed: Boolean = false,
     val showErrors: Boolean = false,
     val revealRequest: Int = 0,
+    val validationRequest: Int = 0,
 )

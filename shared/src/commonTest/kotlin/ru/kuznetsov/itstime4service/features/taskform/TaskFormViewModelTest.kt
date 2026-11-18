@@ -89,6 +89,9 @@ class TaskFormViewModelTest {
         viewModel.onSave()
 
         assertTrue(viewModel.state.value.showErrors)
+        assertEquals(1, viewModel.state.value.validationRequest)
+        viewModel.onSaveAndAddAnother()
+        assertEquals(2, viewModel.state.value.validationRequest)
         assertFalse(viewModel.state.value.isClosed)
         assertTrue(app.car(kia)!!.tasks.isEmpty())
     }

@@ -1,9 +1,6 @@
 package ru.kuznetsov.itstime4service.features.carform
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.runtime.remember
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,10 +9,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,6 +54,7 @@ import ru.kuznetsov.itstime4service.ui.components.fields.LabeledMiniField
 import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
 import ru.kuznetsov.itstime4service.ui.components.indicators.AppCheckbox
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
+import ru.kuznetsov.itstime4service.ui.format.TaskRequiredField
 import ru.kuznetsov.itstime4service.ui.format.grouped
 import ru.kuznetsov.itstime4service.ui.format.unitGenitive
 import ru.kuznetsov.itstime4service.ui.format.unitLabel
@@ -75,7 +76,14 @@ internal fun TaskBlock(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
     revealRequest: Int = 0,
+    validationRequest: Int = 0,
 ) {
+    val validationFields = remember { TaskRequiredField.entries.associateWith { BringIntoViewRequester() } }
+    LaunchedEffect(validationRequest) {
+        if (validationRequest > 0 && showErrors && !isCollapsed) {
+            fields.firstMissingField?.let { validationFields.getValue(it).bringIntoView() }
+        }
+    }
     val colors = ItsTime4ServiceTheme.colors
     val shape = RoundedCornerShape(ItsTime4ServiceTheme.dimens.radiusL)
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -143,7 +151,7 @@ internal fun TaskBlock(
             onDone = onDone,
             placeholder = stringResource(Res.string.task_name_placeholder),
             isError = showErrors && fields.isNameMissing,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.bringIntoViewRequester(validationFields.getValue(TaskRequiredField.NAME)).fillMaxWidth(),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
             LabeledMiniField(
@@ -155,7 +163,7 @@ internal fun TaskBlock(
                 keyboardType = KeyboardType.Number,
                 isError = showErrors && fields.isIntervalMissing,
                 required = true,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.bringIntoViewRequester(validationFields.getValue(TaskRequiredField.INTERVAL)).weight(1f),
             )
             LabeledMiniField(
                 label = stringResource(Res.string.field_interval_months),
@@ -184,7 +192,7 @@ internal fun TaskBlock(
                     keyboardType = KeyboardType.Number,
                     isError = showErrors && fields.isLastDoneMissing,
                     required = fields.createsRecord,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.bringIntoViewRequester(validationFields.getValue(TaskRequiredField.LAST_DONE_MILEAGE)).weight(1f),
                 )
                 LabeledDateField(
                     label = stringResource(Res.string.field_last_done_date),
@@ -192,7 +200,7 @@ internal fun TaskBlock(
                     onValueChange = { onChange(fields.copy(lastDoneDate = it)) },
                     isError = showErrors && fields.isLastDoneDateMissing,
                     required = fields.createsRecord,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.bringIntoViewRequester(validationFields.getValue(TaskRequiredField.LAST_DONE_DATE)).weight(1f),
                 )
             }
             AppCheckbox(

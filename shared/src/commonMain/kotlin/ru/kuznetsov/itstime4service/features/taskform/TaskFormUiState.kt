@@ -13,6 +13,7 @@ import ru.kuznetsov.itstime4service.ui.format.TaskFields
  * or deleted, or the car or the task no longer exists. Distances are typed in [distanceUnit], the unit
  * chosen in settings. [defaultReminderWindowKm] is the settings value used to prefill a new task.
  * [isPickingIcon] shows the window with the task icons.
+ * [validationRequest] changes on each rejected save to reveal the first missing field, including repeated attempts.
  * [loadFailed] replaces the form with the load error; [saveFailed] shows the "could not save" bar.
  */
 data class TaskFormUiState(
@@ -29,4 +30,5 @@ data class TaskFormUiState(
     val defaultReminderWindowKm: Int = Settings.DEFAULT_REMINDER_WINDOW_KM,
     val loadFailed: Boolean = false,
     val saveFailed: Boolean = false,
+    val validationRequest: Int = 0,
 )

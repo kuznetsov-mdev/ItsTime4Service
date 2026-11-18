@@ -129,7 +129,7 @@ class TaskFormViewModel(
         val task = form.fields.toNewTask(form.distanceUnit, original)
         if (form.isLoading) return
         if (task == null) {
-            _state.update { it.copy(showErrors = true) }
+            _state.update { it.copy(showErrors = true, validationRequest = it.validationRequest + 1) }
             return
         }
         if (isSaving) return

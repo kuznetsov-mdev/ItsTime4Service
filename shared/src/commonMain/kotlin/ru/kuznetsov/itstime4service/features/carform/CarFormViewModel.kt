@@ -123,9 +123,17 @@ class CarFormViewModel(
         val form = _state.value
         if (!form.isValid) {
             _state.update { state ->
+                val firstInvalidKey = state.tasks.firstOrNull { !it.fields.isValid }?.key
+                    .takeUnless { state.isBrandMissing || state.isMileageMissing }
                 state.copy(
                     showErrors = true,
-                    tasks = state.tasks.map { if (it.fields.isValid) it else it.copy(isCollapsed = false) },
+                    validationRequest = state.validationRequest + 1,
+                    tasks = state.tasks.map { block ->
+                        if (block.fields.isValid) block else block.copy(
+                            isCollapsed = false,
+                            validationRequest = block.validationRequest + if (block.key == firstInvalidKey) 1 else 0,
+                        )
+                    },
                 )
             }
             return

@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -21,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,6 +78,7 @@ import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTopBar
 import ru.kuznetsov.itstime4service.ui.components.screen.isCompactHeight
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
 import ru.kuznetsov.itstime4service.ui.format.TaskPreset
+import ru.kuznetsov.itstime4service.ui.format.TaskRequiredField
 import ru.kuznetsov.itstime4service.ui.format.chipLabel
 import ru.kuznetsov.itstime4service.ui.format.taskName
 import ru.kuznetsov.itstime4service.ui.format.unitGenitive
@@ -137,6 +141,7 @@ internal fun TaskFormContent(
     onRetry: () -> Unit = {},
 ) {
     val fields = state.fields
+    val validationFields = remember { TaskRequiredField.entries.associateWith { BringIntoViewRequester() } }
     val wholeScreenScrolls = isCompactHeight() && !state.isLoading && !state.loadFailed
     Column(modifier.fillMaxSize().then(if (wholeScreenScrolls) Modifier.verticalScroll(rememberScrollState()) else Modifier)) {
         ScreenTopBar(onBack = onBack) {
@@ -160,6 +165,11 @@ internal fun TaskFormContent(
         if (state.loadFailed) {
             LoadError(onRetry = onRetry, modifier = Modifier.weight(1f).fillMaxWidth())
             return@Column
+        }
+        LaunchedEffect(state.validationRequest) {
+            if (state.validationRequest > 0 && state.showErrors) {
+                fields.firstMissingField?.let { validationFields.getValue(it).bringIntoView() }
+            }
         }
         key(state.formKey) {
             Column(
@@ -193,7 +203,7 @@ internal fun TaskFormContent(
                         onDone = onSave,
                         placeholder = stringResource(Res.string.task_name_placeholder),
                         isError = state.showErrors && fields.isNameMissing,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.bringIntoViewRequester(validationFields.getValue(TaskRequiredField.NAME)).weight(1f),
                     )
                 }
                 Row(
@@ -209,7 +219,7 @@ internal fun TaskFormContent(
                             onDone = onSave,
                             placeholder = "10000",
                             isError = state.showErrors && fields.isIntervalMissing,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.bringIntoViewRequester(validationFields.getValue(TaskRequiredField.INTERVAL)).fillMaxWidth(),
                         )
                     }
                     Column(Modifier.weight(1f)) {
@@ -246,7 +256,7 @@ internal fun TaskFormContent(
                                 onDone = onSave,
                                 placeholder = "78000",
                                 isError = state.showErrors && fields.isLastDoneMissing,
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.bringIntoViewRequester(validationFields.getValue(TaskRequiredField.LAST_DONE_MILEAGE)).fillMaxWidth(),
                             )
                         }
                         Column(Modifier.weight(1f)) {
@@ -256,7 +266,7 @@ internal fun TaskFormContent(
                                 label = stringResource(Res.string.field_last_done_date_short),
                                 onValueChange = { onFieldsChange(fields.copy(lastDoneDate = it)) },
                                 isError = state.showErrors && fields.isLastDoneDateMissing,
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.bringIntoViewRequester(validationFields.getValue(TaskRequiredField.LAST_DONE_DATE)).fillMaxWidth(),
                             )
                         }
                     }

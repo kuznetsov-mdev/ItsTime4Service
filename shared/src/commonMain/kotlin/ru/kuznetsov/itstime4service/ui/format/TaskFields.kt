@@ -37,7 +37,14 @@ data class TaskFields(
     val isIntervalMissing: Boolean get() = (intervalKm.toIntOrNull() ?: 0) <= 0
     val isLastDoneMissing: Boolean get() = createsRecord && (lastDoneKm.toIntOrNull() ?: 0) <= 0
     val isLastDoneDateMissing: Boolean get() = createsRecord && DateInputFormat.current.parse(lastDoneDate) == null
-    val isValid: Boolean get() = !isNameMissing && !isIntervalMissing && !isLastDoneMissing && !isLastDoneDateMissing
+    internal val firstMissingField: TaskRequiredField? get() = when {
+        isNameMissing -> TaskRequiredField.NAME
+        isIntervalMissing -> TaskRequiredField.INTERVAL
+        isLastDoneMissing -> TaskRequiredField.LAST_DONE_MILEAGE
+        isLastDoneDateMissing -> TaskRequiredField.LAST_DONE_DATE
+        else -> null
+    }
+    val isValid: Boolean get() = firstMissingField == null
 
     fun withRecord(on: Boolean, today: LocalDate): TaskFields = copy(
         createsRecord = on,
@@ -86,3 +93,6 @@ fun MaintenanceTask.toFields(unit: DistanceUnit): TaskFields = TaskFields(
     icon = icon,
     unknownService = lastDoneKm == null && lastDoneDate == null,
 )
+
+/** Required task fields in their visual validation order. */
+internal enum class TaskRequiredField { NAME, INTERVAL, LAST_DONE_MILEAGE, LAST_DONE_DATE }

@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -19,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -26,9 +29,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.jetbrains.compose.resources.pluralStringResource
-import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_add_task_button
 import itstime4service.shared.generated.resources.action_save_car
@@ -43,6 +43,9 @@ import itstime4service.shared.generated.resources.section_tasks
 import itstime4service.shared.generated.resources.task_name_oil
 import itstime4service.shared.generated.resources.tasks_added
 import itstime4service.shared.generated.resources.vin_placeholder
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 import ru.kuznetsov.itstime4service.ui.components.ScreenPreview
 import ru.kuznetsov.itstime4service.ui.components.buttons.OutlineButton
 import ru.kuznetsov.itstime4service.ui.components.buttons.PresetChip
@@ -117,6 +120,16 @@ internal fun CarFormContent(
     val typography = ItsTime4ServiceTheme.typography
     val defaultTaskName = stringResource(Res.string.task_name_oil)
     val save = { onSave(defaultTaskName) }
+    val brandRequester = remember { BringIntoViewRequester() }
+    val mileageRequester = remember { BringIntoViewRequester() }
+    LaunchedEffect(state.validationRequest) {
+        if (state.validationRequest > 0 && state.showErrors && !state.loadFailed) {
+            when {
+                state.isBrandMissing -> brandRequester.bringIntoView()
+                state.isMileageMissing -> mileageRequester.bringIntoView()
+            }
+        }
+    }
     val wholeScreenScrolls = isCompactHeight() && !state.loadFailed
     Column(modifier.fillMaxSize().then(if (wholeScreenScrolls) Modifier.verticalScroll(rememberScrollState()) else Modifier)) {
         ScreenTopBar(onBack = onBack)
@@ -138,7 +151,7 @@ internal fun CarFormContent(
                 onDone = save,
                 placeholder = stringResource(Res.string.car_name_placeholder),
                 isError = state.showErrors && state.isBrandMissing,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
+                modifier = Modifier.bringIntoViewRequester(brandRequester).fillMaxWidth().padding(bottom = 18.dp),
             )
             Row(
                 modifier = Modifier.padding(bottom = 18.dp),
@@ -153,7 +166,7 @@ internal fun CarFormContent(
                         onDone = save,
                         placeholder = "84300",
                         isError = state.showErrors && state.isMileageMissing,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.bringIntoViewRequester(mileageRequester).fillMaxWidth(),
                     )
                 }
                 Column(Modifier.weight(1f)) {
@@ -205,6 +218,7 @@ internal fun CarFormContent(
                         isCollapsed = task.isCollapsed,
                         showErrors = state.showErrors || task.showErrors,
                         revealRequest = task.revealRequest,
+                        validationRequest = task.validationRequest,
                         distanceUnit = state.distanceUnit,
                         onChange = { onTaskChange(task.key, it) },
                         onToggle = { onToggleTask(task.key) },

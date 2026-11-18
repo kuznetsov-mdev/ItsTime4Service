@@ -186,6 +186,24 @@ class CarFormViewModelTest {
         assertTrue(state.tasks[0].isCollapsed)
         assertFalse(state.tasks[1].isCollapsed)
         assertTrue(app.summaries().isEmpty())
+        assertEquals(1, state.validationRequest)
+        assertEquals(0, state.tasks[0].validationRequest)
+        assertEquals(1, state.tasks[1].validationRequest)
+        viewModel.onSave("Oil")
+        assertEquals(2, viewModel.block(1).validationRequest)
+    }
+
+    @Test
+    fun carFieldsTakePriorityOverTaskValidationScroll() = runTest {
+        val viewModel = open()
+        viewModel.onAddTask()
+        viewModel.onSave("Oil")
+        assertEquals(1, viewModel.state.value.validationRequest)
+        assertEquals(0, viewModel.block(0).validationRequest)
+        viewModel.fill()
+        viewModel.onSave("Oil")
+        assertEquals(2, viewModel.state.value.validationRequest)
+        assertEquals(1, viewModel.block(0).validationRequest)
     }
 
     @Test

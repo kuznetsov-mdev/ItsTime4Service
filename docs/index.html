@@ -1448,6 +1448,19 @@
   }
   function worstStatus(alerts) { return alerts.due > 0 ? 'due' : (alerts.soon > 0 ? 'soon' : 'ok'); }
 
+  function revealFirstInvalidInput() {
+    requestAnimationFrame(function () {
+      var view = document.querySelector('#interactiveScreen .view.active');
+      var field = view && view.querySelector('input.error, textarea.error');
+      if (!field) return;
+      var scroller = view.querySelector(SCROLLABLE);
+      if (!scroller || scroller.scrollHeight <= scroller.clientHeight) scroller = view;
+      var bounds = scroller.getBoundingClientRect();
+      var target = field.getBoundingClientRect();
+      scroller.scrollTo({ top: scroller.scrollTop + target.top - bounds.top - (bounds.height - target.height) / 2, behavior: 'smooth' });
+    });
+  }
+
   function gaugeHtml(car) {
     var a = carAlerts(car);
     var status = worstStatus(a);
@@ -3359,7 +3372,7 @@
     function storeTaskForm() {
       syncTaskForm();
       var f = istate.taskForm, car = currentDetailCar();
-      if (blockInvalid(f)) { istate.taskFormErrors = true; paintInteractive(); return false; }
+      if (blockInvalid(f)) { istate.taskFormErrors = true; paintInteractive(); revealFirstInvalidInput(); return false; }
       var name = String(f.name).trim();
       var stored = f.taskId ? car.tasks.find(function (t) { return t.id === f.taskId; }) : null;
       var intervalKm = keepKm(stored && stored.intervalKm, f.intervalKm);
@@ -3646,7 +3659,7 @@
       if (!brand || !(mileage > 0) || !blocksValid) {
         /* свёрнутая работа с пустым обязательным полем разворачивается, чтобы ошибку было видно */
         istate.taskBlocks.forEach(function (b) { if (blockInvalid(b)) b.collapsed = false; });
-        istate.formErrors = true; paintInteractive(); return;
+        istate.formErrors = true; paintInteractive(); revealFirstInvalidInput(); return;
       }
       mileage = fromUnit(mileage);
       istate.formErrors = false;
