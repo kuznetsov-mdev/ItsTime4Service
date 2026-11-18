@@ -61,8 +61,8 @@ fun LabeledMiniField(
             placeholder = placeholder,
             keyboardType = keyboardType,
             isError = isError,
-            imeAction = if (onDone != null) ImeAction.Done else ImeAction.Default,
-            onImeAction = onDone,
+            imeAction = if (minLines == 1 && onDone != null) ImeAction.Done else ImeAction.Default,
+            onImeAction = onDone.takeIf { minLines == 1 },
             minLines = minLines,
             visualTransformation = visualTransformation,
         )

@@ -3642,10 +3642,9 @@
       istate.screen = 'cars'; paintInteractive();
     });
 
-    /* клавиша «готово» (Enter) в любом поле — то же, что главная кнопка: окно, правка на месте или форма */
     root.querySelectorAll('input, textarea').forEach(function (input) {
       input.addEventListener('keydown', function (e) {
-        if (e.key !== 'Enter') return;
+        if (e.key !== 'Enter' || e.isComposing || input.tagName === 'TEXTAREA') return;
         var scope = input.closest('.stat-edit-row') || input.closest('.dialog');
         var target = scope ? scope.querySelector(scope.classList.contains('dialog') ? '.dialog-btn.primary' : 'button')
           : (input.closest('.view') || root).querySelector('#saveTaskBtn, #saveCarBtn');

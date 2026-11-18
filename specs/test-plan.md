@@ -346,3 +346,9 @@
 Дополнительный timezone-аудит воспроизвёл потерю часа во второй половине DST overlap. Миграция 6→7 добавляет nullable точный UTC-след, который переживает обычную пересборку плана. Новые и прежние тесты покрывают обе зоны/направления, overlap/gap, старые NULL-следы, будущее, миграции и сохранение фактического Instant без переинтерпретации локального времени.
 
 Проверено 16.11.2026 основной сессией: полный Android suite **634/0/0/0**, native iOS **106/0/0/0** (включая прежние snapshot/repository/sync cases), production/test compilation для iosSimulatorArm64 и iosArm64 — PASS без предупреждений. Workflow `bf88bf0d77a85cebe4210a95e32deada`, итоговые sequences 19–20. [Отчёт с вопросами, ошибками/исправлениями, командами и границами](../docs/research/transfer-import-verification.md). Это самопроверка; отдельные reviewer/QA не подключались. Ready for acceptance, приёмка пользователя ожидается. Системные файлы, Compose transfer UI, реальный Android↔iOS обмен и release gates остаются следующими этапами.
+
+### Исправления отзывов RuStore — 18.11.2026
+
+- `ServiceRecordFieldsTest`: настоящий Enter, перенос строки без submit; однострочное Done.
+
+Изолированный снимок коммита 1: Android 636/0/0/0; debug APK и обе iOS production/test compilation PASS. Workflow `3320ebaf092ce1a3434d4d5c9d210795`, вопрос «Собирается ли отдельный коммит 1?».

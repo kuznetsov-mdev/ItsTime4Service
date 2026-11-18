@@ -19,7 +19,7 @@ import ru.kuznetsov.itstime4service.ui.components.ComponentPreview
 
 /**
  * The optional fields of a service history record — where it was serviced, the cost and a comment — shared by
- * the done-mark window, the history record windows and the task forms. The keyboard's done key calls [onDone].
+ * the done-mark window, the history record windows and the task forms. Single-line fields call [onDone]; the multiline comment keeps Enter for line breaks.
  */
 @Composable
 fun ServiceRecordFields(
