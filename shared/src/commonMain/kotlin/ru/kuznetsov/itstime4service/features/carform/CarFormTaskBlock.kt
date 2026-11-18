@@ -1,6 +1,9 @@
 package ru.kuznetsov.itstime4service.features.carform
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,13 +12,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,19 +26,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import org.jetbrains.compose.resources.stringResource
-import itstime4service.shared.generated.resources.service_unknown
-import itstime4service.shared.generated.resources.service_specify
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_collapse_task
 import itstime4service.shared.generated.resources.action_expand_task
 import itstime4service.shared.generated.resources.action_remove_task
-import itstime4service.shared.generated.resources.date_placeholder
 import itstime4service.shared.generated.resources.field_interval_months
 import itstime4service.shared.generated.resources.field_last_done
 import itstime4service.shared.generated.resources.field_last_done_date
 import itstime4service.shared.generated.resources.field_reminder_window
 import itstime4service.shared.generated.resources.field_task_interval
+import itstime4service.shared.generated.resources.service_specify
+import itstime4service.shared.generated.resources.service_unknown
 import itstime4service.shared.generated.resources.task_block_title
 import itstime4service.shared.generated.resources.task_create_record
 import itstime4service.shared.generated.resources.task_every
@@ -46,14 +44,15 @@ import itstime4service.shared.generated.resources.task_interval_missing
 import itstime4service.shared.generated.resources.task_last_done
 import itstime4service.shared.generated.resources.task_last_done_missing
 import itstime4service.shared.generated.resources.task_name_placeholder
+import org.jetbrains.compose.resources.stringResource
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.ui.components.buttons.AppIconButton
 import ru.kuznetsov.itstime4service.ui.components.fields.AppTextField
+import ru.kuznetsov.itstime4service.ui.components.fields.FieldLabel
+import ru.kuznetsov.itstime4service.ui.components.fields.LabeledDateField
 import ru.kuznetsov.itstime4service.ui.components.fields.LabeledMiniField
 import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
 import ru.kuznetsov.itstime4service.ui.components.indicators.AppCheckbox
-import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
-import ru.kuznetsov.itstime4service.ui.components.fields.FieldLabel
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
 import ru.kuznetsov.itstime4service.ui.format.grouped
 import ru.kuznetsov.itstime4service.ui.format.unitGenitive
@@ -187,16 +186,12 @@ internal fun TaskBlock(
                     required = fields.createsRecord,
                     modifier = Modifier.weight(1f),
                 )
-                LabeledMiniField(
+                LabeledDateField(
                     label = stringResource(Res.string.field_last_done_date),
                     value = fields.lastDoneDate,
                     onValueChange = { onChange(fields.copy(lastDoneDate = it)) },
-                    onDone = onDone,
-                    placeholder = stringResource(Res.string.date_placeholder),
-                    keyboardType = KeyboardType.Number,
                     isError = showErrors && fields.isLastDoneDateMissing,
                     required = fields.createsRecord,
-                    visualTransformation = DateInputFormat.current.visualTransformation,
                     modifier = Modifier.weight(1f),
                 )
             }

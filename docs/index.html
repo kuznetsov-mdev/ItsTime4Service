@@ -377,6 +377,10 @@
   .record-fields { display: flex; flex-direction: column; gap: 10px; margin: 0 0 14px; }
   .record-fields .text-input, .record-fields .num-input { width: 100%; margin: 0; box-sizing: border-box; }
   .record-fields textarea.text-input, .record-fields .text-input.multiline { min-height: 58px; resize: none; line-height: 1.4; }
+  .date-field-control { position: relative; display: block; }
+  .date-field-control .text-input { padding-right: 38px; cursor: pointer; }
+  .date-field-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: flex; color: var(--ink-faint); pointer-events: none; }
+  .calendar-native-proxy { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
   .task-form .app-check { margin: 4px 18px 8px; }
   .task-form .record-fields { padding: 0 18px; }
   .task-block .app-check { margin: 0; }
@@ -1461,7 +1465,7 @@
     var ring = '--d1:' + dueEnd + '%;--d2:' + soonEnd + '%;--d3:' + (a.count > 0 ? 100 : 0) + '%';
     var label = a.total + ' из ' + a.count + ' пора менять';
     return '<div class="status-donut" style="' + ring + '" role="img" aria-label="' + label + '">' +
-      '<div class="status-donut-inner" style="color:' + tierVar(worstStatus(a)) + '">' + a.total + '/' + a.count + '</div></div>';
+      '<div class="status-donut-inner" style="color:' + tierVar(worstStatus(a)) + '">' + a.total + '</div></div>';
   }
 
   /* ---------------- screen: cars list ---------------- */
@@ -3564,10 +3568,33 @@
         paintInteractive();
       });
     });
-    /* поля дат — только цифры, точки ставятся сами: дд.мм.гггг (формат русской локали) */
     root.querySelectorAll('input[placeholder="дд.мм.гггг"]').forEach(function (input) {
-      input.setAttribute('inputmode', 'numeric');
-      input.addEventListener('input', function () { input.value = maskDate(input.value); });
+      input.readOnly = true;
+      input.setAttribute('role', 'button');
+      input.setAttribute('aria-haspopup', 'dialog');
+      input.setAttribute('inputmode', 'none');
+      input.setAttribute('title', 'Выбрать дату');
+      var label = input.parentNode.querySelector('.mini-label, .field-label');
+      input.setAttribute('aria-label', input.id === 'fltFrom' ? 'Дата начала' : input.id === 'fltTo' ? 'Дата окончания' : label ? label.textContent.replace('*', '').trim() : 'Выбрать дату');
+      var wrapper = document.createElement('span'); wrapper.className = 'date-field-control';
+      input.parentNode.insertBefore(wrapper, input); wrapper.appendChild(input);
+      var indicator = document.createElement('span'); indicator.className = 'date-field-icon'; indicator.setAttribute('aria-hidden', 'true');
+      indicator.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>';
+      wrapper.appendChild(indicator);
+      var picker = document.createElement('input'); picker.type = 'date'; picker.className = 'calendar-native-proxy'; picker.tabIndex = -1;
+      picker.min = '0001-01-01'; picker.max = '9999-12-31'; picker.setAttribute('aria-hidden', 'true'); wrapper.appendChild(picker);
+      function openCalendar() {
+        picker.value = validIsoFromRu(input.value) || '';
+        if (typeof picker.showPicker === 'function') picker.showPicker(); else { picker.focus(); picker.click(); }
+      }
+      input.addEventListener('click', openCalendar);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCalendar(); }
+      });
+      picker.addEventListener('change', function () {
+        input.value = picker.value ? formatDateRu(picker.value) : '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
     });
     var addTaskBtn = root.querySelector('#addTaskBtn');
     if (addTaskBtn) addTaskBtn.addEventListener('click', function () {
@@ -3644,7 +3671,7 @@
 
     root.querySelectorAll('input, textarea').forEach(function (input) {
       input.addEventListener('keydown', function (e) {
-        if (e.key !== 'Enter' || e.isComposing || input.tagName === 'TEXTAREA') return;
+        if (e.key !== 'Enter' || e.isComposing || input.tagName === 'TEXTAREA' || input.readOnly || input.type === 'date') return;
         var scope = input.closest('.stat-edit-row') || input.closest('.dialog');
         var target = scope ? scope.querySelector(scope.classList.contains('dialog') ? '.dialog-btn.primary' : 'button')
           : (input.closest('.view') || root).querySelector('#saveTaskBtn, #saveCarBtn');

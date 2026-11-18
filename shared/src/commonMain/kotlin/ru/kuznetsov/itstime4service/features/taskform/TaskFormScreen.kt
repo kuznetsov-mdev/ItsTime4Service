@@ -28,11 +28,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.parameter.parametersOf
-import itstime4service.shared.generated.resources.service_unknown
-import itstime4service.shared.generated.resources.service_specify
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_add_more
 import itstime4service.shared.generated.resources.action_cancel
@@ -40,7 +35,6 @@ import itstime4service.shared.generated.resources.action_delete
 import itstime4service.shared.generated.resources.action_pick_task_icon
 import itstime4service.shared.generated.resources.action_remove_task
 import itstime4service.shared.generated.resources.action_save
-import itstime4service.shared.generated.resources.date_placeholder
 import itstime4service.shared.generated.resources.dialog_delete_task_text
 import itstime4service.shared.generated.resources.dialog_delete_task_title
 import itstime4service.shared.generated.resources.field_interval
@@ -51,8 +45,13 @@ import itstime4service.shared.generated.resources.field_reminder_window
 import itstime4service.shared.generated.resources.field_task_name
 import itstime4service.shared.generated.resources.screen_edit_task
 import itstime4service.shared.generated.resources.screen_new_task
+import itstime4service.shared.generated.resources.service_specify
+import itstime4service.shared.generated.resources.service_unknown
 import itstime4service.shared.generated.resources.task_create_record
 import itstime4service.shared.generated.resources.task_name_placeholder
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import ru.kuznetsov.itstime4service.domain.model.TaskIcon
 import ru.kuznetsov.itstime4service.ui.components.ScreenPreview
 import ru.kuznetsov.itstime4service.ui.components.buttons.AppIconButton
@@ -61,6 +60,7 @@ import ru.kuznetsov.itstime4service.ui.components.buttons.PresetChip
 import ru.kuznetsov.itstime4service.ui.components.buttons.PrimaryButton
 import ru.kuznetsov.itstime4service.ui.components.dialogs.ConfirmDialog
 import ru.kuznetsov.itstime4service.ui.components.dialogs.TaskIconDialog
+import ru.kuznetsov.itstime4service.ui.components.fields.AppDateField
 import ru.kuznetsov.itstime4service.ui.components.fields.AppNumberField
 import ru.kuznetsov.itstime4service.ui.components.fields.AppTextField
 import ru.kuznetsov.itstime4service.ui.components.fields.FieldLabel
@@ -73,7 +73,6 @@ import ru.kuznetsov.itstime4service.ui.components.screen.ScreenHorizontalPadding
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTitle
 import ru.kuznetsov.itstime4service.ui.components.screen.ScreenTopBar
 import ru.kuznetsov.itstime4service.ui.components.screen.isCompactHeight
-import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
 import ru.kuznetsov.itstime4service.ui.format.TaskFields
 import ru.kuznetsov.itstime4service.ui.format.TaskPreset
 import ru.kuznetsov.itstime4service.ui.format.chipLabel
@@ -252,13 +251,11 @@ internal fun TaskFormContent(
                         }
                         Column(Modifier.weight(1f)) {
                             FieldLabel(stringResource(Res.string.field_last_done_date_short), required = fields.createsRecord)
-                            AppNumberField(
+                            AppDateField(
                                 value = fields.lastDoneDate,
+                                label = stringResource(Res.string.field_last_done_date_short),
                                 onValueChange = { onFieldsChange(fields.copy(lastDoneDate = it)) },
-                                onDone = onSave,
-                                placeholder = stringResource(Res.string.date_placeholder),
                                 isError = state.showErrors && fields.isLastDoneDateMissing,
-                                visualTransformation = DateInputFormat.current.visualTransformation,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }

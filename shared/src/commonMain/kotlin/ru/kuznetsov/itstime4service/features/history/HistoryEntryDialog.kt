@@ -16,7 +16,6 @@ import org.jetbrains.compose.resources.stringResource
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_cancel
 import itstime4service.shared.generated.resources.action_save
-import itstime4service.shared.generated.resources.date_placeholder
 import itstime4service.shared.generated.resources.field_date
 import itstime4service.shared.generated.resources.field_mileage
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
@@ -27,8 +26,8 @@ import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogCard
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogFields
 import ru.kuznetsov.itstime4service.ui.components.indicators.ErrorBar
 import ru.kuznetsov.itstime4service.ui.components.fields.LabeledMiniField
+import ru.kuznetsov.itstime4service.ui.components.fields.LabeledDateField
 import ru.kuznetsov.itstime4service.ui.components.fields.ServiceRecordFields
-import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
 import ru.kuznetsov.itstime4service.ui.format.unitLabel
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
@@ -71,14 +70,10 @@ internal fun HistoryEntryCard(
     DialogCard(icon = ItsTime4ServiceIcons.Wrench, title = form.taskName, text = form.car.label(), modifier = modifier) {
         DialogFields {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-                LabeledMiniField(
+                LabeledDateField(
                     label = stringResource(Res.string.field_date),
                     value = form.date,
                     onValueChange = { onChange(form.copy(date = it)) },
-                    onDone = onSave,
-                    placeholder = stringResource(Res.string.date_placeholder),
-                    keyboardType = KeyboardType.Number,
-                    visualTransformation = DateInputFormat.current.visualTransformation,
                     isError = form.showErrors && form.isDateInvalid,
                     required = true,
                     modifier = Modifier.weight(1f),

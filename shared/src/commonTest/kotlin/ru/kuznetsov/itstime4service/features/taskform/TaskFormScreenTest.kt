@@ -1,9 +1,11 @@
 package ru.kuznetsov.itstime4service.features.taskform
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -18,6 +20,10 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.v2.runComposeUiTest
 import itstime4service.shared.generated.resources.service_unknown
 import itstime4service.shared.generated.resources.service_specify
+import kotlinx.datetime.LocalDate
+import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
+import itstime4service.shared.generated.resources.action_done
+import itstime4service.shared.generated.resources.field_last_done_date_short
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_cancel
 import itstime4service.shared.generated.resources.action_pick_task_icon
@@ -52,6 +58,8 @@ class TaskFormScreenTest : UiTest() {
     private val hasError = SemanticsMatcher.keyIsDefined(SemanticsProperties.Error)
 
     private fun ComposeUiTest.show(state: TaskFormUiState) = setContent {
+        texts["date"] = stringResource(Res.string.field_last_done_date_short)
+        texts["done"] = stringResource(Res.string.action_done)
         texts["unknown"] = stringResource(Res.string.service_unknown)
         texts["specify"] = stringResource(Res.string.service_specify).uppercase()
         texts["delete"] = stringResource(Res.string.action_remove_task)
@@ -83,6 +91,24 @@ class TaskFormScreenTest : UiTest() {
 
     private fun newTask(fields: TaskFields = TaskFields(), showErrors: Boolean = false) =
         TaskFormUiState(isLoading = false, carBrand = "Kia", fields = fields, showErrors = showErrors)
+
+    @Test
+    fun newTaskDateOpensCalendarWithoutTextInput() = checkDateCalendar(isEditing = false)
+
+    @Test
+    fun editedTaskDateOpensCalendarWithoutTextInput() = checkDateCalendar(isEditing = true)
+
+    private fun checkDateCalendar(isEditing: Boolean) = runComposeUiTest {
+        val format = DateInputFormat.current
+        show(newTask(TaskFields(name = "Oil", intervalKm = "7500", lastDoneDate = format.digitsOf(LocalDate(2024, 2, 15))))
+            .copy(isEditing = isEditing))
+        onNodeWithContentDescription(texts.getValue("date")).assert(hasSetTextAction().not()).performScrollTo().performClick()
+        onNodeWithText(texts.getValue("done")).assertIsDisplayed()
+        onNodeWithText("29", substring = true).performClick()
+        onNodeWithText(texts.getValue("done")).performClick()
+        assertEquals(format.digitsOf(LocalDate(2024, 2, 29)), typed?.lastDoneDate)
+        assertTrue(calls.isEmpty())
+    }
 
     @Test
     fun newTaskOffersPresetsAndRecordButNoDelete() = runComposeUiTest {

@@ -1,9 +1,11 @@
 package ru.kuznetsov.itstime4service.features.carform
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -16,6 +18,10 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.v2.runComposeUiTest
+import kotlinx.datetime.LocalDate
+import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
+import itstime4service.shared.generated.resources.action_done
+import itstime4service.shared.generated.resources.field_last_done_date
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_add_task_button
 import itstime4service.shared.generated.resources.action_collapse_task
@@ -57,12 +63,15 @@ class CarFormScreenTest : UiTest() {
 
     private val calls = mutableListOf<String>()
     private val texts = mutableMapOf<String, String>()
+    private var changedTask: TaskFields? = null
 
     private val hasError = SemanticsMatcher.keyIsDefined(SemanticsProperties.Error)
 
     private fun ComposeUiTest.show(state: CarFormUiState) = setContent {
         val km = unitGenitive(DistanceUnit.KILOMETERS)
         texts["addTask"] = stringResource(Res.string.action_add_task_button)
+        texts["date"] = stringResource(Res.string.field_last_done_date)
+        texts["done"] = stringResource(Res.string.action_done)
         texts["save"] = stringResource(Res.string.action_save_car)
         texts["defaultName"] = stringResource(Res.string.task_name_oil)
         texts["oilChip"] = "+ ${stringResource(TaskPreset.OIL.chipLabel)}"
@@ -90,7 +99,7 @@ class CarFormScreenTest : UiTest() {
                 onMileageChange = { calls += "mileage $it" },
                 onVinChange = { calls += "vin $it" },
                 onPlateChange = { calls += "plate $it" },
-                onTaskChange = { key, fields -> calls += "task $key ${fields.name}" },
+                onTaskChange = { key, fields -> changedTask = fields; calls += "task $key ${fields.name}" },
                 onAddTask = { calls += "addTask" },
                 onAddPreset = { preset, name -> calls += "preset $preset $name" },
                 onToggleTask = { calls += "toggle $it" },
@@ -103,6 +112,19 @@ class CarFormScreenTest : UiTest() {
     }
 
     private val filledTask = TaskFields(name = "Масло", intervalKm = "10000", lastDoneKm = "78000")
+
+    @Test
+    fun taskBlockDateOpensCalendarWithoutTextInput() = runComposeUiTest {
+        val format = DateInputFormat.current
+        show(CarFormUiState(brand = "Kia", mileageKm = "84000", tasks = listOf(
+            TaskBlockState(1, fields = filledTask.copy(lastDoneDate = format.digitsOf(LocalDate(2024, 2, 15)))),
+        )))
+        onNodeWithContentDescription(texts.getValue("date")).assert(hasSetTextAction().not()).performScrollTo().performClick()
+        onNodeWithText(texts.getValue("done")).assertIsDisplayed()
+        onNodeWithText("29", substring = true).performClick()
+        onNodeWithText(texts.getValue("done")).performClick()
+        assertEquals(format.digitsOf(LocalDate(2024, 2, 29)), changedTask?.lastDoneDate)
+    }
 
     @Test
     fun emptyCarFieldsAreMarkedAsErrors() = runComposeUiTest {

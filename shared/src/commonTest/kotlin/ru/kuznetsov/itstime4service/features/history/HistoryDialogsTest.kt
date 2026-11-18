@@ -8,11 +8,14 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
@@ -25,12 +28,18 @@ import itstime4service.shared.generated.resources.action_cancel
 import itstime4service.shared.generated.resources.action_more_entry_fields
 import itstime4service.shared.generated.resources.action_reset
 import itstime4service.shared.generated.resources.action_save
+import itstime4service.shared.generated.resources.action_done
+import itstime4service.shared.generated.resources.field_date
+import itstime4service.shared.generated.resources.field_date_from
+import itstime4service.shared.generated.resources.field_date_to
 import itstime4service.shared.generated.resources.field_service_name
 import itstime4service.shared.generated.resources.history_sold_car
 import org.jetbrains.compose.resources.stringResource
+import kotlinx.datetime.LocalDate
 import ru.kuznetsov.itstime4service.domain.model.DistanceUnit
 import ru.kuznetsov.itstime4service.ui.test.UiTest
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
+import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -63,6 +72,10 @@ class HistoryDialogsTest : UiTest() {
         texts["more"] = stringResource(Res.string.action_more_entry_fields)
         texts["service"] = stringResource(Res.string.field_service_name)
         texts["soldKia"] = stringResource(Res.string.history_sold_car, "Kia")
+        texts["date"] = stringResource(Res.string.field_date)
+        texts["dateFrom"] = stringResource(Res.string.field_date_from)
+        texts["dateTo"] = stringResource(Res.string.field_date_to)
+        texts["done"] = stringResource(Res.string.action_done)
         ItsTime4ServiceTheme(darkTheme = false) {
             Box(Modifier.fillMaxSize()) { content() }
         }
@@ -110,6 +123,31 @@ class HistoryDialogsTest : UiTest() {
     )
 
     @Test
+    fun filterStartDateOpensCalendarWithoutTextInput() = runComposeUiTest {
+        val format = DateInputFormat.current
+        val to = format.digitsOf(LocalDate(2024, 3, 1))
+        showFilter(HistoryFilter(dateFrom = format.digitsOf(LocalDate(2024, 2, 15)), dateTo = to))
+        onNodeWithContentDescription(texts.getValue("dateFrom")).assert(hasSetTextAction().not()).performScrollTo().performClick()
+        onNodeWithText(texts.getValue("done")).assertIsDisplayed()
+        onNodeWithText("29", substring = true).performClick()
+        onNodeWithText(texts.getValue("done")).performClick()
+        assertEquals(format.digitsOf(LocalDate(2024, 2, 29)), filterChanges.last().dateFrom)
+        assertEquals(to, filterChanges.last().dateTo)
+    }
+
+    @Test
+    fun newRecordDateOpensCalendarWithoutTextInput() = runComposeUiTest {
+        val format = DateInputFormat.current
+        showNewEntry(NewHistoryEntryForm(carId = kia.id, taskName = "Oil", mileage = "84000", date = format.digitsOf(LocalDate(2024, 2, 15))))
+        onNodeWithContentDescription(texts.getValue("date")).assert(hasSetTextAction().not()).performScrollTo().performClick()
+        onNodeWithText(texts.getValue("done")).assertIsDisplayed()
+        onNodeWithText("29", substring = true).performClick()
+        onNodeWithText(texts.getValue("done")).performClick()
+        assertEquals(format.digitsOf(LocalDate(2024, 2, 29)), newEntryChanges.last().date)
+        assertTrue(calls.isEmpty())
+    }
+
+    @Test
     fun recordShowsTaskAndSoldCarAndMarksInvalidFields() = runComposeUiTest {
         showEntry(record(showErrors = true))
 
@@ -136,6 +174,31 @@ class HistoryDialogsTest : UiTest() {
 
         assertTrue(entryChanges.any { it.mileage.length == 6 && "61500" in it.mileage && "7" in it.mileage })
         assertEquals(listOf("save", "dismiss", "save"), calls)
+    }
+
+    @Test
+    fun recordCalendarPublishesTheChosenDate() = runComposeUiTest {
+        val format = DateInputFormat.current
+        showEntry(record(date = format.digitsOf(LocalDate(2024, 2, 15)), mileage = "61500"))
+        onNodeWithContentDescription(texts.getValue("date")).assert(hasSetTextAction().not()).performScrollTo().performClick()
+        onNodeWithText("29", substring = true).performClick()
+        onNodeWithText(texts.getValue("done")).performClick()
+        assertEquals(format.digitsOf(LocalDate(2024, 2, 29)), entryChanges.last().date)
+        assertTrue(calls.isEmpty())
+    }
+
+    @Test
+    fun filterEndDateHasItsOwnLabelAndCalendarCallback() = runComposeUiTest {
+        val format = DateInputFormat.current
+        val from = format.digitsOf(LocalDate(2024, 2, 1))
+        showFilter(HistoryFilter(dateFrom = from, dateTo = format.digitsOf(LocalDate(2024, 2, 15))))
+        onNodeWithContentDescription(texts.getValue("dateFrom")).assertExists()
+        onNodeWithContentDescription(texts.getValue("dateTo")).assert(hasSetTextAction().not()).performScrollTo().performClick()
+        onNodeWithText("29", substring = true).performClick()
+        onNodeWithText(texts.getValue("done")).performClick()
+        assertEquals(from, filterChanges.last().dateFrom)
+        assertEquals(format.digitsOf(LocalDate(2024, 2, 29)), filterChanges.last().dateTo)
+        assertTrue(calls.isEmpty())
     }
 
     @Test

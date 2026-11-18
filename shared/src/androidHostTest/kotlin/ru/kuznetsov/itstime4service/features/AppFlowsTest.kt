@@ -17,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.v2.runComposeUiTest
@@ -25,6 +26,8 @@ import itstime4service.shared.generated.resources.action_add_car
 import itstime4service.shared.generated.resources.action_add_entry
 import itstime4service.shared.generated.resources.action_apply
 import itstime4service.shared.generated.resources.action_back
+import itstime4service.shared.generated.resources.action_done
+import itstime4service.shared.generated.resources.field_date
 import itstime4service.shared.generated.resources.action_delete
 import itstime4service.shared.generated.resources.action_delete_car
 import itstime4service.shared.generated.resources.action_done_unmark
@@ -89,6 +92,8 @@ class AppFlowsTest : UiTest() {
         "addCar" to Res.string.action_add_car,
         "saveCar" to Res.string.action_save_car,
         "save" to Res.string.action_save,
+        "done" to Res.string.action_done,
+        "date" to Res.string.field_date,
         "back" to Res.string.action_back,
         "editName" to Res.string.action_edit_name,
         "editMileage" to Res.string.action_edit_mileage,
@@ -293,7 +298,7 @@ class AppFlowsTest : UiTest() {
         waitForText("Колодки")
         onNodeWithContentDescription(text("filter")).performClick()
         waitForText(text("apply"))
-        onAllNodes(hasSetTextAction())[2].performTextInput("zzz")
+        onAllNodes(hasSetTextAction())[0].performTextInput("zzz")
         onNodeWithText(text("apply")).performClick()
 
         waitForText(text("nothingFound"))
@@ -360,9 +365,25 @@ class AppFlowsTest : UiTest() {
         onNodeWithContentDescription(text("addEntry")).performClick()
         waitForText(text("newEntryTitle"))
         onAllNodes(hasSetTextAction())[0].performTextInput("Колодки")
-        onAllNodes(hasSetTextAction())[1].performTextInput("01102026")
-        onAllNodes(hasSetTextAction())[2].performTextInput("84000")
-        onAllNodes(hasSetTextAction())[2].performImeAction()
+        onNodeWithContentDescription(text("date")).performScrollTo().performClick()
+        waitForText(text("done"))
+        val october = SemanticsMatcher("October month heading") { node ->
+            node.config.getOrNull(SemanticsProperties.Text)?.any { Regex("October\\s*\\d{4}").matches(it.text) } == true
+        }
+        repeat(12) {
+            if (onAllNodes(october).fetchSemanticsNodes().isEmpty()) {
+                onNodeWithContentDescription("Change to next month").performClick()
+            }
+        }
+        onNodeWithContentDescription("Switch to selecting a year").performClick()
+        val year = hasText("Navigate to year 2026")
+        onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.ScrollToIndex) and
+            SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)).performScrollToNode(year)
+        onNode(year).performClick()
+        onNodeWithText("Thursday, October 1, 2026").performClick()
+        onNodeWithText(text("done")).performClick()
+        onAllNodes(hasSetTextAction())[1].performTextInput("84000")
+        onAllNodes(hasSetTextAction())[1].performImeAction()
         waitForEditClosed()
 
         val record = db { app.records { it.size == 1 } }.single()

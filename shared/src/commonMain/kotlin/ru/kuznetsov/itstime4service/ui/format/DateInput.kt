@@ -9,10 +9,10 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.number
 
 /**
- * How a date is typed in the app's date fields, chosen by the app language: Russian `dd.MM.yyyy`,
+ * How a date is represented in the app's date fields, chosen by the app language: Russian `dd.MM.yyyy`,
  * Spanish `dd/MM/yyyy`, English (and any other language) `MM/dd/yyyy`.
- * A date field keeps only the typed digits, at most eight; [visualTransformation] shows them with the
- * separators already in place, so the user types digits only and never the separators.
+ * A date field keeps eight localized digits; [visualTransformation] adds display separators.
+ * Calendar selection converts dates to this representation through [digitsOf].
  * [current] follows the app language; tests replace [language] to fix it.
  */
 enum class DateInputFormat(val separator: Char, private val dayFirst: Boolean) {

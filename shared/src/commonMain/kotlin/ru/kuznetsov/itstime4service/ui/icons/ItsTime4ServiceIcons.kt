@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.composables.icons.lucide.Battery
 import com.composables.icons.lucide.Bell
 import com.composables.icons.lucide.Car
+import com.composables.icons.lucide.Calendar
 import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.ChevronDown
 import com.composables.icons.lucide.ChevronLeft
@@ -42,6 +43,7 @@ import com.composables.icons.lucide.Zap
  */
 object ItsTime4ServiceIcons {
     val Car: ImageVector get() = Lucide.Car
+    val Calendar: ImageVector get() = Lucide.Calendar
     val Gauge: ImageVector get() = Lucide.Gauge
     val Droplet: ImageVector get() = Lucide.Droplet
     val Disc: ImageVector get() = Lucide.Disc

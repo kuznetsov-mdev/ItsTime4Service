@@ -17,7 +17,8 @@ import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_apply
 import itstime4service.shared.generated.resources.action_filter
 import itstime4service.shared.generated.resources.action_reset
-import itstime4service.shared.generated.resources.date_placeholder
+import itstime4service.shared.generated.resources.field_date_from
+import itstime4service.shared.generated.resources.field_date_to
 import itstime4service.shared.generated.resources.field_mileage_range
 import itstime4service.shared.generated.resources.field_period
 import itstime4service.shared.generated.resources.field_search_task
@@ -29,7 +30,7 @@ import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogButton
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogCard
 import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogFields
 import ru.kuznetsov.itstime4service.ui.components.fields.LabeledMiniField
-import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
+import ru.kuznetsov.itstime4service.ui.components.fields.LabeledDateField
 import ru.kuznetsov.itstime4service.ui.format.unitLabel
 import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
@@ -61,25 +62,19 @@ internal fun HistoryFilterCard(
     DialogCard(icon = ItsTime4ServiceIcons.Filter, title = stringResource(Res.string.action_filter), modifier = modifier) {
         DialogFields {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-                LabeledMiniField(
+                LabeledDateField(
                     label = stringResource(Res.string.field_period),
+                    accessibilityLabel = stringResource(Res.string.field_date_from),
                     value = filter.dateFrom,
                     onValueChange = { onChange(filter.copy(dateFrom = it)) },
-                    onDone = onApply,
-                    placeholder = stringResource(Res.string.date_placeholder),
-                    keyboardType = KeyboardType.Number,
-                    visualTransformation = DateInputFormat.current.visualTransformation,
                     isError = filter.showErrors && filter.isDateFromInvalid,
                     modifier = Modifier.weight(1f),
                 )
-                LabeledMiniField(
+                LabeledDateField(
                     label = "",
+                    accessibilityLabel = stringResource(Res.string.field_date_to),
                     value = filter.dateTo,
                     onValueChange = { onChange(filter.copy(dateTo = it)) },
-                    onDone = onApply,
-                    placeholder = stringResource(Res.string.date_placeholder),
-                    keyboardType = KeyboardType.Number,
-                    visualTransformation = DateInputFormat.current.visualTransformation,
                     isError = filter.showErrors && filter.isDateToInvalid,
                     modifier = Modifier.weight(1f),
                 )

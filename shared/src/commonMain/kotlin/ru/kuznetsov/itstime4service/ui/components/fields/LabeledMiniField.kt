@@ -38,19 +38,8 @@ fun LabeledMiniField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     onDone: (() -> Unit)? = null,
 ) {
-    val colors = ItsTime4ServiceTheme.colors
     Column(modifier = modifier) {
-        Text(
-            buildAnnotatedString {
-                append(label)
-                if (required) {
-                    withStyle(SpanStyle(color = colors.tierDue)) { append(" *") }
-                }
-            },
-            style = ItsTime4ServiceTheme.typography.sans.copy(fontSize = 10.5.sp),
-            color = colors.inkFaint,
-            modifier = Modifier.padding(bottom = 4.dp),
-        )
+        MiniFieldLabel(label, required)
         FieldBox(
             value = value,
             onValueChange = onValueChange,
@@ -67,6 +56,20 @@ fun LabeledMiniField(
             visualTransformation = visualTransformation,
         )
     }
+}
+
+@Composable
+internal fun MiniFieldLabel(label: String, required: Boolean) {
+    val colors = ItsTime4ServiceTheme.colors
+    Text(
+        buildAnnotatedString {
+            append(label)
+            if (required) withStyle(SpanStyle(color = colors.tierDue)) { append(" *") }
+        },
+        style = ItsTime4ServiceTheme.typography.sans.copy(fontSize = 10.5.sp),
+        color = colors.inkFaint,
+        modifier = Modifier.padding(bottom = 4.dp),
+    )
 }
 
 @Preview

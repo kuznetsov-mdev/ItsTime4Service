@@ -43,6 +43,10 @@
     <string name="action_delete_car">Удалить авто</string>
     <string name="action_edit_mileage">Изменить пробег</string>
     <string name="action_cancel">Отмена</string>
+    <string name="action_choose_date">Выбрать дату</string>
+    <string name="action_clear">Очистить</string>
+    <string name="field_date_from">Дата начала</string>
+    <string name="field_date_to">Дата окончания</string>
     <string name="action_delete">Удалить</string>
     <string name="dialog_delete_car_title">Удалить %1$s?</string>
     <string name="dialog_delete_car_text">Авто и его регламентные работы будут удалены. История ТО сохранится в разделе «История» с пометкой «продано». Удалить авто вместе с историей можно в настройках.</string>

@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
@@ -18,8 +19,8 @@ import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
  * or leaving the screen underneath. A tap on the scrim closes it the same way.
  */
 @Composable
-fun AppDialog(onDismiss: () -> Unit, content: @Composable () -> Unit) {
-    Dialog(onDismissRequest = onDismiss) {
+fun AppDialog(onDismiss: () -> Unit, properties: DialogProperties = DialogProperties(), content: @Composable () -> Unit) {
+    Dialog(onDismissRequest = onDismiss, properties = properties) {
         NavigationBackHandler(
             state = rememberNavigationEventState(NavigationEventInfo.None),
             onBackCompleted = onDismiss,

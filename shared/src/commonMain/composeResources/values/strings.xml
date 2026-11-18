@@ -43,6 +43,10 @@
     <string name="action_delete_car">Delete car</string>
     <string name="action_edit_mileage">Edit mileage</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_choose_date">Choose date</string>
+    <string name="action_clear">Clear</string>
+    <string name="field_date_from">From date</string>
+    <string name="field_date_to">To date</string>
     <string name="action_delete">Delete</string>
     <string name="dialog_delete_car_title">Delete %1$s?</string>
     <string name="dialog_delete_car_text">The car and its maintenance tasks will be deleted. Its service history stays in History marked “sold”. To delete the car together with its history, use Settings.</string>

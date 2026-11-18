@@ -43,6 +43,10 @@
     <string name="action_delete_car">Eliminar coche</string>
     <string name="action_edit_mileage">Editar kilometraje</string>
     <string name="action_cancel">Cancelar</string>
+    <string name="action_choose_date">Elegir fecha</string>
+    <string name="action_clear">Borrar</string>
+    <string name="field_date_from">Fecha inicial</string>
+    <string name="field_date_to">Fecha final</string>
     <string name="action_delete">Eliminar</string>
     <string name="dialog_delete_car_title">¿Eliminar %1$s?</string>
     <string name="dialog_delete_car_text">Se eliminarán el coche y sus tareas de mantenimiento. Su historial de servicio se conservará en Historial marcado como «vendido». Para eliminar el coche junto con su historial, ve a Ajustes.</string>
