@@ -17,6 +17,9 @@ kotlin {
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
+        iosTarget.binaries.withType<org.jetbrains.kotlin.gradle.plugin.mpp.TestExecutable>().configureEach {
+            linkerOpts("-sectcreate", "__TEXT", "__info_plist", project.file("src/iosTest/TransferFilesTestInfo.plist").absolutePath)
+        }
         iosTarget.binaries.framework {
             baseName = "Shared"
             isStatic = true
@@ -121,5 +124,19 @@ sqldelight {
         create("ItsTime4ServiceDatabase") {
             packageName.set("ru.kuznetsov.itstime4service.data.local")
         }
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest>().configureEach {
+    standalone.set(false)
+    doFirst {
+        val simulator = this as org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest
+        val boot = ProcessBuilder("/usr/bin/xcrun", "simctl", "bootstatus", simulator.device.get(), "-b")
+            .redirectErrorStream(true).start()
+        boot.inputStream.use { stream ->
+            val buffer = ByteArray(4096)
+            while (stream.read(buffer) >= 0) { }
+        }
+        check(boot.waitFor() == 0) { "Unable to boot the native test simulator" }
     }
 }

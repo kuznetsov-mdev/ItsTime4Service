@@ -8,6 +8,7 @@ sealed interface TransferOutcome<out T> {
 sealed interface TransferFailure {
     data object PermissionDenied : TransferFailure
     data object FileUnavailable : TransferFailure
+    data object FileOperationBusy : TransferFailure
     data object InsufficientSpace : TransferFailure
     data object ReadFailed : TransferFailure
     data object WriteFailed : TransferFailure

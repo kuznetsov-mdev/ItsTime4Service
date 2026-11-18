@@ -347,6 +347,13 @@
 
 Проверено 16.11.2026 основной сессией: полный Android suite **634/0/0/0**, native iOS **106/0/0/0** (включая прежние snapshot/repository/sync cases), production/test compilation для iosSimulatorArm64 и iosArm64 — PASS без предупреждений. Workflow `bf88bf0d77a85cebe4210a95e32deada`, итоговые sequences 19–20. [Отчёт с вопросами, ошибками/исправлениями, командами и границами](../docs/research/transfer-import-verification.md). Это самопроверка; отдельные reviewer/QA не подключались. Ready for acceptance, приёмка пользователя ожидается. Системные файлы, Compose transfer UI, реальный Android↔iOS обмен и release gates остаются следующими этапами.
 
+
+### Этап 6 — системные файловые адаптеры (core)
+
+Проверки предела/ложного размера/частичных операций/close failure/cancellation, host replacement/busy/stale callbacks, Android ContentProvider и native Foundation stream/coordinator/security scope. Совместимость synthetic plain/protected fixtures и системные тестовые hosts относятся к следующему отдельному коммиту. Это не системная приёмка; iOS matrix и product transfer UI остаются незавершёнными.
+
+Снимок коммита 1: Android **683/0/0/0**, native iOS file tests **25/0/0/0**, Android APK и обе iOS production/test compilation PASS. Workflow `e20fda31be0b5a5606614f7d71edec81`, «Проходит ли файловый коммит 1?».
+
 ### Исправления отзывов RuStore — 18.11.2026
 
 - `ServiceRecordFieldsTest`: настоящий Enter, перенос строки без submit; однострочное Done.

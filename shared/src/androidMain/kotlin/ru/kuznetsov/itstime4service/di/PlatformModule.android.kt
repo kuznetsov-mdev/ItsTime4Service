@@ -12,8 +12,11 @@ import ru.kuznetsov.itstime4service.data.notification.LocalNotifications
 import ru.kuznetsov.itstime4service.data.notification.NotificationQueue
 import ru.kuznetsov.itstime4service.data.transfer.TransferCipherImpl
 import ru.kuznetsov.itstime4service.domain.transfer.TransferCipher
+import ru.kuznetsov.itstime4service.ui.transfer.TransferFiles
+import ru.kuznetsov.itstime4service.ui.transfer.AndroidTransferFiles
 
 actual val platformModule: Module = module {
+    single<TransferFiles> { AndroidTransferFiles(androidContext()) }
     single { TransferCipherImpl(CryptographyProvider.JDK(BouncyCastleProvider())) } bind TransferCipher::class
     single { DatabaseDriverFactory(androidContext()) }
     single { LocalNotifications(androidContext()) } bind NotificationQueue::class

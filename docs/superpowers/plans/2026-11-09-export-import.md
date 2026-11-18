@@ -10,7 +10,7 @@
 
 **Spec:** [Постановка на разработку](../../../specs/export-import.md), [согласованные требования](../../research/export-import-iteration-3.md), [макет](../../index.html#interactiveApp).
 
-**Status:** Реализация запущена пользователем 10.11.2026 после ревью макета и постановки. Реализованы этапы 2–4: неизвестное обслуживание, согласованный снимок и рабочий кодек/конверт/шифрование. Последний полный Android suite — 574 теста (проверка перед коммитом, sequence 25), R8 и debug APK — PASS; iOS — 55 transfer-тестов, обе production/test compilation и debug/release frameworks — PASS без предупреждений. Дополнительно 4 новых теста границ валидатора прошли отдельно на каждой платформе. [Отчёт этапа 4](../../research/transfer-codec-verification.md). Пользователь явно разрешил продолжать разработку, перенеся реальный API24 в обязательные проверки перед релизом. Уточнён выбор конкретной работы среди одноимённых; макет/контракт обновлены, 22 JS-проверки — PASS. 16.11.2026 этап 5 реализован основной сессией и готов к приёмке: полный Android suite 634/0/0/0, native iOS 106/0/0/0, обе iOS production/test compilation PASS без предупреждений. Миграция 6→7 включает журнал/provenance и точный UTC-след импортированных напоминаний. [Отчёт этапа 5](../../research/transfer-import-verification.md). Следующий этап — 6, системные файловые адаптеры; UI и release gates ещё не завершены. Пользователь разрешил коммит этапа 5 16.11.2026: `data: Add atomic transfer import`.
+**Status:** Реализация запущена пользователем 10.11.2026 после ревью макета и постановки. Реализованы этапы 2–4: неизвестное обслуживание, согласованный снимок и рабочий кодек/конверт/шифрование. Последний полный Android suite — 574 теста (проверка перед коммитом, sequence 25), R8 и debug APK — PASS; iOS — 55 transfer-тестов, обе production/test compilation и debug/release frameworks — PASS без предупреждений. Дополнительно 4 новых теста границ валидатора прошли отдельно на каждой платформе. [Отчёт этапа 4](../../research/transfer-codec-verification.md). Пользователь явно разрешил продолжать разработку, перенеся реальный API24 в обязательные проверки перед релизом. Уточнён выбор конкретной работы среди одноимённых; макет/контракт обновлены, 22 JS-проверки — PASS. 16.11.2026 этап 5 реализован основной сессией и готов к приёмке: полный Android suite 634/0/0/0, native iOS 106/0/0/0, обе iOS production/test compilation PASS без предупреждений. Миграция 6→7 включает журнал/provenance и точный UTC-след импортированных напоминаний. [Отчёт этапа 5](../../research/transfer-import-verification.md). 17.11.2026 начат этап 6: файловые адаптеры реализованы, системная матрица ещё проверяется; UI и release gates ещё не завершены. Пользователь разрешил коммит этапа 5 16.11.2026: `data: Add atomic transfer import`.
 
 ## Global Constraints
 
@@ -120,6 +120,19 @@
 
 ### Task 6: Файловые адаптеры Android и iOS
 
+Детализация 17.11.2026, основная сессия самостоятельно:
+
+Продолжение 18.11.2026: восстановить изолированный XCTest host; проверить UIKit control с реальным завершением; отключить автоматические screen attachments; завершить cancel/save/open/share с SHA-256 синтетических файлов. Stale `Other` с именем Cancel перекрывает More: тесты используют настоящую кнопку отмены либо жест закрытия листа. Save ищется в native navigation bar, файл выбирается по ячейке. Изменения harness — `tools/transfer-files-check/{prepare_ios.py,run_ios.py,ios/Main.swift,ios/TransferFilesCheckUITests.swift}`. Production менять только при воспроизведённом дефекте; при неизменных Kotlin-исходниках использовать прежние результаты Gradle, а системные сценарии выполнить заново. Результаты внести в отчёт/спеки/dev_plan/сессию; коммит отдельно по разрешению.
+- [x] `ui/transfer/TransferFiles.kt`: suspend pick/read/save/share/release, несериализуемый session-only handle, отдельные Success/Cancelled/Failure, Saved/Shared без обещания доставки. Лимит чтения 16 MiB независимо от metadata; suggested name без путей. Busy — фиксированный код ошибки.
+- [x] `TransferFileDialogs.kt`, `BoundedTransferIo.kt`: один host/диалог, stale callback не завершает новую операцию, отмена coroutine не считается пользовательским Cancelled. Смена host отменяет операцию; Android дожидается результата уже открытого диалога без повторного запуска. Потоки закрываются при отмене/ошибке; write/flush/close завершаются до Saved.
+- [x] `androidMain/.../ui/transfer`: SAF OpenDocument/CreateDocument и lifecycle launchers; ephemeral read grants без persistable/wide permissions, bounded ContentResolver IO, FileProvider только cache/transfer. Выбор share-target подтверждается callback chooser; Shared означает передачу ОС. Переданная private копия сохраняется до 24 часов; очистка только собственных истёкших UUID-каталогов при следующем обращении, без удаления выбранных файлов.
+- [x] `iosMain/.../ui/transfer`: UIDocumentPicker open/export-as-copy, security scope + coordinated bounded reading, UIActivityViewController completion/cancel/error и popover anchor. Private staging в Caches, временный экспорт удаляется после результата; handed-off копии имеют ту же ограниченную retention policy. NS errors преобразуются в фиксированные причины.
+- [x] `TransferFilesHost` expect/actual leaf и platform DI, wiring из MainActivity/MainViewController. URI/URL не входят в common state, routes, логи или saved state. UTType `.it4s` conforms to public.data; исходный файл определяется проверенным содержимым.
+- [x] Core-тесты: предел/ложный размер/частичные операции/close failure/cancellation/lifecycle, Android ContentProvider и iOS stream/error/security scope.
+- [ ] Совместимость собственных plaintext/encrypted fixtures и отдельные системные тестовые hosts — следующий коммит.
+- [ ] Реальные диалоги — отдельные тестовые hosts: Android `transferCheck` с applicationIdSuffix и iOS harness в /private/tmp с отдельным bundle ID. Не затрагивать данные установленного пользовательского приложения, не делать снимков экрана. Зафиксировать cancel/save/open/share и проверку одинаковых bytes/hash; не выдавать unit fake за системную проверку.
+- [ ] Через `gradle-run`: Android host suite, Android build, обе iOS production/test compilation и native file tests. Обновить спеки, тест-план, dev_plan, отчёт этапа 6 и прежнюю сессию; коммит/публикация отдельно.
+
 **Files:** создать `ui/transfer/TransferFiles.kt` в commonMain и реализации в androidMain/iosMain; добавить привязки в `di/PlatformModule.android.kt`, `PlatformModule.ios.kt`; при необходимости Android FileProvider с узкими путями и iOS UTType, без постоянного доступа к папке.
 **Tests:** platform tests `TransferFilesTest` плюс ручная матрица выбора/сохранения/передачи на Android и iOS.
 **Consumes:** семантический порт, ограниченный дескриптор и байты согласованного документа.
@@ -128,6 +141,7 @@
 - [ ] Проверить отмену, недоступный provider, ограниченное чтение, отсутствие места, возврат в приложение и отзыв разрешения. «Передано системному меню» не означает доставку адресату.
 - [ ] Реализовать закрытие stream/descriptors и временные файлы в частном каталоге. Не добавлять широкие разрешения хранения и автокопирование.
 - [ ] Пройти реальные системные диалоги обеих платформ, включая защищённый перенос. Compose fake сам по себе не подтверждает работоспособность этих адаптеров.
+
 
 ### Task 7: Экраны, итоговая проверка и релиз
 
@@ -157,3 +171,9 @@
 ## Следующее решение
 
 Пользователь разрешил реализацию 10.11.2026. Выполнить технический шаг 1 и закрепить окончательные контракты перед реализацией зависимых частей. Этот план не выдаёт неподтверждённый provider или незапущенные миграционные тесты за готовое решение.
+
+### Разрешение на фиксацию — 18.11.2026
+
+Пользователь явно поручил закоммитить оставшиеся изменения. Разбиение: адаптеры/core IO и затем fixtures/системные инструменты. Проверки сборки и unit/native IO не заменяют завершение iOS system matrix; этап6 и release gates остаются открытыми.
+
+Снимок коммита 1: Android **683/0/0/0**, native iOS file tests **25/0/0/0**, Android APK и обе iOS production/test compilation PASS. Workflow `e20fda31be0b5a5606614f7d71edec81`, «Проходит ли файловый коммит 1?».

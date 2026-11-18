@@ -10,8 +10,11 @@ import ru.kuznetsov.itstime4service.data.notification.LocalNotifications
 import ru.kuznetsov.itstime4service.data.notification.NotificationQueue
 import ru.kuznetsov.itstime4service.data.transfer.TransferCipherImpl
 import ru.kuznetsov.itstime4service.domain.transfer.TransferCipher
+import ru.kuznetsov.itstime4service.ui.transfer.TransferFiles
+import ru.kuznetsov.itstime4service.ui.transfer.IosTransferFiles
 
 actual val platformModule: Module = module {
+    single<TransferFiles> { IosTransferFiles() }
     single { TransferCipherImpl(CryptographyProvider.Openssl3) } bind TransferCipher::class
     single { DatabaseDriverFactory() }
     single { LocalNotifications() } bind NotificationQueue::class

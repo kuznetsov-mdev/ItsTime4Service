@@ -10,6 +10,22 @@
 		<string>ru</string>
 		<string>es</string>
 	</array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>ru.kuznetsov.itstime4service.transfer</string>
+            <key>UTTypeDescription</key>
+            <string>ItsTime4Service transfer file</string>
+            <key>UTTypeConformsTo</key>
+            <array><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array><string>it4s</string></array>
+            </dict>
+        </dict>
+    </array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 </dict>
