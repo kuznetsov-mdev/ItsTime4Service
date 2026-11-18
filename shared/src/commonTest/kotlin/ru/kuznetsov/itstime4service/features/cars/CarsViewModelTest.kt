@@ -123,6 +123,25 @@ class CarsViewModelTest {
     }
 
     @Test
+    fun countsTrackTasksAddedAndRemovedAfterCarCreation() = runTest {
+        val original = car("kia", listOf(task("due", -100)))
+        val repository = FakeCarRepository(listOf(original))
+        val model = viewModel(repository.cars, carRepository = repository)
+        assertEquals(1, loaded(model).car("kia").taskCount)
+        repository.cars = listOf(original.copy(tasks = original.tasks + (1..8).map { task("later-$it", 9000) }))
+        testScheduler.runCurrent()
+        assertEquals(1, model.state.value.car("kia").alertCount)
+        assertEquals(9, model.state.value.car("kia").taskCount)
+        repository.cars = listOf(original)
+        testScheduler.runCurrent()
+        assertEquals(1, model.state.value.car("kia").taskCount)
+        repository.cars = listOf(original.copy(tasks = emptyList()))
+        testScheduler.runCurrent()
+        assertEquals(0, model.state.value.car("kia").taskCount)
+        assertEquals(0, model.state.value.car("kia").alertCount)
+    }
+
+    @Test
     fun gaugeAndCountsSummarizeSoonAndDueTasks() = runTest {
         val kia = car("kia", listOf(task("oil", -300), task("filter", 200), task("plugs", 700), task("belt", 5_000)))
 

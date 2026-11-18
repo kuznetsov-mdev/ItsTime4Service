@@ -352,9 +352,12 @@
 - `ServiceRecordFieldsTest`: настоящий Enter, перенос строки без submit; однострочное Done.
 - `DateFieldsTest`, формы машины/работы, `HistoryDialogsTest`, `AppFlowsTest`: все шесть date call sites, отсутствие SetText, выбор високосного дня, callback/сохранение, отмена/очистка и три формата даты.
 - `TaskFieldsTest`, ViewModel и UI-тесты форм: первый обязательный пропуск, приоритет машины, раскрытие блока, повторное сохранение и реальная видимость ошибки на маленьком экране.
+- `CarsScreenTest`, `CarsViewModelTest`, `CarsTaskCountsIntegrationTest`: формат дроби и реактивный сценарий SQLite `1/1 → 1/9 → 1/1 → 0/0`.
 
 Изолированный снимок коммита 1: Android 636/0/0/0; debug APK и обе iOS production/test compilation PASS. Workflow `3320ebaf092ce1a3434d4d5c9d210795`, вопрос «Собирается ли отдельный коммит 1?».
 
 Изолированный снимок коммита 2: Android 649/0/0/0; debug APK и обе iOS production/test compilation PASS. Workflow `3320ebaf092ce1a3434d4d5c9d210795`, вопрос «Собирается ли отдельный коммит 2?».
 
 Изолированный снимок коммита 3: Android 655/0/0/0; debug APK и обе iOS production/test compilation PASS. Workflow `3320ebaf092ce1a3434d4d5c9d210795`, вопрос «Собирается ли отдельный коммит 3?».
+
+Изолированный снимок коммита 4: Android 658/0/0/0; debug APK и обе iOS production/test compilation PASS. Workflow `3320ebaf092ce1a3434d4d5c9d210795`, вопрос «Собирается ли отдельный коммит 4?».

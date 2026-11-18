@@ -120,6 +120,13 @@ class CarsScreenTest : UiTest() {
     }
 
     @Test
+    fun compactGaugeShowsUpcomingAndTotalIncludingEmptyCars() = runComposeUiTest {
+        show(cars(CarsView.LIST, listOf(kia.copy(taskCount = 9), bare)))
+        onNodeWithText("1/9", useUnmergedTree = true).assertExists()
+        onNodeWithText("0/0", useUnmergedTree = true).assertExists()
+    }
+
+    @Test
     fun viewButtonsReportTheChoice() = runComposeUiTest {
         show(cars(CarsView.LIST))
 

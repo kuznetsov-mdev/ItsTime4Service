@@ -23,6 +23,7 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import itstime4service.shared.generated.resources.alert_count_due
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.cars_count
 import itstime4service.shared.generated.resources.cars_empty
@@ -144,6 +145,8 @@ private fun CarsList(
                                     value = car.gaugeValue,
                                     color = car.status.toTier().color,
                                     count = car.alertCount,
+                                    total = car.taskCount,
+                                    contentDescription = stringResource(Res.string.alert_count_due, car.alertCount, car.taskCount),
                                 )
                             },
                         )

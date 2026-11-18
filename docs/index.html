@@ -207,7 +207,7 @@
   .entering.after-slide .gauge, .entering.after-slide .status-donut, .entering.after-slide .task-fill { animation-delay: 0.5s; animation-fill-mode: backwards; }
   .gauge-inner {
     width: 38px; height: 38px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center;
-    font-family: var(--display); font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums;
+    font-family: var(--display); font-weight: 800; font-size: 12px; font-variant-numeric: tabular-nums;
   }
 
   .fab {
@@ -1468,7 +1468,7 @@
     var pct = a.count > 0 ? Math.round(a.total / a.count * 100) : 0;
     if (a.total === 0) pct = 6; // тонкое кольцо-«всё ок», не пустое
     return '<div class="gauge" style="--g:' + pct + '%;--gc:' + color + '">' +
-      '<div class="gauge-inner" style="color:' + color + '">' + a.total + '</div></div>';
+      '<div class="gauge-inner" style="color:' + color + '">' + a.total + '/' + a.count + '</div></div>';
   }
 
   /* кольцо статусов на карточке пробега: дуги просрочено / пора менять / в порядке, в центре «N/M» */
@@ -1478,7 +1478,7 @@
     var ring = '--d1:' + dueEnd + '%;--d2:' + soonEnd + '%;--d3:' + (a.count > 0 ? 100 : 0) + '%';
     var label = a.total + ' из ' + a.count + ' пора менять';
     return '<div class="status-donut" style="' + ring + '" role="img" aria-label="' + label + '">' +
-      '<div class="status-donut-inner" style="color:' + tierVar(worstStatus(a)) + '">' + a.total + '</div></div>';
+      '<div class="status-donut-inner" style="color:' + tierVar(worstStatus(a)) + '">' + a.total + '/' + a.count + '</div></div>';
   }
 
   /* ---------------- screen: cars list ---------------- */

@@ -94,7 +94,7 @@ private fun ListRowCardLightPreview() = ComponentPreview(darkTheme = false) {
         title = "Kia Rio",
         subtitle = stringResource(Res.string.mileage_km, "84 300"),
         modifier = Modifier.width(300.dp),
-        trailing = { GaugeRing(value = 0.25f, color = StatusTier.Soon.color, count = 1) },
+        trailing = { GaugeRing(value = 0.25f, color = StatusTier.Soon.color, count = 1, total = 4) },
     )
 }
 
@@ -106,6 +106,6 @@ private fun ListRowCardDarkPreview() = ComponentPreview(darkTheme = true) {
         title = "Kia Rio",
         subtitle = stringResource(Res.string.mileage_km, "84 300"),
         modifier = Modifier.width(300.dp),
-        trailing = { GaugeRing(value = 0.25f, color = StatusTier.Soon.color, count = 1) },
+        trailing = { GaugeRing(value = 0.25f, color = StatusTier.Soon.color, count = 1, total = 4) },
     )
 }
