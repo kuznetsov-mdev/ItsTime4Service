@@ -348,11 +348,11 @@
 Проверено 16.11.2026 основной сессией: полный Android suite **634/0/0/0**, native iOS **106/0/0/0** (включая прежние snapshot/repository/sync cases), production/test compilation для iosSimulatorArm64 и iosArm64 — PASS без предупреждений. Workflow `bf88bf0d77a85cebe4210a95e32deada`, итоговые sequences 19–20. [Отчёт с вопросами, ошибками/исправлениями, командами и границами](../docs/research/transfer-import-verification.md). Это самопроверка; отдельные reviewer/QA не подключались. Ready for acceptance, приёмка пользователя ожидается. Системные файлы, Compose transfer UI, реальный Android↔iOS обмен и release gates остаются следующими этапами.
 
 
-### Этап 6 — системные файловые адаптеры (core)
+### Этап 6 — системные файловые адаптеры (проверка продолжается)
 
-Проверки предела/ложного размера/частичных операций/close failure/cancellation, host replacement/busy/stale callbacks, Android ContentProvider и native Foundation stream/coordinator/security scope. Совместимость synthetic plain/protected fixtures и системные тестовые hosts относятся к следующему отдельному коммиту. Это не системная приёмка; iOS matrix и product transfer UI остаются незавершёнными.
+Добавлены bounded IO (фактический предел и ложный metadata size, частичные операции, flush/close, очистка буферов), cancellation/resource-close, host replacement/busy/stale callback, реальный Android ContentProvider, native iOS stream/coordinator/security scope и одинаковые plaintext/protected fixtures с обеими криптореализациями. 17.11.2026: полный Android host suite **660/0/0/0**, обе iOS production/test compilation, APK и debug simulator framework PASS; отдельные native file tests **26/0/0/0**. Gradle workflow `29e49353d9f446c0f3398a8b16c2e450`, sequences 17–18 и 20 (Android classifier), без предупреждений. Native Foundation тесты требуют полностью загруженного симулятора, а не KGP standalone spawn; настройка bootstatus включена в тестовую задачу.
 
-Снимок коммита 1: Android **683/0/0/0**, native iOS file tests **25/0/0/0**, Android APK и обе iOS production/test compilation PASS. Workflow `e20fda31be0b5a5606614f7d71edec81`, «Проходит ли файловый коммит 1?».
+Отдельные тестовые приложения имеют свои sandbox/package ID; используют синтетические файлы и сравнение SHA-256, без пользовательской БД и снимков экрана. Android API35: первоначальный и повторный прогоны всех шести системных сценариев PASS; проверяются bytes SHA-256 и собственный получатель. Последующая правка только классификации ENOSPC/EACCES проверена полным host suite. iOS pick/share cancellation подтверждены; export/open и подтверждённая передача ещё не подтверждены, чистый UIKit control также воспроизводит ошибку экспорта. Этап не Ready for acceptance до завершения системной матрицы. [Фактические результаты и ограничения](../docs/research/transfer-files-verification.md).
 
 ### Исправления отзывов RuStore — 18.11.2026
 
@@ -368,3 +368,11 @@
 Изолированный снимок коммита 3: Android 655/0/0/0; debug APK и обе iOS production/test compilation PASS. Workflow `3320ebaf092ce1a3434d4d5c9d210795`, вопрос «Собирается ли отдельный коммит 3?».
 
 Изолированный снимок коммита 4: Android 658/0/0/0; debug APK и обе iOS production/test compilation PASS. Workflow `3320ebaf092ce1a3434d4d5c9d210795`, вопрос «Собирается ли отдельный коммит 4?».
+
+### Фиксация файлового этапа — 18.11.2026
+
+Пользователь разрешил сохранить реализацию двумя логическими коммитами. Core IO и совместимость синтетических файлов проверены отдельно. Последняя системная iOS18 матрица — 5/7; iOS27 bootstrap и повторное открытие shared-файла остаются непроверенными до исправления окружения/автотестов. Это не Ready for acceptance.
+
+Снимок коммита 1: Android **683/0/0/0**, native iOS file tests **25/0/0/0**, Android APK и обе iOS production/test compilation PASS. Workflow `e20fda31be0b5a5606614f7d71edec81`, «Проходит ли файловый коммит 1?».
+
+Снимок коммита 2: Android **684/0/0/0**, native iOS file tests **26/0/0/0**, Android APK и обе iOS production/test compilation PASS. Workflow `e20fda31be0b5a5606614f7d71edec81`, «Проходит ли файловый коммит 2?».

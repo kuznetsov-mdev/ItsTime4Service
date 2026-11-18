@@ -446,3 +446,5 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 Пользователь разрешил коммиты оставшихся изменений. Коммит1: production adapters/core IO tests; коммит2: synthetic fixtures и системные тестовые hosts/runners. Это сохранение реализации, а не завершение системной приёмки iOS. Последняя iOS18 матрица 5/7, iOS27 bootstrap и повторное открытие shared-файла требуют продолжения проверки; этап6 не Ready for acceptance. Следующий продуктовый шаг — экраны переноса (этап7), после закрытия файловых сценариев.
 
 Снимок коммита 1: Android **683/0/0/0**, native iOS file tests **25/0/0/0**, Android APK и обе iOS production/test compilation PASS. Workflow `e20fda31be0b5a5606614f7d71edec81`, «Проходит ли файловый коммит 1?».
+
+Снимок коммита 2: Android **684/0/0/0**, native iOS file tests **26/0/0/0**, Android APK и обе iOS production/test compilation PASS. Workflow `e20fda31be0b5a5606614f7d71edec81`, «Проходит ли файловый коммит 2?».

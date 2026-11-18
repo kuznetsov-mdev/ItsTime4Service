@@ -128,8 +128,7 @@
 - [x] `androidMain/.../ui/transfer`: SAF OpenDocument/CreateDocument и lifecycle launchers; ephemeral read grants без persistable/wide permissions, bounded ContentResolver IO, FileProvider только cache/transfer. Выбор share-target подтверждается callback chooser; Shared означает передачу ОС. Переданная private копия сохраняется до 24 часов; очистка только собственных истёкших UUID-каталогов при следующем обращении, без удаления выбранных файлов.
 - [x] `iosMain/.../ui/transfer`: UIDocumentPicker open/export-as-copy, security scope + coordinated bounded reading, UIActivityViewController completion/cancel/error и popover anchor. Private staging в Caches, временный экспорт удаляется после результата; handed-off копии имеют ту же ограниченную retention policy. NS errors преобразуются в фиксированные причины.
 - [x] `TransferFilesHost` expect/actual leaf и platform DI, wiring из MainActivity/MainViewController. URI/URL не входят в common state, routes, логи или saved state. UTType `.it4s` conforms to public.data; исходный файл определяется проверенным содержимым.
-- [x] Core-тесты: предел/ложный размер/частичные операции/close failure/cancellation/lifecycle, Android ContentProvider и iOS stream/error/security scope.
-- [ ] Совместимость собственных plaintext/encrypted fixtures и отдельные системные тестовые hosts — следующий коммит.
+- [x] `commonTest` — предел/ложный размер/частичные read/write/close failure/cancellation/lifecycle; Android provider tests и iOS stream/error/security-scope tests. Проверить собственные plaintext и encrypted fixtures без личных данных.
 - [ ] Реальные диалоги — отдельные тестовые hosts: Android `transferCheck` с applicationIdSuffix и iOS harness в /private/tmp с отдельным bundle ID. Не затрагивать данные установленного пользовательского приложения, не делать снимков экрана. Зафиксировать cancel/save/open/share и проверку одинаковых bytes/hash; не выдавать unit fake за системную проверку.
 - [ ] Через `gradle-run`: Android host suite, Android build, обе iOS production/test compilation и native file tests. Обновить спеки, тест-план, dev_plan, отчёт этапа 6 и прежнюю сессию; коммит/публикация отдельно.
 
@@ -177,3 +176,5 @@
 Пользователь явно поручил закоммитить оставшиеся изменения. Разбиение: адаптеры/core IO и затем fixtures/системные инструменты. Проверки сборки и unit/native IO не заменяют завершение iOS system matrix; этап6 и release gates остаются открытыми.
 
 Снимок коммита 1: Android **683/0/0/0**, native iOS file tests **25/0/0/0**, Android APK и обе iOS production/test compilation PASS. Workflow `e20fda31be0b5a5606614f7d71edec81`, «Проходит ли файловый коммит 1?».
+
+Снимок коммита 2: Android **684/0/0/0**, native iOS file tests **26/0/0/0**, Android APK и обе iOS production/test compilation PASS. Workflow `e20fda31be0b5a5606614f7d71edec81`, «Проходит ли файловый коммит 2?».

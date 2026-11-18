@@ -58,6 +58,11 @@ android {
         }
     }
     buildTypes {
+        create("transferCheck") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".transfercheck"
+            matchingFallbacks += "debug"
+        }
         release {
             signingConfig = signingConfigs.getByName("release")
             isDebuggable = false
