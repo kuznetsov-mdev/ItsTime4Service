@@ -268,7 +268,7 @@
     <string name="transfer_password_confirm">Repite la contraseña</string>
     <string name="transfer_password_note">Guarda la contraseña por separado. No se puede recuperar.</string>
     <string name="transfer_plain_warning">Sin contraseña, cualquiera que tenga el archivo podrá leer sus datos personales.</string>
-    <string name="transfer_plain_confirm">Guardar sin protección</string>
+    <string name="transfer_plain_confirm">Confirmar</string>
     <string name="transfer_continue">Continuar</string>
     <string name="transfer_preview">Revisar antes de transferir</string>
     <string name="transfer_counts">Coches: %1$d · tareas: %2$d · registros: %3$d</string>

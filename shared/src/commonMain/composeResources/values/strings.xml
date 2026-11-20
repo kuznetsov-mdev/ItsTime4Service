@@ -266,7 +266,7 @@
     <string name="transfer_password_confirm">Repeat password</string>
     <string name="transfer_password_note">Keep the password separately. It cannot be recovered.</string>
     <string name="transfer_plain_warning">Without a password, anyone with the file can read the personal data in it.</string>
-    <string name="transfer_plain_confirm">Save without protection</string>
+    <string name="transfer_plain_confirm">Confirm</string>
     <string name="transfer_continue">Continue</string>
     <string name="transfer_preview">Review before transfer</string>
     <string name="transfer_counts">Cars: %1$d · tasks: %2$d · history: %3$d</string>

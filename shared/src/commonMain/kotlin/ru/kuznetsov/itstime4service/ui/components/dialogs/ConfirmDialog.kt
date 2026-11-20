@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -126,8 +127,10 @@ internal fun RowScope.DialogButton(
     ) {
         Text(
             label,
+            modifier = Modifier.fillMaxWidth(),
             style = ItsTime4ServiceTheme.typography.sans.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold),
             color = contentColor,
+            textAlign = TextAlign.Center,
             maxLines = 1,
         )
     }

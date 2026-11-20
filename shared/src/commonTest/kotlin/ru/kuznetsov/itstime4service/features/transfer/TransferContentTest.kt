@@ -1,8 +1,10 @@
 package ru.kuznetsov.itstime4service.features.transfer
 
 import androidx.compose.runtime.*
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.v2.runComposeUiTest
+import androidx.compose.ui.text.TextLayoutResult
 import itstime4service.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import ru.kuznetsov.itstime4service.domain.transfer.*
@@ -32,6 +34,7 @@ class TransferContentTest : UiTest() {
         texts["confirm"] = stringResource(Res.string.transfer_password_confirm)
         texts["continue"] = stringResource(Res.string.transfer_continue)
         texts["protection"] = stringResource(Res.string.transfer_protection)
+        texts["confirmPlaintext"] = stringResource(Res.string.transfer_plain_confirm)
         texts["lastService"] = stringResource(Res.string.transfer_last_service)
         texts["save"] = stringResource(Res.string.transfer_save)
         texts["share"] = stringResource(Res.string.transfer_share)
@@ -150,6 +153,23 @@ class TransferContentTest : UiTest() {
         onNodeWithText(texts.getValue("apply")).performClick()
         onNodeWithText(texts.getValue("replace")).performClick()
         assertEquals(1, applied)
+    }
+
+    @Test fun disablingExportProtectionShowsACenteredConfirmAction() = runComposeUiTest {
+        var confirmed = false
+        show({ TransferUiState(isLoading = false, step = TransferStep.EXPORT, isConfirmingPlaintext = true) },
+            TransferActions(plaintext = { confirmed = it }))
+
+        val label = texts.getValue("confirmPlaintext")
+        val layouts = mutableListOf<TextLayoutResult>()
+        onNodeWithText(label, useUnmergedTree = true)
+            .assertIsDisplayed()
+            .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        val layout = layouts.single()
+        assertFalse(layout.hasVisualOverflow)
+        assertEquals(layout.size.width / 2f, (layout.getLineLeft(0) + layout.getLineRight(0)) / 2f, absoluteTolerance = 1f)
+        onNodeWithText(label).performClick()
+        assertTrue(confirmed)
     }
 
     @Test fun resultRetriesOnlyNotificationsAndDoneCloses() = runComposeUiTest {

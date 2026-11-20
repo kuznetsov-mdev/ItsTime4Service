@@ -270,7 +270,7 @@
     <string name="transfer_password_confirm">Повторите пароль</string>
     <string name="transfer_password_note">Сохраните пароль отдельно. Восстановить его нельзя.</string>
     <string name="transfer_plain_warning">Без пароля любой, у кого есть файл, сможет прочитать содержащиеся в нём личные данные.</string>
-    <string name="transfer_plain_confirm">Сохранить без защиты</string>
+    <string name="transfer_plain_confirm">Подтвердить</string>
     <string name="transfer_continue">Продолжить</string>
     <string name="transfer_preview">Проверьте перед переносом</string>
     <string name="transfer_counts">Авто: %1$d · работы: %2$d · записи: %3$d</string>
