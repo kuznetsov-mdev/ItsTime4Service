@@ -46,7 +46,6 @@ class CarFormViewModel(
     val state: StateFlow<CarFormUiState> = _state.asStateFlow()
 
     private var nextKey = 0
-    private var isSaving = false
 
     init {
         observeUnit()
@@ -138,8 +137,8 @@ class CarFormViewModel(
             }
             return
         }
-        if (isSaving) return
-        isSaving = true
+        if (form.isSaving || form.isSaved) return
+        _state.update { it.copy(isSaving = true) }
         val mileageKm = form.mileageKm.toInt().kmFrom(form.distanceUnit)
         viewModelScope.launch {
             val tasks = form.tasks.mapNotNull { it.fields.toNewTask(form.distanceUnit) }.ifEmpty {
@@ -154,11 +153,10 @@ class CarFormViewModel(
             }
             val carId = attempt { addCar(NewCar(brand = form.brand, mileageKm = mileageKm, vin = form.vin, tasks = tasks, plate = form.plate)) }
                 .getOrElse {
-                    isSaving = false
-                    _state.update { it.copy(saveFailed = true) }
+                    _state.update { it.copy(isSaving = false, saveFailed = true) }
                     return@launch
                 }
-            if (carId != null) _state.update { it.copy(isSaved = true) } else isSaving = false
+            _state.update { it.copy(isSaving = false, isSaved = carId != null) }
         }
     }
 

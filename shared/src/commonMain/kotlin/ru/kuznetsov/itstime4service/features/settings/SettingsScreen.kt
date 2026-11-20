@@ -23,6 +23,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import itstime4service.shared.generated.resources.transfer_data
+import itstime4service.shared.generated.resources.transfer_title
+import itstime4service.shared.generated.resources.transfer_subtitle
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_cancel
 import itstime4service.shared.generated.resources.action_delete
@@ -90,6 +93,7 @@ fun SettingsScreen(
     onOpenLicenses: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = koinViewModel(),
+    onOpenTransfer: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     Box(modifier.fillMaxSize()) {
@@ -109,6 +113,7 @@ fun SettingsScreen(
             onPurgeDismiss = viewModel::onPurgeDismiss,
             onPurgeConfirm = viewModel::onPurgeConfirm,
             onOpenLicenses = onOpenLicenses,
+            onOpenTransfer = onOpenTransfer,
             onRetry = viewModel::onRetry,
         )
         ErrorBar(
@@ -138,6 +143,7 @@ internal fun SettingsContent(
     onOpenLicenses: () -> Unit,
     modifier: Modifier = Modifier,
     onRetry: () -> Unit = {},
+    onOpenTransfer: () -> Unit = {},
 ) {
     val purgeCar = state.purgeCar
     if (purgeCar != null) {
@@ -222,6 +228,10 @@ internal fun SettingsContent(
                         }
                     }
                 }
+            }
+            SettingsGroup(stringResource(Res.string.transfer_data)) {
+                SettingRow(ItsTime4ServiceIcons.Share, stringResource(Res.string.transfer_title),
+                    stringResource(Res.string.transfer_subtitle), onClick = onOpenTransfer) {}
             }
             SettingsGroup(stringResource(Res.string.settings_notifications)) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,15 +31,17 @@ fun OutlineButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
+    enabled: Boolean = true,
 ) {
     val colors = ItsTime4ServiceTheme.colors
     val shape = RoundedCornerShape(ItsTime4ServiceTheme.dimens.radiusL)
     Box(
         modifier = modifier
+            .alpha(if (enabled) 1f else 0.5f)
             .clip(shape)
             .background(colors.bg)
             .border(1.5.dp, colors.accent, shape)
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(PaddingValues(horizontal = if (compact) 6.dp else 22.dp, vertical = 15.dp)),
         contentAlignment = Alignment.Center,
     ) {

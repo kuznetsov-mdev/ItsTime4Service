@@ -23,6 +23,7 @@ data class CarFormUiState(
     val plate: String = "",
     val tasks: List<TaskBlockState> = emptyList(),
     val showErrors: Boolean = false,
+    val isSaving: Boolean = false,
     val isSaved: Boolean = false,
     val distanceUnit: DistanceUnit = DistanceUnit.KILOMETERS,
     val defaultReminderWindowKm: Int = Settings.DEFAULT_REMINDER_WINDOW_KM,

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -68,6 +69,8 @@ import ru.kuznetsov.itstime4service.features.cars.CarsScreen
 import ru.kuznetsov.itstime4service.features.history.HistoryScreen
 import ru.kuznetsov.itstime4service.features.licenses.LicensesScreen
 import ru.kuznetsov.itstime4service.features.settings.SettingsScreen
+import ru.kuznetsov.itstime4service.features.transfer.TransferEntry
+import ru.kuznetsov.itstime4service.features.transfer.TransferScreen
 import ru.kuznetsov.itstime4service.features.taskform.TaskFormScreen
 import ru.kuznetsov.itstime4service.ui.components.buttons.TabBarItem
 import ru.kuznetsov.itstime4service.ui.components.indicators.LocalScreenSettled
@@ -102,7 +105,7 @@ fun ItsTime4ServiceNavGraph(launchCarId: String?, modifier: Modifier = Modifier)
         NavHost(
             navController = navController,
             startDestination = Destination.Cars.route,
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
             enterTransition = { tabEnter(still) ?: fadeIn(tween(DEFAULT_FADE_MS)) },
             exitTransition = { tabExit(still) ?: fadeOut(tween(DEFAULT_FADE_MS)) },
             popEnterTransition = { tabEnter(still) ?: fadeIn(tween(DEFAULT_FADE_MS)) },
@@ -121,7 +124,16 @@ fun ItsTime4ServiceNavGraph(launchCarId: String?, modifier: Modifier = Modifier)
                 )
             }
             screen(Destination.AddCar.route) {
-                CarFormScreen(onBack = { navController.popBackStack() })
+                CarFormScreen(
+                    onBack = { navController.popBackStack() },
+                    onImport = { navController.navigate(Destination.ImportCar.route) { launchSingleTop = true } },
+                )
+            }
+            screen(Destination.ImportCar.route) {
+                TransferScreen(TransferEntry.CarForm, onClose = { imported ->
+                    if (imported) navController.popBackStack(Destination.Cars.route, inclusive = false)
+                    else navController.popBackStack()
+                })
             }
             screen(Destination.CarDetail.route, arguments = carIdArgument) { entry ->
                 val carId = entry.carId
@@ -135,6 +147,7 @@ fun ItsTime4ServiceNavGraph(launchCarId: String?, modifier: Modifier = Modifier)
                         }
                     },
                     onAddTask = { navController.navigate(Destination.NewTask.createRoute(carId)) },
+                    onExport = { navController.navigate(Destination.Transfer.createRoute(carId)) },
                     onOpenTask = { taskId -> navController.navigate(Destination.EditTask.createRoute(carId, taskId)) },
                 )
             }
@@ -160,7 +173,15 @@ fun ItsTime4ServiceNavGraph(launchCarId: String?, modifier: Modifier = Modifier)
                 HistoryScreen(initialCarId = entry.arguments?.read { getStringOrNull(Destination.ARG_CAR_ID) })
             }
             screen(Destination.Settings.route) {
-                SettingsScreen(onOpenLicenses = { navController.navigate(Destination.Licenses.route) })
+                SettingsScreen(onOpenLicenses = { navController.navigate(Destination.Licenses.route) },
+                    onOpenTransfer = { navController.navigate(Destination.Transfer.createRoute()) })
+            }
+            screen(Destination.Transfer.route, arguments = listOf(navArgument(Destination.ARG_CAR_ID) {
+                type = NavType.StringType; nullable = true; defaultValue = null
+            })) { entry ->
+                val carId = entry.arguments?.read { getStringOrNull(Destination.ARG_CAR_ID) }
+                val transferEntry = if (carId == null) TransferEntry.Settings else TransferEntry.CarDetail(carId)
+                TransferScreen(transferEntry, onClose = { navController.popBackStack() })
             }
             screen(Destination.Licenses.route) {
                 LicensesScreen(onBack = { navController.popBackStack() })

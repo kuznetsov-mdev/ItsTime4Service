@@ -32,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import itstime4service.shared.generated.resources.transfer_share_action
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_add_task
 import itstime4service.shared.generated.resources.action_cancel
@@ -71,6 +72,7 @@ fun CarDetailScreen(
     onOpenTask: (taskId: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CarDetailViewModel = koinViewModel { parametersOf(carId) },
+    onExport: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.isMissing) {
@@ -79,6 +81,7 @@ fun CarDetailScreen(
     CarDetailContent(
         state = state,
         onBack = onBack,
+        onExport = onExport,
         onOpenHistory = onOpenHistory,
         onAddTask = onAddTask,
         onOpenTask = onOpenTask,
@@ -136,6 +139,7 @@ internal fun CarDetailContent(
     modifier: Modifier = Modifier,
     onSaveFailureShown: () -> Unit = {},
     onRetry: () -> Unit = {},
+    onExport: () -> Unit = {},
 ) {
     val car = state.car
     val taskListState = rememberLazyListState()
@@ -159,6 +163,10 @@ internal fun CarDetailContent(
     ) {
         val topBar: @Composable () -> Unit = {
             ScreenTopBar(onBack = onBack) {
+                if (car != null) AppIconButton(
+                    icon = ItsTime4ServiceIcons.Share, onClick = onExport,
+                    contentDescription = stringResource(Res.string.transfer_share_action),
+                )
                 AppIconButton(
                     icon = ItsTime4ServiceIcons.Clock,
                     onClick = onOpenHistory,

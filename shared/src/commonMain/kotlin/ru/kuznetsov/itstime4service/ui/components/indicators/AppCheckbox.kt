@@ -35,13 +35,14 @@ fun AppCheckbox(
     onCheckedChange: (Boolean) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val colors = ItsTime4ServiceTheme.colors
     val shape = RoundedCornerShape(5.dp)
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(ItsTime4ServiceTheme.dimens.radiusM))
-            .toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange)
+            .toggleable(value = checked, enabled = enabled, role = Role.Checkbox, onValueChange = onCheckedChange)
             .padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,

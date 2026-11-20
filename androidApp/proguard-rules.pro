@@ -21,3 +21,7 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-keep class org.bouncycastle.jcajce.provider.symmetric.AES** { *; }
+-keep class org.bouncycastle.jcajce.provider.symmetric.PBEPBKDF2** { *; }
+-keep class org.bouncycastle.jcajce.provider.digest.SHA256** { *; }

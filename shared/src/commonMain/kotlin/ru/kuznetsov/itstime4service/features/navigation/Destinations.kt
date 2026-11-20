@@ -6,6 +6,8 @@ sealed class Destination(val route: String) {
 
     data object AddCar : Destination("add-car")
 
+    data object ImportCar : Destination("add-car/import")
+
     data object CarDetail : Destination("cars/{$ARG_CAR_ID}") {
         fun createRoute(carId: String) = "cars/$carId"
     }
@@ -21,6 +23,10 @@ sealed class Destination(val route: String) {
     }
 
     data object Settings : Destination("settings")
+
+    data object Transfer : Destination("settings/data?$ARG_CAR_ID={$ARG_CAR_ID}") {
+        fun createRoute(carId: String? = null) = if (carId == null) "settings/data" else "settings/data?$ARG_CAR_ID=$carId"
+    }
 
     data object Licenses : Destination("settings/licenses")
 

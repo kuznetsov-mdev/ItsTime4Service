@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
@@ -83,6 +84,7 @@ internal fun FieldBox(
     onImeAction: (() -> Unit)? = null,
     showDoneButton: Boolean = true,
     trailing: (@Composable () -> Unit)? = null,
+    label: String? = null,
 ) {
     val colors = ItsTime4ServiceTheme.colors
     var isFocused by remember { mutableStateOf(false) }
@@ -126,7 +128,10 @@ internal fun FieldBox(
                         .fillMaxWidth()
                         .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
                         .onFocusChanged { isFocused = it.isFocused }
-                        .semantics { if (isError) error(errorText) },
+                        .semantics {
+                            if (isError) error(errorText)
+                            if (label != null) contentDescription = label
+                        },
                     enabled = enabled,
                     textStyle = textStyle.copy(color = colors.ink),
                     singleLine = minLines == 1,

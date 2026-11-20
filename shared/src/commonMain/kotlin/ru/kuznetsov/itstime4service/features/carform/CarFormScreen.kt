@@ -42,6 +42,7 @@ import itstime4service.shared.generated.resources.screen_add_car
 import itstime4service.shared.generated.resources.section_tasks
 import itstime4service.shared.generated.resources.task_name_oil
 import itstime4service.shared.generated.resources.tasks_added
+import itstime4service.shared.generated.resources.transfer_import
 import itstime4service.shared.generated.resources.vin_placeholder
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -69,6 +70,7 @@ import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 @Composable
 fun CarFormScreen(
     onBack: () -> Unit,
+    onImport: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CarFormViewModel = koinViewModel(),
 ) {
@@ -79,6 +81,10 @@ fun CarFormScreen(
     CarFormContent(
         state = state,
         onBack = onBack,
+        onImport = {
+            val current = viewModel.state.value
+            if (!current.isSaving && !current.isSaved) onImport()
+        },
         onBrandChange = viewModel::onBrandChange,
         onMileageChange = viewModel::onMileageChange,
         onVinChange = viewModel::onVinChange,
@@ -115,6 +121,7 @@ internal fun CarFormContent(
     modifier: Modifier = Modifier,
     onSaveFailureShown: () -> Unit = {},
     onRetry: () -> Unit = {},
+    onImport: () -> Unit = {},
 ) {
     val colors = ItsTime4ServiceTheme.colors
     val typography = ItsTime4ServiceTheme.typography
@@ -144,6 +151,12 @@ internal fun CarFormContent(
                 .padding(horizontal = ScreenHorizontalPadding)
                 .padding(top = 18.dp, bottom = 8.dp),
         ) {
+            OutlineButton(
+                text = stringResource(Res.string.transfer_import),
+                onClick = onImport,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp),
+                enabled = !state.isSaving && !state.isSaved,
+            )
             FieldLabel(stringResource(Res.string.field_brand), required = true)
             AppTextField(
                 value = state.brand,

@@ -17,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.v2.runComposeUiTest
+import itstime4service.shared.generated.resources.transfer_title
 import itstime4service.shared.generated.resources.Res
 import itstime4service.shared.generated.resources.action_cancel
 import itstime4service.shared.generated.resources.action_decrease
@@ -75,6 +76,7 @@ class SettingsScreenTest : UiTest() {
         appVersion: AppVersion = AppVersion("2.3.4", "17"),
         darkTheme: Boolean = false,
     ) = setContent {
+        texts["transfer"] = stringResource(Res.string.transfer_title)
         texts["dark"] = stringResource(Res.string.theme_dark)
         texts["miles"] = stringResource(Res.string.units_mi)
         texts["theme"] = stringResource(Res.string.settings_theme).uppercase()
@@ -110,12 +112,20 @@ class SettingsScreenTest : UiTest() {
                 onPurgeDismiss = { calls += "purgeDismiss" },
                 onPurgeConfirm = { calls += "purgeConfirm" },
                 onOpenLicenses = { calls += "licenses" },
+                onOpenTransfer = { calls += "transfer" },
                 onRetry = { calls += "retry" },
             )
         }
     }
 
     private fun loaded(settings: Settings = this.settings) = SettingsUiState(settings = settings)
+
+    @Test
+    fun transferRowOpensTheDataScreen() = runComposeUiTest {
+        show(loaded())
+        onNodeWithText(texts.getValue("transfer")).performScrollTo().performClick()
+        assertEquals(listOf("transfer"), calls)
+    }
 
     @Test
     fun themeAndUnitChoicesReachTheViewModel() = runComposeUiTest {

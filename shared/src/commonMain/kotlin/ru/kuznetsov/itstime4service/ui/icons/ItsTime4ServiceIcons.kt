@@ -27,6 +27,7 @@ import com.composables.icons.lucide.PanelTop
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.Plus
 import com.composables.icons.lucide.ScrollText
+import com.composables.icons.lucide.Share2
 import com.composables.icons.lucide.Settings
 import com.composables.icons.lucide.Sun
 import com.composables.icons.lucide.Thermometer
@@ -42,6 +43,7 @@ import com.composables.icons.lucide.Zap
  * source could be swapped later without touching call sites.
  */
 object ItsTime4ServiceIcons {
+    val Share: ImageVector get() = Lucide.Share2
     val Car: ImageVector get() = Lucide.Car
     val Calendar: ImageVector get() = Lucide.Calendar
     val Gauge: ImageVector get() = Lucide.Gauge

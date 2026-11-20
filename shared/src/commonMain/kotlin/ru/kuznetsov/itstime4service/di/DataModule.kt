@@ -13,6 +13,8 @@ import ru.kuznetsov.itstime4service.data.repository.ServiceHistoryRepositoryImpl
 import ru.kuznetsov.itstime4service.data.repository.SettingsRepositoryImpl
 import ru.kuznetsov.itstime4service.data.repository.TaskHistoryRepositoryImpl
 import ru.kuznetsov.itstime4service.data.transfer.TransferRepositoryImpl
+import ru.kuznetsov.itstime4service.data.transfer.TransferDocumentCodecImpl
+import ru.kuznetsov.itstime4service.domain.transfer.TransferDocumentCodec
 import ru.kuznetsov.itstime4service.data.transfer.TransferCodecImpl
 import ru.kuznetsov.itstime4service.domain.repository.CarRepository
 import ru.kuznetsov.itstime4service.domain.repository.ReminderRepository
@@ -33,5 +35,6 @@ val dataModule = module {
     single { ReminderRepositoryImpl(get(), get()) } bind ReminderRepository::class
     single { ReminderSchedulerImpl(get()) } bind ReminderScheduler::class
     single { TransferRepositoryImpl(get(), get()) } bind TransferRepository::class
+    single { TransferDocumentCodecImpl(get(), get()) } bind TransferDocumentCodec::class
     single { TransferCodecImpl() } bind TransferCodec::class
 }
