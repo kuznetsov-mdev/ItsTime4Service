@@ -378,10 +378,16 @@
 Снимок коммита 2: Android **684/0/0/0**, native iOS file tests **26/0/0/0**, Android APK и обе iOS production/test compilation PASS. Workflow `e20fda31be0b5a5606614f7d71edec81`, «Проходит ли файловый коммит 2?».
 
 
-### Мастер переноса
+### Завершение мастера переноса — 19.11.2026
 
-- TransferDocumentCodecTest проверяет конверт, парольную защиту, версию и предел размера.
-- TransferExchangeTest проверяет обмен синтетическими копиями Android ↔ iOS, импорт в SQLite, сохранение связей, порядка и настроек.
+- TransferDocumentCodecTest: envelope/protection, аутентификация до metadata, реальные пароли/UTF-8, roundtrip/ошибки версии и лимита.
+- TransferViewModelTest (14): defaults/dependencies, правильный/неверный пароль, release/cancel, новые назначения всех машин, сброс решений, показанный default SKIP, single apply/Back, stale plan, реальная страховка и её отмена, изменение БД во время native save, отдельный retry уведомлений.
+- TransferContentTest (7): callbacks/disabled busy, password cleanup/disposal, скрытое содержимое до пароля, финальное подтверждение replace и cancel, отдельный retry/завершение результата.
+- TransferNavigationTest (2): настоящий Koin/SQLite/navigation, оба входа и успешный импорт с возвратом без старого подтверждения.
+- TransferExchangeTest (3 на каждой платформе): настоящие Android/iOS encrypted outputs, импорт peer backup и чистого регламента через SQLite с проверкой состава/порядка, sold/deleted history, настроек, reminder state и допустимого rollback.
+- Последний полный Android: **715/0/0/0**, native iOS18.3 transfer suite: **56/0/0/0**, Gradle workflow d03d426690b465c939b1849acbac5192 sequence35; debug APK, iOS production/test compilation и подписанный AAB PASS.
+- Настоящее обновление отдельного приложения 1.0.0→1.1.0, схема5→7: все legacy columns автомобиля/работы/истории/настроек сохранены, integrity_check=ok. Пользовательская установленная версия не затрагивалась.
+- R8 runtime и финальные native-dialog результаты записываются в [отчёт версии](../docs/research/transfer-ui-release-verification.md); прежние незавершённые матрицы выше являются историей, не текущим итогом. Физический API24 и точная минимальная iOS остаются отдельными обязательными gates.
 
 ### Выбор цели экспорта и импорт из формы авто
 

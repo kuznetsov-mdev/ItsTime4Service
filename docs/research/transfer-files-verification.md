@@ -94,3 +94,14 @@ The user authorized two logical commits: production adapters/core IO tests, then
 Снимок коммита 1: Android **683/0/0/0**, native iOS file tests **25/0/0/0**, Android APK и обе iOS production/test compilation PASS. Workflow `e20fda31be0b5a5606614f7d71edec81`, «Проходит ли файловый коммит 1?».
 
 Снимок коммита 2: Android **684/0/0/0**, native iOS file tests **26/0/0/0**, Android APK и обе iOS production/test compilation PASS. Workflow `e20fda31be0b5a5606614f7d71edec81`, «Проходит ли файловый коммит 2?».
+
+
+## Completion — 2026-11-19
+
+The earlier incomplete system matrices are superseded for production adapter readiness: iOS27 **7/7**, `result-20261119-141029-dab736.xcresult`; iOS18.3 **7/7**, `result-20261119-143505-b697c9.xcresult`. Both retained zero screen attachments. Exact native save/open/shared bytes and SHA256 are checked, including reopening the protected shared file. Cancellation includes the UIKit control and share popover.
+
+The repeat-run harness uses unique short own folders, bounded startup/waits, a process-group timeout and a runner lock. iOS18 Back has no BackButton identifier: its exact label excludes the folder Actions Menu title. The native picker/share UI is opened directly; the separate Files warmup launch was removed after it caused bootstrap failures. These are test-host fixes; production native presentation remains unchanged.
+
+Android API35 non-debuggable R8 host: production encrypted codec roundtrip and all six file cases PASS. The recipient receipt is fresh for every share and verified through the host UI, so run-as is not required. R8 stripped reflective JCA registrations before the targeted AES/PBEPBKDF2/SHA256 keep rules; runtime now passes and the signed AAB was rebuilt. Full final host suite711 and native suite56 pass; actual encrypted peer documents restore through SQLite both ways. The real isolated 1.0.0→1.1.0 installation upgrade preserves all legacy columns and passes integrity_check.
+
+Details, acceptance traceability, artifact and remaining physical/minimum-OS gates: [1.1.0 UI/release verification](transfer-ui-release-verification.md) and [release candidate](../releases/1.1.0.md). The implementation is ready for user acceptance on tested environments; publication still requires the outstanding agreed hardware gates. No new commit, push or upload has been made.
