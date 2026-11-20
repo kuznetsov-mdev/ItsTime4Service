@@ -6,6 +6,7 @@ import itstime4service.shared.generated.resources.*
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinIsolatedContext
+import ru.kuznetsov.itstime4service.domain.model.NewMaintenanceTask
 import ru.kuznetsov.itstime4service.features.TestApp
 import ru.kuznetsov.itstime4service.features.navigation.ItsTime4ServiceNavGraph
 import ru.kuznetsov.itstime4service.domain.transfer.TransferCipher
@@ -17,11 +18,12 @@ import kotlin.test.*
 /** Runs the real navigation, DI, presentation and SQLite with a synthetic native file boundary. */
 @OptIn(ExperimentalTestApi::class)
 class TransferNavigationTest : UiTest() {
-    @Test fun settingsImportCompletesAndReturnsWithoutAReusableConfirmation() {
+    @Test fun existingDestinationWithSkippedMatchesContinuesAndAppliesFromSettings() {
         val app = TestApp()
         val files = FakeTransferFiles()
         app.koin.declare<TransferFiles>(files)
         app.koin.declare<TransferCipher>(transferFileCheckCipher())
+        runTest { app.addCar("Synthetic car", tasks = listOf(NewMaintenanceTask("Oil", 8000))) }
         val texts = mutableMapOf<String, String>()
         try {
             runComposeUiTest {
@@ -30,7 +32,7 @@ class TransferNavigationTest : UiTest() {
                     texts["transfer"] = stringResource(Res.string.transfer_title)
                     texts["import"] = stringResource(Res.string.transfer_import)
                     texts["pick"] = stringResource(Res.string.transfer_pick)
-                    texts["target"] = stringResource(Res.string.transfer_confirm_target)
+                    texts["skip"] = stringResource(Res.string.transfer_skip)
                     texts["continue"] = stringResource(Res.string.transfer_continue)
                     texts["apply"] = stringResource(Res.string.transfer_apply)
                     texts["done"] = stringResource(Res.string.action_done)
@@ -45,10 +47,13 @@ class TransferNavigationTest : UiTest() {
                 waitUntilAtLeastOneExists(hasText(texts.getValue("import")), 10000)
                 onNodeWithText(texts.getValue("import")).performScrollTo().performClick()
                 onNodeWithText(texts.getValue("pick")).performScrollTo().performClick()
-                waitUntilAtLeastOneExists(hasSetTextAction(), 10000)
-                onAllNodes(hasSetTextAction())[1].performScrollTo().performTextInput("12000")
-                onNodeWithText(texts.getValue("target")).performScrollTo().performClick()
-                onNodeWithText(texts.getValue("continue")).performScrollTo().performClick()
+                val destination = hasText("Synthetic car") and isSelectable()
+                waitUntilAtLeastOneExists(destination, 10000)
+                val next = onNodeWithText(texts.getValue("continue"))
+                next.assertIsDisplayed().assertIsNotEnabled()
+                onNode(destination).performScrollTo().performClick()
+                onNode(hasText(texts.getValue("skip")) and isSelectable()).performScrollTo().assertIsSelected()
+                next.assertIsDisplayed().performClick()
                 waitUntilAtLeastOneExists(hasText(texts.getValue("apply")), 10000)
                 onNodeWithText(texts.getValue("apply")).performScrollTo().performClick()
                 waitUntilAtLeastOneExists(hasText(texts.getValue("success")), 10000)
@@ -58,7 +63,7 @@ class TransferNavigationTest : UiTest() {
             }
             runTest {
                 assertEquals("Synthetic car", app.summaries().single().brand)
-                assertEquals(1, app.car(app.summaries().single().id)!!.tasks.size)
+                assertEquals(8000, app.car(app.summaries().single().id)!!.tasks.single().intervalKm)
             }
         } finally { app.close() }
     }
@@ -118,7 +123,7 @@ class TransferNavigationTest : UiTest() {
                     texts["import"] = stringResource(Res.string.transfer_import)
                     texts["pick"] = stringResource(Res.string.transfer_pick)
                     texts["back"] = stringResource(Res.string.action_back)
-                    texts["target"] = stringResource(Res.string.transfer_confirm_target)
+                    texts["newTarget"] = stringResource(Res.string.transfer_new_car)
                     texts["continue"] = stringResource(Res.string.transfer_continue)
                     texts["apply"] = stringResource(Res.string.transfer_apply)
                     texts["done"] = stringResource(Res.string.action_done)
@@ -145,10 +150,9 @@ class TransferNavigationTest : UiTest() {
                 onNodeWithText(texts.getValue("import")).performClick()
                 waitUntilAtLeastOneExists(hasText(texts.getValue("pick")), 10000)
                 onNodeWithText(texts.getValue("pick")).performClick()
-                waitUntilAtLeastOneExists(hasText(texts.getValue("target")), 10000)
+                waitUntilAtLeastOneExists(hasText(texts.getValue("newTarget")), 10000)
                 onAllNodes(hasSetTextAction())[1].performScrollTo().performTextInput("12000")
-                onNodeWithText(texts.getValue("target")).performScrollTo().performClick()
-                onNodeWithText(texts.getValue("continue")).performScrollTo().performClick()
+                onNodeWithText(texts.getValue("continue")).performClick()
                 waitUntilAtLeastOneExists(hasText(texts.getValue("apply")), 10000)
                 onNodeWithText(texts.getValue("apply")).performScrollTo().performClick()
                 waitUntilAtLeastOneExists(hasText(texts.getValue("success")), 10000)

@@ -2688,7 +2688,7 @@
     transferState = {
       step: step || 'hub', from: source || 'settings', trail: [], carId: source === 'detail' ? istate.detailId : cars[0]?.id,
       groups: {}, selected: {}, protected: step === 'backup',
-      fileKind: 'car', mode: 'merge', target: cars.length ? cars[0].id : 'new', settings: true,
+      fileKind: 'car', mode: 'merge', target: cars.length ? null : 'new', settings: true,
       incoming: JSON.parse(JSON.stringify(transferDemoFile)), personalDecisions: {}, decisions: {}, taskTargets: {}, mileageDecision: 'current', serviceDecision: 'current', historyDecision: 'current',
       brand: 'Kia Rio', mileage: '', description: '', password: '', repeat: '', error: '', saved: false, declined: false, confirmed: false
     };
@@ -2833,6 +2833,13 @@
       return transferRadio('taskTarget:' + task.id,local.id,local.name,transferEscape(transferTaskDescription(local,index)));
     }).join('');
   }
+  function transferWorkDecisions() {
+    var choices = transferConflicts().map(function(t){return transferGroup('Похожая работа: ' + transferEscape(t.name),
+      transferRadio('decision:' + t.id,'skip','Пропустить','Сохранить параметры. Личные сведения выбираются отдельно.') +
+      transferRadio('decision:' + t.id,'update','Обновить параметры','Сохранить свою историю и последнее обслуживание.') +
+      transferRadio('decision:' + t.id,'separate','Добавить отдельную','Появится ещё одна работа.') + transferTaskTargetOptions(t));}).join('');
+    return choices + (transferTaskChoicesReady() ? '' : transferNote('Для обновления укажите конкретную работу. Одну работу на телефоне можно обновить только один раз за импорт.',true));
+  }
   function transferComposition(file) {
     var labels = {mileage:'Текущий пробег',plate:'Госномер',vin:'VIN',service:'Последнее обслуживание работ',history:'История',details:'Стоимость, сервисы и комментарии'};
     var included = Object.keys(labels).filter(function(key){return file.groups[key];});
@@ -2867,15 +2874,12 @@
     }
     return items;
   }
-  function transferHasImportDecisions() {
-    return transferConflicts().length > 0 || transferPersonalItems().length > 0;
-  }
   function transferOpenDemoFile() {
     var s = transferState;
     s.incoming = JSON.parse(JSON.stringify(transferDemoFile));
     s.fileKind = s.incoming.kind;
     s.selected = {};
-    s.target = cars.length ? cars[0].id : 'new';
+    s.target = cars.length ? null : 'new';
     s.brand = transferIncomingCar().brand;
     s.mileage = s.incoming.groups.mileage ? String(transferIncomingCar().mileageKm) : '';
     s.password = '';
@@ -2956,30 +2960,27 @@
       sub = (s.fileKind === 'backup' ? 'Полная копия.' : transferHasPersonalGroups(s.incoming.groups) ? 'Данные автомобиля.' : 'Регламент.') + ' Проверьте содержимое перед импортом.';
       body = transferCard(s.incoming.name,(s.fileKind === 'car' ? transferEscape(incoming.brand) + ' · работ: ' + incoming.tasks.length : s.incoming.cars.length + ' действующих авто · ' + s.incoming.sold.length + ' проданных') + '<br>' + transferEscape(transferComposition(s.incoming)),s.fileKind === 'car' ? 'car' : 'scrollText') +
         (s.incoming.description ? transferNote(transferEscape(s.incoming.description)) : '') +
-        (s.fileKind === 'car' ? transferNote('Проверьте применимость интервалов к вашей модификации и условиям эксплуатации.') + transferGroup('Выберите работы',transferWorkList(true)) : transferGroup('Способ восстановления',transferRadio('mode','merge','Объединить','Сравнить сведения и выбрать, что добавить.') + transferRadio('mode','replace','Заменить всё','Текущие автомобили, работы и история будут заменены.')) + transferGroup('Настройки',transferCheck('settings','Восстановить настройки','Разрешения уведомлений остаются системными.')));
+        (s.fileKind === 'car' ? transferNote('Проверьте применимость интервалов к вашей модификации и условиям эксплуатации.') : transferGroup('Способ восстановления',transferRadio('mode','merge','Объединить','Сравнить сведения и выбрать, что добавить.') + transferRadio('mode','replace','Заменить всё','Текущие автомобили, работы и история будут заменены.')) + transferGroup('Настройки',transferCheck('settings','Восстановить настройки','Разрешения уведомлений остаются системными.')));
       footer = transferButton('Далее','previewNext');
     }
     if (s.step === 'target') {
       var incoming = transferIncomingCar();
-      sub = s.fileKind === 'car' ? 'К какой машине добавить выбранные работы?' : 'Сопоставьте автомобиль из копии со своим.';
-      body = transferCard('В файле: ' + incoming.brand,transferEscape(s.incoming.groups.mileage ? fmtKm(incoming.mileageKm) : 'Текущий пробег не передан.'),'car') + transferGroup('На этом телефоне',cars.map(function(c){return transferRadio('target',c.id,c.brand,fmtKm(c.mileageKm) + ' · выбрать эту машину');}).join('') + transferRadio('target','new','Добавить отдельный автомобиль','Не объединять с существующим.')) +
-        (s.target === 'new' ? transferField('brand','Марка и модель') + transferField('mileage','Фактический пробег, км','number','Введите показание одометра') : transferNote('Совпадение названия не означает, что это одна машина. Выберите её самостоятельно.'));
-      footer = transferButton(s.target === 'new' ? 'Создать автомобиль' : 'Выбрать этот автомобиль','targetNext');
+      sub = s.fileKind === 'car' ? 'Выберите автомобиль и работы для переноса.' : 'Сопоставьте автомобиль из копии со своим.';
+      body = transferCard('В файле: ' + incoming.brand,transferEscape(s.incoming.groups.mileage ? fmtKm(incoming.mileageKm) : 'Текущий пробег не передан.'),'car') + transferGroup('На этом телефоне',cars.map(function(c){return transferRadio('target',c.id,c.brand,'Объединить с этим авто · ' + fmtKm(c.mileageKm));}).join('') + transferRadio('target','new','Создать новое авто')) +
+        (s.target === 'new' ? transferField('brand','Марка и модель') + transferField('mileage','Фактический пробег, км','number','Введите показание одометра') : '') +
+        (s.fileKind === 'car' ? transferGroup('Работы для переноса',transferWorkList(true)) : '') +
+        transferWorkDecisions();
+      footer = transferButton('Продолжить','targetNext',false,!s.target || !transferTaskChoicesReady());
     }
     if (s.step === 'conflicts') {
-      var target = carById(s.target), conflicts = transferConflicts(), personalItems = transferPersonalItems();
+      var target = carById(s.target), personalItems = transferPersonalItems();
       sub = target ? 'Для ' + target.brand + '. По умолчанию сохраняются ваши сведения.' : 'Выберите, какие сведения перенести в новый автомобиль.';
-      body = conflicts.map(function(t){return transferGroup('Похожая работа: ' + transferEscape(t.name),
-        transferRadio('decision:' + t.id,'skip','Пропустить','Сохранить параметры. Личные сведения выбираются отдельно.') +
-        transferRadio('decision:' + t.id,'update','Обновить параметры','Сохранить свою историю и последнее обслуживание.') +
-        transferRadio('decision:' + t.id,'separate','Добавить отдельную','Появится ещё одна работа.') + transferTaskTargetOptions(t));}).join('') +
-        personalItems.map(function(item){return transferGroup(item.label,
+      body = personalItems.map(function(item){return transferGroup(item.label,
           transferRadio('personal:' + item.key,'current',target ? 'Оставить текущее' : 'Не переносить',transferEscape(item.current)) +
           transferRadio('personal:' + item.key,'file','Взять из файла',transferEscape(item.value)));}).join('') +
         transferNote(s.incoming.groups.service ? 'Последнее обслуживание переносится только по вашему выбору. Для совпавших работ обновление параметров само по себе его не меняет.' : 'Новые работы без сведений о выполнении получат статус «Рекомендовано обслужить».') +
         (transferServiceHistoryLinked() ? transferNote('Последнее обслуживание и связанные записи истории применяются вместе, чтобы сохранить согласованность данных.') : '');
-      if (!transferTaskChoicesReady()) body += transferNote('Для обновления укажите конкретную работу. Одну работу на телефоне можно обновить только один раз за импорт.',true);
-      footer = transferButton('Посмотреть итог','review',false,!transferTaskChoicesReady());
+      footer = transferButton('Продолжить','review');
     }
     if (s.step === 'review') {
       var replacing = s.fileKind === 'backup' && s.mode === 'replace';
@@ -3077,8 +3078,9 @@
       if (action === 'unlock') {if (!s.password) {s.error = 'Введите тестовый пароль.';paintInteractive();return;}s.password = '';transferGo('preview');return;}
       if (action === 'previewNext') {transferGo(s.fileKind === 'backup' && s.mode === 'replace' ? 'review' : 'target');return;}
       if (action === 'targetNext') {
+        if (!s.target || (s.target !== 'new' && !carById(s.target)) || !transferTaskChoicesReady()) return;
         if (s.target === 'new' && (!s.brand.trim() || !/^\d+$/.test(s.mileage) || !Number.isSafeInteger(Number(s.mileage)))) {s.error = 'Укажите марку и фактический пробег целым числом.';paintInteractive();return;}
-        transferGo(transferHasImportDecisions() ? 'conflicts' : 'review');return;
+        transferGo(transferPersonalItems().length ? 'conflicts' : 'review');return;
       }
       if (action === 'safety') {s.protected = true;s.password = '';s.repeat = '';s.modal = 'safetyPassword';paintInteractive();return;}
       if (action === 'safetySave') {if (!validPassword()) return;s.modal = 'safetySave';s.error = '';paintInteractive();return;}

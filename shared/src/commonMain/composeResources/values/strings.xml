@@ -287,8 +287,6 @@
     <string name="transfer_new_car">Create a new car</string>
     <string name="transfer_new_brand">Car name</string>
     <string name="transfer_confirm_mileage">Confirm the current mileage in %1$s</string>
-    <string name="transfer_confirm_target">Confirm destination</string>
-    <string name="transfer_target_confirmed">Destination confirmed</string>
     <string name="transfer_skip">Skip</string>
     <string name="transfer_update_task">Update task parameters</string>
     <string name="transfer_add_task">Add separately</string>
@@ -325,7 +323,9 @@
     <string name="transfer_error_identity">The file conflicts with an earlier import. Choose another file.</string>
     <string name="transfer_error_password">Enter a password and repeat it exactly. Use at most 1024 UTF-8 bytes.</string>
     <string name="transfer_error_password_match">The passwords do not match.</string>
-    <string name="transfer_error_target">Choose and confirm a destination for every car.</string>
+    <string name="transfer_error_target">Choose a destination for every car in the file.</string>
+    <string name="transfer_error_duplicate_car_target">Choose a different existing car for each car in the file.</string>
+    <string name="transfer_error_brand">Enter a name for the new car.</string>
     <string name="transfer_error_mileage">Enter a valid current mileage and car name.</string>
     <string name="transfer_busy">Working…</string>
     <string name="transfer_task_interval">Every %1$s · %2$s months</string>

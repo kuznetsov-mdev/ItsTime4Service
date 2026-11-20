@@ -113,7 +113,11 @@ internal fun TransferContent(state: TransferUiState, actions: TransferActions, m
                 }
             }
         }
-
+        if (state.step == TransferStep.IMPORT_SETUP) {
+            val missingTarget = state.importMode != ImportMode.REPLACE_BACKUP &&
+                state.incoming?.cars.orEmpty().any { state.targetDrafts[it.id]?.hasTarget != true }
+            TransferContinueButton(state.isBusy || missingTarget, actions.previewImport)
+        }
     }
 }
 
@@ -142,6 +146,13 @@ internal fun TransferNote(text: String, modifier: Modifier = Modifier, error: Bo
 @Composable
 internal fun TransferButton(text: StringResource, busy: Boolean, action: () -> Unit) {
     PrimaryButton(stringResource(text), action, Modifier.fillMaxWidth(), enabled = !busy)
+}
+
+@Composable
+internal fun TransferContinueButton(disabled: Boolean, action: () -> Unit) {
+    Box(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp)) {
+        TransferButton(Res.string.transfer_continue, disabled, action)
+    }
 }
 
 @Composable
@@ -200,6 +211,8 @@ private fun problemText(problem: TransferFormProblem) = when (problem) {
     TransferFormProblem.PASSWORD_REQUIRED, TransferFormProblem.PASSWORD_INVALID -> Res.string.transfer_error_password
     TransferFormProblem.PASSWORD_MISMATCH -> Res.string.transfer_error_password_match
     TransferFormProblem.CAR_REQUIRED, TransferFormProblem.TARGET_REQUIRED -> Res.string.transfer_error_target
+    TransferFormProblem.DUPLICATE_CAR_TARGET -> Res.string.transfer_error_duplicate_car_target
+    TransferFormProblem.BRAND_REQUIRED -> Res.string.transfer_error_brand
     TransferFormProblem.MILEAGE_REQUIRED -> Res.string.transfer_error_mileage
 }
 

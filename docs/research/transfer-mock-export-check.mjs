@@ -149,7 +149,11 @@ for (const finishAction of ['finish', 'back']) {
     action('openFile');
     assert.equal(context.transferState.step, 'preview');
     action('previewNext');
+    assert.equal(context.transferState.target, null);
     trigger('[data-transfer-radio]', 'onchange', { dataset: { transferRadio: 'target' }, value: 'new' });
+    action('targetNext');
+    assert.equal(context.transferState.step, 'target');
+    assert.match(context.transferState.error, /пробег/);
     context.transferState.mileage = '120000';
     action('targetNext');
     assert.equal(context.transferState.step, 'review');

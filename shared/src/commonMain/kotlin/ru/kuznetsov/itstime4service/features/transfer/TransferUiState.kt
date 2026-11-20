@@ -7,7 +7,10 @@ import ru.kuznetsov.itstime4service.domain.transfer.*
 
 enum class TransferStep { HUB, EXPORT_PURPOSE, EXPORT, EXPORT_PREVIEW, IMPORT_FILE, UNLOCK, IMPORT_SETUP, IMPORT_DECISIONS, IMPORT_PREVIEW, RESULT }
 enum class TransferExportPurpose { FULL_BACKUP, CAR_BACKUP, SHARE_SCHEDULE }
-enum class TransferFormProblem { PASSWORD_REQUIRED, PASSWORD_MISMATCH, PASSWORD_INVALID, CAR_REQUIRED, TARGET_REQUIRED, MILEAGE_REQUIRED }
+enum class TransferFormProblem {
+    PASSWORD_REQUIRED, PASSWORD_MISMATCH, PASSWORD_INVALID, CAR_REQUIRED,
+    TARGET_REQUIRED, DUPLICATE_CAR_TARGET, BRAND_REQUIRED, MILEAGE_REQUIRED,
+}
 
 sealed interface TransferEntry {
     data object Settings : TransferEntry
@@ -15,7 +18,14 @@ sealed interface TransferEntry {
     data class CarDetail(val carId: String) : TransferEntry
 }
 
-data class ImportTargetDraft(val isNew: Boolean = true, val existingId: String? = null, val brand: String = "", val mileage: String = "")
+data class ImportTargetDraft(
+    val isNew: Boolean = false,
+    val existingId: String? = null,
+    val brand: String = "",
+    val mileage: String = "",
+) {
+    val hasTarget: Boolean get() = isNew || existingId != null
+}
 
 data class TransferUiState(
     val step: TransferStep = TransferStep.HUB,

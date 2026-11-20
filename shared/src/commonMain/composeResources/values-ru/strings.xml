@@ -291,8 +291,6 @@
     <string name="transfer_new_car">Создать новый автомобиль</string>
     <string name="transfer_new_brand">Название автомобиля</string>
     <string name="transfer_confirm_mileage">Подтвердите текущий пробег в %1$s</string>
-    <string name="transfer_confirm_target">Подтвердить автомобиль</string>
-    <string name="transfer_target_confirmed">Автомобиль подтверждён</string>
     <string name="transfer_skip">Пропустить</string>
     <string name="transfer_update_task">Обновить параметры работы</string>
     <string name="transfer_add_task">Добавить отдельно</string>
@@ -329,7 +327,9 @@
     <string name="transfer_error_identity">Файл конфликтует с предыдущим импортом. Выберите другой файл.</string>
     <string name="transfer_error_password">Введите пароль и точно повторите его. Максимум — 1024 байта UTF-8.</string>
     <string name="transfer_error_password_match">Пароли не совпадают.</string>
-    <string name="transfer_error_target">Выберите и подтвердите автомобиль для каждого источника.</string>
+    <string name="transfer_error_target">Выберите, куда перенести каждый автомобиль из файла.</string>
+    <string name="transfer_error_duplicate_car_target">Выберите разные существующие автомобили для автомобилей из файла.</string>
+    <string name="transfer_error_brand">Укажите название нового автомобиля.</string>
     <string name="transfer_error_mileage">Введите корректный текущий пробег и название автомобиля.</string>
     <string name="transfer_busy">Выполняется…</string>
     <string name="transfer_task_interval">Каждые %1$s · %2$s мес.</string>

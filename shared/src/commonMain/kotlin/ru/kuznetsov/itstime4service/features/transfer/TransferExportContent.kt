@@ -76,13 +76,11 @@ internal fun TransferExportContent(state: TransferUiState, actions: TransferActi
             }
             if (!state.isFullBackup) TransferCarExportFields(state, actions)
         }
-        Box(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp)) {
-            TransferButton(Res.string.transfer_continue, state.isBusy || (!state.isFullBackup && state.exportCar == null)) {
-                actions.previewExport(password, confirmation)
-                if (state.isProtected && password.isNotEmpty() && password == confirmation) {
-                    password = ""
-                    confirmation = ""
-                }
+        TransferContinueButton(state.isBusy || (!state.isFullBackup && state.exportCar == null)) {
+            actions.previewExport(password, confirmation)
+            if (state.isProtected && password.isNotEmpty() && password == confirmation) {
+                password = ""
+                confirmation = ""
             }
         }
     }

@@ -54,8 +54,6 @@ internal fun TransferImportSetup(state: TransferUiState, actions: TransferAction
                 AppNumberField(draft.mileage, { actions.target(car.id, draft.copy(mileage = it)) }, Modifier.fillMaxWidth(),
                     placeholder = stringResource(Res.string.transfer_mileage), enabled = !state.isBusy)
             }
-            if (car.id in state.decisions.carTargets) TransferNote(stringResource(Res.string.transfer_target_confirmed))
-            TransferButton(Res.string.transfer_confirm_target, state.isBusy) { actions.confirmTarget(car.id) }
             car.tasks.forEach { task ->
                 val ref = EntityRef(car.id, task.id)
                 TransferCheck(task.name, ref in state.decisions.selectedTasks, state.isBusy) { actions.importTask(ref, it) }
@@ -68,7 +66,6 @@ internal fun TransferImportSetup(state: TransferUiState, actions: TransferAction
             }
         }
     }
-    TransferButton(Res.string.transfer_continue, state.isBusy, actions.previewImport)
 }
 
 @Composable

@@ -229,8 +229,14 @@ class TransferViewModel(
                     clearFile()
                     val snapshot = result.value
                     val decisions = ImportDecisions.initial(snapshot).copy(restoreSettings = snapshot.kind == TransferKind.BACKUP)
-                    val drafts = snapshot.cars.associate { car -> car.id to ImportTargetDraft(brand = car.brand,
-                        mileage = (car.mileageKm as? Presence.Present)?.value?.kmIn(state.value.distanceUnit)?.toString().orEmpty()) }
+                    val current = state.value
+                    val drafts = snapshot.cars.associate { car ->
+                        car.id to ImportTargetDraft(
+                            isNew = current.allCars.isEmpty(),
+                            brand = car.brand,
+                            mileage = (car.mileageKm as? Presence.Present)?.value?.kmIn(current.distanceUnit)?.toString().orEmpty(),
+                        )
+                    }
                     mutableState.update { it.copy(step = TransferStep.IMPORT_SETUP, incoming = snapshot,
                         importMode = if (snapshot.kind == TransferKind.BACKUP) ImportMode.MERGE_BACKUP else ImportMode.INTO_CAR,
                         decisions = decisions, targetDrafts = drafts, pending = emptyList(), importSummary = null, importPreview = null) }
@@ -240,33 +246,27 @@ class TransferViewModel(
     }
 
     fun onTargetDraft(sourceId: String, draft: ImportTargetDraft) {
-        if (!editable()) return
-        plan = null
-        mutableState.update { current ->
-            val snapshot = current.incoming ?: return@update current
-            current.copy(targetDrafts = current.targetDrafts + (sourceId to draft),
-                decisions = ImportDecisions.initial(snapshot).copy(restoreSettings = current.decisions.restoreSettings,
-                    carTargets = current.decisions.carTargets - sourceId),
-                pending = emptyList(), importSummary = null, importPreview = null, problem = null)
-        }
-    }
-
-    fun onConfirmTarget(sourceId: String) {
-        if (!editable()) return
         val current = state.value
-        val draft = current.targetDrafts[sourceId] ?: return
-        val target = if (draft.isNew) {
-            val mileage = draft.mileage.toIntOrNull()?.takeIf { it >= 0 }
-                ?: return problem(TransferFormProblem.MILEAGE_REQUIRED)
-            if (draft.brand.isBlank()) return problem(TransferFormProblem.CAR_REQUIRED)
-            val original = (current.incoming?.cars?.firstOrNull { it.id == sourceId }?.mileageKm as? Presence.Present)?.value
-            TargetCar.New(draft.brand, keepKm(original, mileage, current.distanceUnit))
-        } else {
-            val id = draft.existingId?.takeIf { id -> current.allCars.any { it.id == id } }
-                ?: return problem(TransferFormProblem.TARGET_REQUIRED)
-            TargetCar.Existing(id)
+        if (!editable() || current.step != TransferStep.IMPORT_SETUP) return
+        val previous = current.targetDrafts[sourceId] ?: return
+        if (draft == previous) return
+        val changedDestination = previous.isNew != draft.isNew || previous.existingId != draft.existingId
+        edit {
+            val decisions = it.decisions.copy(carTargets = it.decisions.carTargets - sourceId)
+            it.copy(
+                targetDrafts = it.targetDrafts + (sourceId to draft),
+                decisions = if (changedDestination) decisions.copy(
+                    taskChoices = decisions.taskChoices.filterKeys { ref -> ref.carId != sourceId },
+                    taskTargets = decisions.taskTargets.filterKeys { ref -> ref.carId != sourceId },
+                    personalChoices = emptyMap(),
+                    relatedChoices = emptyMap(),
+                    soldChoices = emptyMap(),
+                ) else decisions,
+                pending = emptyList(),
+                importSummary = null,
+                importPreview = null,
+            )
         }
-        edit { it.copy(decisions = it.decisions.copy(carTargets = it.decisions.carTargets + (sourceId to target)), problem = null) }
     }
 
     fun onImportMode(mode: ImportMode) = edit {
@@ -345,11 +345,29 @@ class TransferViewModel(
     }
 
     fun onPrepareImport() {
-        if (!editable()) return
         val current = state.value
+        if (!editable() || (current.step != TransferStep.IMPORT_SETUP && current.step != TransferStep.IMPORT_DECISIONS)) return
         val snapshot = current.incoming ?: return
-        if (current.importMode != ImportMode.REPLACE_BACKUP && current.decisions.carTargets.keys != snapshot.cars.map { it.id }.toSet()) {
-            return problem(TransferFormProblem.TARGET_REQUIRED)
+        if (current.step == TransferStep.IMPORT_SETUP && current.importMode != ImportMode.REPLACE_BACKUP) {
+            val targets = mutableMapOf<String, TargetCar>()
+            val usedExistingCars = mutableSetOf<String>()
+            for (car in snapshot.cars) {
+                val draft = current.targetDrafts[car.id] ?: return problem(TransferFormProblem.TARGET_REQUIRED)
+                val target = if (draft.isNew) {
+                    if (draft.brand.isBlank()) return problem(TransferFormProblem.BRAND_REQUIRED)
+                    val mileage = draft.mileage.toIntOrNull()?.takeIf { it >= 0 }
+                        ?: return problem(TransferFormProblem.MILEAGE_REQUIRED)
+                    val original = (car.mileageKm as? Presence.Present)?.value
+                    TargetCar.New(draft.brand, keepKm(original, mileage, current.distanceUnit))
+                } else {
+                    val id = draft.existingId?.takeIf { id -> current.allCars.any { it.id == id } }
+                        ?: return problem(TransferFormProblem.TARGET_REQUIRED)
+                    if (!usedExistingCars.add(id)) return problem(TransferFormProblem.DUPLICATE_CAR_TARGET)
+                    TargetCar.Existing(id)
+                }
+                targets[car.id] = target
+            }
+            mutableState.update { it.copy(decisions = it.decisions.copy(carTargets = targets.toMap())) }
         }
         execute { prepare() }
     }

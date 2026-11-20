@@ -140,15 +140,16 @@ class TransferViewModelTest {
         assertEquals(1, files.released)
     }
 
-    @Test fun changingDestinationResetsPriorChoicesAndRequiresConfirmation() = runTest {
+    @Test fun changingDestinationResetsWorkChoicesAndContinueUsesTheNewDestination() = runTest {
         val first = app.addCar("First", tasks = listOf(NewMaintenanceTask("Oil", 10000)))
-        val second = app.addCar("Second")
+        val second = app.addCar("Synthetic car")
         val model = open()
         model.onStartImport(); model.onPickFile(); model.at(TransferStep.IMPORT_SETUP)
         val source = model.state.value.incoming!!.cars.single()
         val ref = EntityRef(source.id, source.tasks.single().id)
+        model.onPrepareImport()
+        assertEquals(TransferFormProblem.TARGET_REQUIRED, model.state.value.problem)
         model.onTargetDraft(source.id, ImportTargetDraft(false, first))
-        model.onConfirmTarget(source.id)
         model.onTaskChoice(ref, TaskChoice.UPDATE_PARAMETERS)
         model.onTaskTarget(ref, app.car(first)!!.tasks.single().id)
         model.onTargetDraft(source.id, ImportTargetDraft(false, second))
@@ -156,15 +157,34 @@ class TransferViewModelTest {
         assertTrue(model.state.value.decisions.taskChoices.isEmpty())
         assertTrue(model.state.value.decisions.carTargets.isEmpty())
         model.onPrepareImport()
-        assertEquals(TransferFormProblem.TARGET_REQUIRED, model.state.value.problem)
+        val preview = model.state.first { !it.isBusy }
+        assertEquals(TransferStep.IMPORT_PREVIEW, preview.step)
+        assertEquals(TargetCar.Existing(second), preview.decisions.carTargets[source.id])
+    }
+
+    @Test fun skippingAllMatchesOnAnExistingCarAppliesWithoutChangingItsData() = runTest {
+        val id = app.addCar("Synthetic car", tasks = listOf(NewMaintenanceTask("Oil", 8000, lastDoneKm = 30000)))
+        val original = app.car(id)
+        val model = open()
+        model.onPickFile()
+        val source = model.at(TransferStep.IMPORT_SETUP).incoming!!.cars.single()
+        model.onTargetDraft(source.id, ImportTargetDraft(existingId = id))
+        model.onTaskChoice(EntityRef(source.id, source.tasks.single().id), TaskChoice.SKIP)
+        model.onPrepareImport()
+        val preview = model.at(TransferStep.IMPORT_PREVIEW)
+        assertEquals(TargetCar.Existing(id), preview.decisions.carTargets[source.id])
+        assertEquals(1, preview.importSummary!!.skipped)
+        model.onApplyImport()
+        model.at(TransferStep.RESULT)
+        assertEquals(id, app.summaries().single().id)
+        assertEquals(original, app.car(id))
     }
 
     @Test fun aConfirmedPreviewAppliesOnceAndBackFromSuccessEndsTheSession() = runTest {
         val model = open()
         model.onStartImport(); model.onPickFile(); model.at(TransferStep.IMPORT_SETUP)
         val source = model.state.value.incoming!!.cars.single()
-        model.onTargetDraft(source.id, ImportTargetDraft(brand = "Imported test car", mileage = "12000"))
-        model.onConfirmTarget(source.id)
+        model.onTargetDraft(source.id, ImportTargetDraft(isNew = true, brand = "Imported test car", mileage = "12000"))
         model.onPrepareImport(); model.at(TransferStep.IMPORT_PREVIEW)
         model.onApplyImport(); model.onApplyImport()
         model.at(TransferStep.RESULT)
@@ -196,8 +216,7 @@ class TransferViewModelTest {
         val model = open()
         model.onStartImport(); model.onPickFile(); model.at(TransferStep.IMPORT_SETUP)
         val source = model.state.value.incoming!!.cars.single()
-        model.onTargetDraft(source.id, ImportTargetDraft(brand = "Imported", mileage = "12000"))
-        model.onConfirmTarget(source.id)
+        model.onTargetDraft(source.id, ImportTargetDraft(isNew = true, brand = "Imported", mileage = "12000"))
         model.onPrepareImport(); model.at(TransferStep.IMPORT_PREVIEW)
         app.addCar("Created elsewhere")
         model.onApplyImport()
@@ -224,8 +243,8 @@ class TransferViewModelTest {
         assertEquals(1, app.summaries().size)
     }
 
-    @Test fun encryptedMultiCarBackupRequiresEveryTargetAndPreservesEarlierConfirmations() = runTest {
-        app.addCar("First synthetic", tasks = listOf(NewMaintenanceTask("Oil", 10000)))
+    @Test fun encryptedMultiCarBackupValidatesAndConfirmsAllDestinationsTogether() = runTest {
+        val first = app.addCar("First synthetic", tasks = listOf(NewMaintenanceTask("Oil", 10000)))
         app.addCar("Second synthetic")
         val original = assertIs<TransferOutcome.Success<TransferSnapshot>>(
             app.koin.get<TransferRepository>().readSnapshot(ExportSelection.FullBackup)).value
@@ -236,12 +255,15 @@ class TransferViewModelTest {
         model.onPickFile(); model.at(TransferStep.UNLOCK)
         model.onUnlock("Synthetic multi password"); model.at(TransferStep.IMPORT_SETUP)
         val source = model.state.value.incoming!!.cars
+        source.forEach { model.onTargetDraft(it.id, ImportTargetDraft(existingId = first)) }
+        model.onPrepareImport()
+        assertEquals(TransferFormProblem.DUPLICATE_CAR_TARGET, model.state.value.problem)
+        assertTrue(model.state.value.decisions.carTargets.isEmpty())
         source.forEachIndexed { index, car ->
-            model.onTargetDraft(car.id, ImportTargetDraft(brand = "Copy $index", mileage = "12000"))
-            model.onConfirmTarget(car.id)
-            assertEquals(index + 1, model.state.value.decisions.carTargets.size)
+            model.onTargetDraft(car.id, ImportTargetDraft(isNew = true, brand = "Copy $index", mileage = "12000"))
         }
         model.onPrepareImport()
+        assertEquals(source.map { it.id }.toSet(), model.state.value.decisions.carTargets.keys)
         for (round in 0..3) {
             val current = model.state.first { !it.isBusy }
             assertNull(current.failure)
@@ -267,8 +289,7 @@ class TransferViewModelTest {
         val model = open()
         model.onPickFile(); model.at(TransferStep.IMPORT_SETUP)
         val source = model.state.value.incoming!!.cars.single()
-        model.onTargetDraft(source.id, ImportTargetDraft(brand = "Copy", mileage = "100000"))
-        model.onConfirmTarget(source.id)
+        model.onTargetDraft(source.id, ImportTargetDraft(isNew = true, brand = "Copy", mileage = "100000"))
         model.onPrepareImport()
         val pending = model.at(TransferStep.IMPORT_DECISIONS)
         assertEquals(ImportDecisionReason.IDENTITY_COLLISION, pending.pending.single().reason)
@@ -286,8 +307,10 @@ class TransferViewModelTest {
         val model = open()
         model.onPickFile(); model.at(TransferStep.IMPORT_SETUP)
         val source = model.state.value.incoming!!.cars.single()
-        assertEquals("18890", model.state.value.targetDrafts.getValue(source.id).mileage)
-        model.onConfirmTarget(source.id)
+        val draft = model.state.value.targetDrafts.getValue(source.id)
+        assertEquals("18890", draft.mileage)
+        model.onTargetDraft(source.id, draft.copy(isNew = true))
+        model.onPrepareImport()
         assertEquals(30400, assertIs<TargetCar.New>(model.state.value.decisions.carTargets[source.id]).confirmedMileageKm)
     }
 
@@ -305,8 +328,7 @@ class TransferViewModelTest {
         val model = open()
         model.onPickFile(); model.at(TransferStep.IMPORT_SETUP)
         val source = model.state.value.incoming!!.cars.single()
-        model.onTargetDraft(source.id, ImportTargetDraft(brand = "Imported", mileage = "12000"))
-        model.onConfirmTarget(source.id)
+        model.onTargetDraft(source.id, ImportTargetDraft(isNew = true, brand = "Imported", mileage = "12000"))
         model.onPrepareImport(); model.at(TransferStep.IMPORT_PREVIEW)
         model.onApplyImport(); model.at(TransferStep.RESULT)
         assertEquals(NotificationState.RETRY_REQUIRED, model.state.value.importResult!!.notifications)

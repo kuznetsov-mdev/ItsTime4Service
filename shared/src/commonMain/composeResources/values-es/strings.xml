@@ -289,8 +289,6 @@
     <string name="transfer_new_car">Crear un coche nuevo</string>
     <string name="transfer_new_brand">Nombre del coche</string>
     <string name="transfer_confirm_mileage">Confirma el kilometraje actual en %1$s</string>
-    <string name="transfer_confirm_target">Confirmar destino</string>
-    <string name="transfer_target_confirmed">Destino confirmado</string>
     <string name="transfer_skip">Omitir</string>
     <string name="transfer_update_task">Actualizar parámetros de la tarea</string>
     <string name="transfer_add_task">Añadir por separado</string>
@@ -327,7 +325,9 @@
     <string name="transfer_error_identity">El archivo entra en conflicto con una importación anterior. Elige otro archivo.</string>
     <string name="transfer_error_password">Introduce la contraseña y repítela exactamente. Máximo: 1024 bytes UTF-8.</string>
     <string name="transfer_error_password_match">Las contraseñas no coinciden.</string>
-    <string name="transfer_error_target">Elige y confirma un destino para cada coche.</string>
+    <string name="transfer_error_target">Elige un destino para cada coche del archivo.</string>
+    <string name="transfer_error_duplicate_car_target">Elige un coche existente distinto para cada coche del archivo.</string>
+    <string name="transfer_error_brand">Escribe el nombre del coche nuevo.</string>
     <string name="transfer_error_mileage">Introduce un kilometraje actual y nombre válidos.</string>
     <string name="transfer_busy">Procesando…</string>
     <string name="transfer_task_interval">Cada %1$s · %2$s meses</string>

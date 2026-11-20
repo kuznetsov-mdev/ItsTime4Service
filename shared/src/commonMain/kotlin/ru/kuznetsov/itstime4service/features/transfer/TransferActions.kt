@@ -20,7 +20,6 @@ internal class TransferActions(
     val pick: () -> Unit = {},
     val unlock: (String) -> Unit = {},
     val target: (String, ImportTargetDraft) -> Unit = { _, _ -> },
-    val confirmTarget: (String) -> Unit = {},
     val mode: (ImportMode) -> Unit = {},
     val settings: (Boolean) -> Unit = {},
     val importTask: (EntityRef, Boolean) -> Unit = { _, _ -> },

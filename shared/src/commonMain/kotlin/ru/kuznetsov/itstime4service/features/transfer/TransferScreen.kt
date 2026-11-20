@@ -26,7 +26,7 @@ fun TransferScreen(
             viewModel::onDescription, viewModel::onExportGroup, viewModel::onProtectionChange,
             viewModel::onConfirmPlaintext, viewModel::onPrepareExport, viewModel::onWriteExport,
             viewModel::onStartImport, viewModel::onPickFile, viewModel::onUnlock,
-            viewModel::onTargetDraft, viewModel::onConfirmTarget, viewModel::onImportMode,
+            viewModel::onTargetDraft, viewModel::onImportMode,
             viewModel::onRestoreSettings, viewModel::onImportTask, viewModel::onTaskChoice,
             viewModel::onTaskTarget, viewModel::onPersonalChoice, viewModel::onSaveSafety,
             viewModel::onDeclineBackup, viewModel::onPrepareImport, viewModel::onApplyImport,
