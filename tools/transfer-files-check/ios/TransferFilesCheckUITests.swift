@@ -2,26 +2,14 @@ import XCTest
 
 final class TransferFilesCheckUITests: XCTestCase {
     private let app = XCUIApplication(bundleIdentifier:"ru.kuznetsov.itstime4service.filescheck")
-    private let runToken = String(UUID().uuidString.prefix(8))
+    private let runToken = "-" + String(format:"%06llu", 999999 - (UInt64(Date().timeIntervalSince1970) % 1000000)) + String(UUID().uuidString.prefix(8))
 
     override func setUp() {
         continueAfterFailure = false
         app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-FileCheckRun", runToken]
         app.launch()
         XCTAssertTrue(app.buttons["Save"].waitForExistence(timeout:30))
-        let files = XCUIApplication(bundleIdentifier:"com.apple.DocumentsApp")
-        files.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-        files.launch()
-        let browse = files.descendants(matching:.any).matching(NSPredicate(format:"label == %@", "Browse")).firstMatch
-        if browse.waitForExistence(timeout:5) { browse.tap() }
-        let local = files.descendants(matching:.any).matching(NSPredicate(format:"label == %@", "On My iPhone")).firstMatch
-        if local.waitForExistence(timeout:5) && local.isHittable { local.tap() }
-        let ownFolder = files.staticTexts["TransferFilesCheck"].firstMatch
-        if ownFolder.waitForExistence(timeout:5) && ownFolder.isHittable { ownFolder.tap() }
-        app.terminate()
-        app.launch()
-        XCTAssertTrue(app.wait(for:.runningForeground,timeout:10))
-        XCTAssertTrue(app.buttons["Save"].waitForExistence(timeout:10))
+
     }
 
     private func status(_ value: String) {
@@ -35,15 +23,21 @@ final class TransferFilesCheckUITests: XCTestCase {
         XCTNSPredicateExpectation(predicate: predicate, object: app.staticTexts["status"])
     }
 
-    private func waitForPicker() {
-        let picker = app.navigationBars.firstMatch
-        let exists = picker.waitForExistence(timeout:30)
-        if !exists { diagnoseDialog() }
-        XCTAssertTrue(exists, "Native picker not exposed; status=" + (app.staticTexts["status"].exists ? app.staticTexts["status"].label : "hidden"))
+    private func waitForPicker(exporting: Bool = false) {
+        let ready = XCTNSPredicateExpectation(predicate:NSPredicate { _,_ in
+            let bar = self.app.navigationBars.firstMatch
+            guard bar.exists && bar.isHittable else { return false }
+            if !exporting { return true }
+            let action = self.app.navigationBars.buttons.matching(NSPredicate(format:"label IN %@",["Save","Export","Сохранить","Экспорт"])).firstMatch
+            return action.exists && action.isHittable
+        },object:nil)
+        let result = XCTWaiter.wait(for:[ready],timeout:30)
+        if result != .completed { diagnoseDialog() }
+        XCTAssertEqual(result,.completed,"Native picker is not ready")
     }
 
     private func cancelPicker(preferButton: Bool = true) {
-        waitForPicker()
+        waitForPicker(exporting: !preferButton)
         let cancel = app.buttons.matching(NSPredicate(format:"label IN %@",["Cancel","Отменить","Отмена"])).firstMatch
         if preferButton && cancel.exists && cancel.isHittable { cancel.tap(); return }
         let bar = app.navigationBars.firstMatch
@@ -52,6 +46,12 @@ final class TransferFilesCheckUITests: XCTestCase {
         let start = bar.coordinate(withNormalizedOffset:CGVector(dx:0.95,dy:0.1))
         let end = app.coordinate(withNormalizedOffset:CGVector(dx:0.95,dy:0.9))
         start.press(forDuration:0,thenDragTo:end)
+        let dismissed = XCTNSPredicateExpectation(predicate:NSPredicate { _,_ in !self.app.navigationBars.firstMatch.exists },object:nil)
+        if XCTWaiter.wait(for:[dismissed],timeout:5) != .completed {
+            let middle = bar.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:0.05))
+            let bottom = app.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:0.9))
+            middle.press(forDuration:0,thenDragTo:bottom)
+        }
     }
 
     private func diagnoseDialog() {
@@ -67,6 +67,8 @@ final class TransferFilesCheckUITests: XCTestCase {
         let structure = snapshot.components(separatedBy:"\n").filter { line in
             ["Sheet,", "Popover,", "ScrollView,", "CollectionView,", "Table,"].contains(where:{line.trimmingCharacters(in:.whitespaces).hasPrefix($0)})
         }.map { $0.trimmingCharacters(in:.whitespaces).components(separatedBy:"identifier:")[0].components(separatedBy:"label:")[0] }
+        let ownRows = snapshot.components(separatedBy:"\n").filter { $0.contains("Run-") || $0.contains("SourcePlain") || $0.contains("SourceProtected") }.map { String($0.trimmingCharacters(in:.whitespaces).prefix(220)) }
+        print("FILECHECK_DIAGNOSTIC ownRows="+ownRows.prefix(20).joined(separator:";"))
         print("FILECHECK_DIAGNOSTIC structure="+structure.prefix(10).joined(separator:";"))
         let systemSnapshot = XCUIApplication(bundleIdentifier:"com.apple.springboard").debugDescription
         print("FILECHECK_DIAGNOSTIC systemLabels="+labels.filter { systemSnapshot.contains("label: '"+$0+"'") }.joined(separator:","))
@@ -88,13 +90,29 @@ final class TransferFilesCheckUITests: XCTestCase {
         return false
     }
 
+    private func isRunFolder() -> Bool {
+        let name = "Run-"+runToken
+        return app.navigationBars[name].exists || app.navigationBars.buttons.matching(NSPredicate(format:"label BEGINSWITH %@",name)).firstMatch.exists
+    }
+
     private func localFolder() {
-        if app.navigationBars["TransferFilesCheck"].exists || app.navigationBars.buttons.matching(NSPredicate(format:"label BEGINSWITH %@", "TransferFilesCheck")).firstMatch.exists { return }
-        let local = app.descendants(matching:.any).matching(NSPredicate(format:"label MATCHES[c] %@", "^(?:On\\s+My\\s+iPhone|На\\s+(?:мо[её]м\\s+)?iPhone)$")).firstMatch
-        if !local.waitForExistence(timeout:8) { _ = tapIfPresent(["Browse", "Locations", "Обзор", "Места"]) }
-        if local.waitForExistence(timeout:8) && local.isHittable { local.tap() }
-        let folder = app.staticTexts["TransferFilesCheck"].firstMatch
-        if folder.waitForExistence(timeout:8) && folder.isHittable { folder.tap() }
+        if isRunFolder() { return }
+        let rootName = "TransferFilesCheck"
+        let rootBar = app.navigationBars.buttons.matching(NSPredicate(format:"label == %@",rootName)).firstMatch
+        if !app.navigationBars[rootName].exists && rootBar.exists && rootBar.isHittable { rootBar.tap() }
+        let run = app.cells.matching(NSPredicate(format:"label CONTAINS %@ OR identifier CONTAINS %@","Run-"+runToken,"Run-"+runToken)).firstMatch
+        if !run.waitForExistence(timeout:8) {
+            let local = app.descendants(matching:.any).matching(NSPredicate(format:"label MATCHES[c] %@", "^(?:On\\s+My\\s+iPhone|На\\s+(?:мо[её]м\\s+)?iPhone)$")).firstMatch
+            if !local.exists { _ = tapIfPresent(["Browse", "Locations", "Обзор", "Места"]) }
+            if local.waitForExistence(timeout:8) && local.isHittable { local.tap() }
+            let folder = app.cells.matching(NSPredicate(format:"label CONTAINS %@ OR identifier CONTAINS %@",rootName,rootName)).firstMatch
+            if folder.waitForExistence(timeout:8) && folder.isHittable { folder.tap() }
+        }
+        if !run.waitForExistence(timeout:10) { diagnoseDialog() }
+        XCTAssertTrue(run.exists,"Own run directory is not exposed")
+        run.tap()
+        let ready = XCTNSPredicateExpectation(predicate:NSPredicate { _,_ in self.isRunFolder() },object:nil)
+        XCTAssertEqual(XCTWaiter.wait(for:[ready],timeout:10),.completed,"Picker did not enter the own run directory")
     }
 
     func testNativeSaveControl() {
@@ -121,8 +139,15 @@ final class TransferFilesCheckUITests: XCTestCase {
     func testCancelShare() {
         app.buttons["Share"].tap()
         let close = app.descendants(matching:.any).matching(NSPredicate(format:"label IN %@", ["Close", "Закрыть"])).firstMatch
-        if close.waitForExistence(timeout:30) { close.tap() }
-        else { app.swipeDown() }
+        if close.waitForExistence(timeout:5) && close.isHittable { close.tap() }
+        else {
+            let popover = app.popovers.firstMatch
+            if popover.exists {
+                app.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:0.3)).tap()
+            } else {
+                app.swipeDown()
+            }
+        }
         status("Cancelled")
     }
 
@@ -132,8 +157,9 @@ final class TransferFilesCheckUITests: XCTestCase {
     private func saveAndRead(_ kind: String, _ expected: String) {
         app.buttons[kind].tap()
         app.buttons["Save"].tap()
-        waitForPicker()
+        waitForPicker(exporting:true)
         localFolder()
+        waitForPicker(exporting:true)
         XCTAssertTrue(tapIfPresent(["Export", "Save", "Move", "Экспорт", "Сохранить", "Переместить"]))
         _ = tapIfPresent(["Replace", "Заменить"])
         status("Saved")
@@ -171,8 +197,9 @@ final class TransferFilesCheckUITests: XCTestCase {
         if !save.exists || !save.isHittable { diagnoseDialog() }
         XCTAssertTrue(save.exists && save.isHittable)
         save.tap()
-        waitForPicker()
+        waitForPicker(exporting:true)
         localFolder()
+        waitForPicker(exporting:true)
         XCTAssertTrue(tapIfPresent(["Save", "Export", "Сохранить", "Экспорт"]))
         _ = tapIfPresent(["Replace", "Заменить"])
         status("Shared")

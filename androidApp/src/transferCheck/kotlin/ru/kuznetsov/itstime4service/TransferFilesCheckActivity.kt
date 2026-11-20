@@ -1,6 +1,8 @@
 package ru.kuznetsov.itstime4service
 
 import android.os.Bundle
+import org.koin.android.ext.android.getKoin
+import ru.kuznetsov.itstime4service.domain.transfer.*
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -23,12 +25,34 @@ class TransferFilesCheckActivity : ComponentActivity() {
             val scope = rememberCoroutineScope()
             TransferFilesHost(files) {
                 AndroidView(factory = { context ->
-                    val layout = LinearLayout(context).also { it.orientation = LinearLayout.VERTICAL }
+                    val layout = LinearLayout(context).also {
+                        it.orientation = LinearLayout.VERTICAL
+                        it.setPadding(0, (48 * context.resources.displayMetrics.density).toInt(), 0, 0)
+                    }
                     val status = TextView(context).also { it.text = "Ready"; it.textSize = 16f }
                     fun button(label: String, action: () -> Unit) {
                         layout.addView(Button(context).also { it.text = label; it.setOnClickListener { action() } })
                     }
                     fun fixture() = assets.open(fixtureName).use { it.readBytes() }
+                    button("Crypto") { scope.launch {
+                        status.text = "Working"
+                        val document = getKoin().get<TransferDocumentCodec>()
+                        val input = assets.open("Protected.it4s").use { it.readBytes() }
+                        val secret = SecretBytes.fromPassword("Synthetic-file-check")
+                        try {
+                            val source = document.decode(input, secret)
+                            check(source is TransferOutcome.Success)
+                            val encoded = document.encode(source.value, secret)
+                            check(encoded is TransferOutcome.Success)
+                            try {
+                                val reopened = document.decode(encoded.value, secret)
+                                check(reopened is TransferOutcome.Success && reopened.value == source.value)
+                                status.text = "Crypto PASS"
+                            } finally { encoded.value.fill(0) }
+                        } catch (cancelled: CancellationException) { throw cancelled }
+                        catch (_: Exception) { status.text = "Crypto FAILED" }
+                        finally { secret.close(); input.fill(0) }
+                    } }
                     button("Plain") { fixtureName = "Plain.it4s"; status.text = "Ready Plain" }
                     button("Protected") { fixtureName = "Protected.it4s"; status.text = "Ready Protected" }
                     button("Save") { scope.launch {
@@ -54,9 +78,14 @@ class TransferFilesCheckActivity : ComponentActivity() {
                         } catch (_: CancellationException) { status.text = "CoroutineCancelled" }
                     } }
                     button("Share") { scope.launch {
+                        java.io.File(filesDir, "received-sha.txt").writeText("")
                         try { status.text = result(files.share(fixture(), fixtureName)) }
                         catch (_: CancellationException) { status.text = "CoroutineCancelled" }
                     } }
+                    button("Receipt") {
+                        val receipt = java.io.File(filesDir, "received-sha.txt")
+                        status.text = if (receipt.isFile) "Received " + receipt.readText() else "No receipt"
+                    }
                     layout.addView(status)
                     layout
                 })

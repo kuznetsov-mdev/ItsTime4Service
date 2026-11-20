@@ -128,6 +128,7 @@ sqldelight {
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest>().configureEach {
+    providers.gradleProperty("iosTestDevice").orNull?.let { device.set(it) }
     standalone.set(false)
     doFirst {
         val simulator = this as org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest

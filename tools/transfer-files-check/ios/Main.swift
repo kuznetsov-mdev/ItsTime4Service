@@ -52,7 +52,12 @@ final class FileCheckController: UIViewController {
         stack.addArrangedSubview(status)
         view.addSubview(stack)
         NSLayoutConstraint.activate([stack.leadingAnchor.constraint(equalTo:view.safeAreaLayoutGuide.leadingAnchor,constant:20),stack.trailingAnchor.constraint(equalTo:view.safeAreaLayoutGuide.trailingAnchor,constant:-20),stack.topAnchor.constraint(equalTo:view.safeAreaLayoutGuide.topAnchor,constant:20)])
-        let docs = FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0]
+        let arguments = ProcessInfo.processInfo.arguments
+        let marker = arguments.firstIndex(of:"-FileCheckRun")
+        let token = marker.flatMap { $0+1 < arguments.count ? arguments[$0+1] : nil } ?? "standalone"
+        let docs = FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("Run-"+token,isDirectory:true)
+        do { try FileManager.default.createDirectory(at:docs,withIntermediateDirectories:true) }
+        catch { status.text = "FailedFixtureDirectory"; return }
         for name in ["Plain", "Protected"] {
             let destination = docs.appendingPathComponent("Source"+name+".it4s")
             if !FileManager.default.fileExists(atPath:destination.path), let source = Bundle.main.url(forResource:name,withExtension:"it4s"), let data = try? Data(contentsOf:source) {

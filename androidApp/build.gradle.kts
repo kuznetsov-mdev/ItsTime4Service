@@ -63,6 +63,16 @@ android {
             applicationIdSuffix = ".transfercheck"
             matchingFallbacks += "debug"
         }
+        create("transferReleaseCheck") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".transfercheck"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+            isMinifyEnabled = true
+            isShrinkResources = true
+            isDebuggable = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
         release {
             signingConfig = signingConfigs.getByName("release")
             isDebuggable = false
@@ -73,6 +83,11 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+    sourceSets.getByName("transferReleaseCheck") {
+        kotlin.directories.add("src/transferCheck/kotlin")
+        assets.directories.add("src/transferCheck/assets")
+        manifest.srcFile("src/transferCheck/AndroidManifest.xml")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
