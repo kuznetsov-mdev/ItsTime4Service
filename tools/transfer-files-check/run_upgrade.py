@@ -53,14 +53,16 @@ def scroll_click(text):
     raise RuntimeError('Scrollable action not found: '+text)
 
 def edit(index,value):
-    wait(lambda n:n.get('class')=='android.widget.EditText')
-    fields=[n for n in nodes() if n.get('class')=='android.widget.EditText']
-    if len(fields)<=index:raise RuntimeError('Expected input is not visible')
+    deadline=time.monotonic()+35
+    while True:
+        fields=[n for n in nodes() if n.get('package')==PKG and n.get('class')=='android.widget.EditText']
+        if len(fields)>index:break
+        if time.monotonic()>=deadline:raise RuntimeError('Expected input is not visible')
+        time.sleep(.3)
     tap(fields[index])
     time.sleep(.3)
     for char in value:
         adb('shell','input','text',char);time.sleep(.08)
-    adb('shell','input','keyevent','4')
 
 def launch():
     adb('shell','input','keyevent','224');adb('shell','wm','dismiss-keyguard')
@@ -93,7 +95,10 @@ def capture(stage):
 
 if args.stage=='seed':
     if (work/'before.json').exists():raise SystemExit('Baseline already recorded; use verify after the update')
-    if version() is None:adb('install','-r',meta['old_apk'])
+    if version() is None:
+        adb('install','-r',meta['old_apk'])
+        launch()
+        label('Add car')
     assert version()=='1.0.0','Unexpected baseline version'
     previous=capture('checkpoint')
     existing=previous['tables']['cars']
@@ -109,7 +114,7 @@ if args.stage=='seed':
     if not any(n.get('content-desc')=='Mark as done' for n in nodes()):click(CAR)
     click('Mark as done')
     edit(0,'SyntheticGarage');edit(1,'5000');edit(2,'SyntheticUpgradeComment')
-    click('Save');label(CAR)
+    scroll_click('Save');label(CAR)
     click('Back');click('Settings');click('Dark');click('Miles')
     snapshot=capture('before')
     counts={name:len(value['rows']) for name,value in snapshot['tables'].items()}
