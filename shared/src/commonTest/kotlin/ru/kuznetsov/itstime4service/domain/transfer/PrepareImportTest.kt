@@ -122,6 +122,23 @@ class PrepareImportTest {
     }
 
     @Test
+    fun skippingOneMatchDoesNotUndoAnotherMatchUpdate() {
+        val local = local()
+        val incoming = source.cars.single()
+        val update = incoming.tasks.single().copy(intervalKm = 25000)
+        val skip = update.copy(id = "t2", intervalKm = 30000)
+        for (tasks in listOf(listOf(update, skip), listOf(skip, update))) {
+            val snapshot = source.copy(cars = listOf(incoming.copy(tasks = tasks)))
+            val decisions = choices(local, snapshot).copy(
+                taskChoices = mapOf(ref to TaskChoice.UPDATE_PARAMETERS, EntityRef(incoming.id, skip.id) to TaskChoice.SKIP),
+            )
+            val ready = settle(decisions, empty.copy(cars = listOf(local)), snapshot)
+            assertEquals(25000, ready.changes.cars.single().tasks.single().intervalKm)
+            assertEquals(1, ready.summary.skipped)
+        }
+    }
+
+    @Test
     fun skipParametersCanIndependentlyAcceptLastService() {
         val local = local()
         val snapshot = source.copy(includedGroups = setOf(TransferGroup.LAST_SERVICE), cars = source.cars.map { car ->

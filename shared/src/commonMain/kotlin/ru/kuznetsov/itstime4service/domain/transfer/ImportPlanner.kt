@@ -235,21 +235,19 @@ internal class ImportPlanner(
                 targetDetails[ref] = target
                 remember("task", task.id, local.id, target.id)
             }
-            if (choice == TaskChoice.UPDATE_PARAMETERS || service != target.lastService.required()) {
-                val previous = used.put(target.id, ref)
-                if (previous != null) {
-                    need("duplicate:${local.id}:${target.id}", setOf(previous, ref), ImportDecisionReason.DUPLICATE_TARGET, candidates = listOf(target))
-                    return@forEach
-                }
+            if (choice == TaskChoice.SKIP) {
+                skipped++
+                if (service == target.lastService.required()) return@forEach
             }
-            var updated = target.copy(lastService = Presence.Present(service))
-            when (choice) {
-                TaskChoice.SKIP -> skipped++
-                TaskChoice.UPDATE_PARAMETERS -> updated = updated.copy(name = task.name, intervalKm = task.intervalKm,
-                    intervalMonths = task.intervalMonths, icon = task.icon)
-                TaskChoice.ADD_SEPARATE -> error("Separate task handled before matching")
+            val previous = used.put(target.id, ref)
+            if (previous != null) {
+                need("duplicate:${local.id}:${target.id}", setOf(previous, ref), ImportDecisionReason.DUPLICATE_TARGET, candidates = listOf(target))
+                return@forEach
             }
-            tasks[positions.getValue(target.id)] = updated
+            val updated = target.copy(lastService = Presence.Present(service))
+            tasks[positions.getValue(target.id)] = if (choice == TaskChoice.UPDATE_PARAMETERS) {
+                updated.copy(name = task.name, intervalKm = task.intervalKm, intervalMonths = task.intervalMonths, icon = task.icon)
+            } else updated
         }
         return tasks
     }
