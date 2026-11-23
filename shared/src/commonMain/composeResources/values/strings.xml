@@ -269,6 +269,11 @@
     <string name="transfer_plain_confirm">Confirm</string>
     <string name="transfer_continue">Continue</string>
     <string name="transfer_preview">Review before transfer</string>
+    <string name="transfer_backup_date">Backup date: %1$s</string>
+    <string name="transfer_backup_car_counts">Active cars: %1$d · sold cars: %2$d</string>
+    <string name="transfer_choose_task_target">Choose the local task to update.</string>
+    <string name="transfer_duplicate_task_target">Each local task can be updated only once per import.</string>
+    <string name="transfer_task_mapping">Update %1$s → %2$s</string>
     <string name="transfer_counts">Cars: %1$d · tasks: %2$d · history: %3$d</string>
     <string name="transfer_groups_none">No personal data included</string>
     <string name="transfer_save">Save file</string>

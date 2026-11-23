@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -95,6 +96,9 @@ internal fun FieldBox(
     val errorText = stringResource(Res.string.field_required)
     var edited by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
     val shown = if (edited.text == value) edited else TextFieldValue(value, TextRange(value.length))
+    if (shown !== edited) {
+        SideEffect { edited = shown }
+    }
     Row(
         modifier = modifier
             .then(if (needsDoneButton) Modifier.height(IntrinsicSize.Min) else Modifier)

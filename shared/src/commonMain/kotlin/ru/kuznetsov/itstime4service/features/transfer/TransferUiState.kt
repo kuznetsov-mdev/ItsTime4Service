@@ -59,6 +59,7 @@ data class TransferUiState(
     val failure: TransferFailure? = null,
     val problem: TransferFormProblem? = null,
 ) {
+    val isApplyingImport: Boolean get() = step == TransferStep.IMPORT_PREVIEW && isBusy
     val isFullBackup: Boolean get() = exportPurpose == TransferExportPurpose.FULL_BACKUP
     val hasPersonalExport: Boolean get() = isFullBackup || exportGroups.isNotEmpty()
     val exportCar: Car? get() = cars.firstOrNull { it.id == exportCarId }

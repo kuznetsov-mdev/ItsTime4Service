@@ -404,8 +404,19 @@ class TransferViewModel(
                             else -> choices
                         }
                     }
-                    mutableState.update { it.copy(step = TransferStep.IMPORT_DECISIONS, pending = prepared.decisions,
-                        decisions = choices, importSummary = null, importPreview = null) }
+                    val hasTaskTargetsToResolve = prepared.decisions.any { decision ->
+                        decision.reason in setOf(ImportDecisionReason.TASK_TARGET, ImportDecisionReason.DUPLICATE_TARGET) &&
+                            decision.affected.any { choices.taskChoices[it] == TaskChoice.UPDATE_PARAMETERS }
+                    }
+                    mutableState.update {
+                        it.copy(
+                            step = if (hasTaskTargetsToResolve) TransferStep.IMPORT_SETUP else TransferStep.IMPORT_DECISIONS,
+                            pending = prepared.decisions,
+                            decisions = choices,
+                            importSummary = null,
+                            importPreview = null,
+                        )
+                    }
                 }
                 is PreparedImport.Ready -> {
                     if (current.decisions.backupSafety == BackupSafety.SAVED &&
@@ -422,6 +433,7 @@ class TransferViewModel(
     private fun publishPlan(prepared: ImportPlan) {
         plan = prepared
         mutableState.update { it.copy(step = TransferStep.IMPORT_PREVIEW,
+            pending = if (it.step == TransferStep.IMPORT_SETUP) emptyList() else it.pending,
             importSummary = prepared.summary, importPreview = prepared.preview) }
     }
 
@@ -464,7 +476,7 @@ class TransferViewModel(
 
     fun onBack() {
         val current = state.value
-        if (current.isClosed) return
+        if (current.isClosed || current.isApplyingImport) return
         if (current.isConfirmingPlaintext) {
             onConfirmPlaintext(false)
             return

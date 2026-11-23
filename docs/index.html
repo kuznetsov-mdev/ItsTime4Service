@@ -2796,14 +2796,18 @@
     var s = transferState;
     return transferIncomingWorks().filter(function(t){return s.fileKind === 'backup' || s.selected[t.id] !== false;});
   }
+  function transferDestination(id) {
+    var sold = soldCars.find(function(car){return car.id === id;});
+    return carById(id) || (sold ? Object.assign({tasks: [], mileageKm: sold.history.at(-1)?.mileageKm}, sold) : null);
+  }
   function transferConflicts() {
-    var s = transferState, target = carById(s.target);
+    var s = transferState, target = transferDestination(s.target);
     return target ? transferSelectedIncomingWorks().filter(function(t){
       return target.tasks.some(function(local){return local.name.toLowerCase() === t.name.toLowerCase();});
     }) : [];
   }
   function transferTaskCandidates(task) {
-    var target = carById(transferState.target);
+    var target = transferDestination(transferState.target);
     return target ? target.tasks.filter(function(local){return local.name.toLowerCase() === task.name.toLowerCase();}) : [];
   }
   function transferChosenTask(task) {
@@ -2857,7 +2861,7 @@
     });
   }
   function transferPersonalItems() {
-    var s = transferState, groups = s.incoming.groups, incoming = transferIncomingCar(), target = carById(s.target);
+    var s = transferState, groups = s.incoming.groups, incoming = transferIncomingCar(), target = transferDestination(s.target);
     var items = [];
     function add(key,label,current,value) {items.push({key:key,label:label,current:current || 'Нет сведений',value:value || 'Нет сведений'});}
     if (groups.mileage && target) add('mileage','Текущий пробег',fmtKm(target.mileageKm),fmtKm(incoming.mileageKm));
@@ -2958,7 +2962,7 @@
     if (s.step === 'preview') {
       var incoming = transferIncomingCar();
       sub = (s.fileKind === 'backup' ? 'Полная копия.' : transferHasPersonalGroups(s.incoming.groups) ? 'Данные автомобиля.' : 'Регламент.') + ' Проверьте содержимое перед импортом.';
-      body = transferCard(s.incoming.name,(s.fileKind === 'car' ? transferEscape(incoming.brand) + ' · работ: ' + incoming.tasks.length : s.incoming.cars.length + ' действующих авто · ' + s.incoming.sold.length + ' проданных') + '<br>' + transferEscape(transferComposition(s.incoming)),s.fileKind === 'car' ? 'car' : 'scrollText') +
+      body = transferCard(s.incoming.name,(s.fileKind === 'car' ? transferEscape(incoming.brand) + ' · работ: ' + incoming.tasks.length : s.incoming.cars.length + ' действующих авто · ' + s.incoming.sold.length + ' проданных' + (s.incoming.createdAt ? '<br>Дата копии: ' + formatDateRu(s.incoming.createdAt) : '')) + '<br>' + transferEscape(transferComposition(s.incoming)),s.fileKind === 'car' ? 'car' : 'scrollText') +
         (s.incoming.description ? transferNote(transferEscape(s.incoming.description)) : '') +
         (s.fileKind === 'car' ? transferNote('Проверьте применимость интервалов к вашей модификации и условиям эксплуатации.') : transferGroup('Способ восстановления',transferRadio('mode','merge','Объединить','Сравнить сведения и выбрать, что добавить.') + transferRadio('mode','replace','Заменить всё','Текущие автомобили, работы и история будут заменены.')) + transferGroup('Настройки',transferCheck('settings','Восстановить настройки','Разрешения уведомлений остаются системными.')));
       footer = transferButton('Далее','previewNext');
@@ -2966,14 +2970,14 @@
     if (s.step === 'target') {
       var incoming = transferIncomingCar();
       sub = s.fileKind === 'car' ? 'Выберите автомобиль и работы для переноса.' : 'Сопоставьте автомобиль из копии со своим.';
-      body = transferCard('В файле: ' + incoming.brand,transferEscape(s.incoming.groups.mileage ? fmtKm(incoming.mileageKm) : 'Текущий пробег не передан.'),'car') + transferGroup('На этом телефоне',cars.map(function(c){return transferRadio('target',c.id,c.brand,'Объединить с этим авто · ' + fmtKm(c.mileageKm));}).join('') + transferRadio('target','new','Создать новое авто')) +
+      body = transferCard('В файле: ' + incoming.brand,transferEscape(s.incoming.groups.mileage ? fmtKm(incoming.mileageKm) : 'Текущий пробег не передан.'),'car') + transferGroup('На этом телефоне','<select class="text-input" aria-label="Выбрать автомобиль" data-transfer-car-target><option value="">Выбрать автомобиль</option><option value="new"' + (s.target === 'new' ? ' selected' : '') + '>Создать новое авто</option>' + cars.concat(soldCars).map(function(c){return '<option value="' + transferEscape(c.id) + '"' + (s.target === c.id ? ' selected' : '') + '>' + transferEscape(c.brand + (c.mileageKm == null ? ' · продан' : ' · ' + fmtKm(c.mileageKm))) + '</option>';}).join('') + '</select>') +
         (s.target === 'new' ? transferField('brand','Марка и модель') + transferField('mileage','Фактический пробег, км','number','Введите показание одометра') : '') +
         (s.fileKind === 'car' ? transferGroup('Работы для переноса',transferWorkList(true)) : '') +
         transferWorkDecisions();
       footer = transferButton('Продолжить','targetNext',false,!s.target || !transferTaskChoicesReady());
     }
     if (s.step === 'conflicts') {
-      var target = carById(s.target), personalItems = transferPersonalItems();
+      var target = transferDestination(s.target), personalItems = transferPersonalItems();
       sub = target ? 'Для ' + target.brand + '. По умолчанию сохраняются ваши сведения.' : 'Выберите, какие сведения перенести в новый автомобиль.';
       body = personalItems.map(function(item){return transferGroup(item.label,
           transferRadio('personal:' + item.key,'current',target ? 'Оставить текущее' : 'Не переносить',transferEscape(item.current)) +
@@ -2992,7 +2996,7 @@
           transferGroup('Будет восстановлено','<p class="transfer-copy">' + s.incoming.cars.concat(s.incoming.sold).map(function(c){return transferEscape(c.brand) + ' · работ: ' + c.tasks.length + ' · история: ' + (c.history || []).length + ' записей';}).join('<br>') + '<br>' + transferEscape(transferComposition(s.incoming)) + '</p>');
       } else {
         var conflicts = transferConflicts();
-        body = transferCard(s.target === 'new' ? s.brand : (carById(s.target) || {}).brand,'Источник: ' + transferEscape(s.incoming.name) + '<br>Выбранных работ: ' + transferSelectedIncomingWorks().length + '<br>' + (s.target === 'new' ? 'Новая машина · ' + fmtKm(Number(s.mileage)) : 'Существующий автомобиль'),'scrollText') +
+        body = transferCard(s.target === 'new' ? s.brand : (transferDestination(s.target) || {}).brand,'Источник: ' + transferEscape(s.incoming.name) + '<br>Выбранных работ: ' + transferSelectedIncomingWorks().length + '<br>' + (s.target === 'new' ? 'Новая машина · ' + fmtKm(Number(s.mileage)) : 'Существующий автомобиль'),'scrollText') +
           (conflicts.length ? conflicts.map(function(t){var chosen = transferChosenTask(t);return transferGroup(transferEscape(t.name),'<p class="transfer-copy">' + decisions[s.decisions[t.id] || 'skip'] + (s.decisions[t.id] === 'update' && chosen ? ': ' + transferEscape(chosen.name) + '<br>' + transferEscape(transferTaskDescription(chosen,transferTaskCandidates(t).indexOf(chosen))) : '') + '</p>');}).join('') : transferNote('Совпадений работ нет. Выбранные работы будут добавлены.')) +
           transferPersonalItems().map(function(item){return transferGroup(item.label,'<p class="transfer-copy">' + ((s.personalDecisions[item.key] || 'current') === 'file' ? 'Взять из файла: ' + transferEscape(item.value) : s.target === 'new' ? 'Не переносить' : 'Оставить текущее: ' + transferEscape(item.current)) + '</p>');}).join('') +
           (!(s.incoming.groups.service && (s.personalDecisions.service === 'file' || s.personalDecisions.serviceHistory === 'file')) ? transferNote('Для новых работ последнее обслуживание — «Не указано». Статус: «Рекомендовано обслужить».') : '');
@@ -3032,6 +3036,7 @@
     if (!transferState) return;
     var s = transferState;
     root.querySelectorAll('[data-transfer-field]').forEach(function(el){el.oninput = function(){s[el.dataset.transferField] = el.value;};});
+    root.querySelectorAll('[data-transfer-car-target]').forEach(function(el){el.onchange = function(){s.target = el.value || null;transferResetDecisions();paintInteractive();};});
     root.querySelectorAll('[data-transfer-select]').forEach(function(el){el.onchange = function(){s[el.dataset.transferSelect] = el.value; s.selected = {};paintInteractive();};});
     root.querySelectorAll('[data-transfer-check]').forEach(function(el){el.onchange = function(){
       var key = el.dataset.transferCheck;
@@ -3078,7 +3083,7 @@
       if (action === 'unlock') {if (!s.password) {s.error = 'Введите тестовый пароль.';paintInteractive();return;}s.password = '';transferGo('preview');return;}
       if (action === 'previewNext') {transferGo(s.fileKind === 'backup' && s.mode === 'replace' ? 'review' : 'target');return;}
       if (action === 'targetNext') {
-        if (!s.target || (s.target !== 'new' && !carById(s.target)) || !transferTaskChoicesReady()) return;
+        if (!s.target || (s.target !== 'new' && !transferDestination(s.target)) || !transferTaskChoicesReady()) return;
         if (s.target === 'new' && (!s.brand.trim() || !/^\d+$/.test(s.mileage) || !Number.isSafeInteger(Number(s.mileage)))) {s.error = 'Укажите марку и фактический пробег целым числом.';paintInteractive();return;}
         transferGo(transferPersonalItems().length ? 'conflicts' : 'review');return;
       }

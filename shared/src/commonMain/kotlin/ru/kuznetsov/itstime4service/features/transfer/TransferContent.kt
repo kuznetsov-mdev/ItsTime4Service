@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import itstime4service.shared.generated.resources.*
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import ru.kuznetsov.itstime4service.domain.transfer.*
 import ru.kuznetsov.itstime4service.features.settings.SettingRow
 import ru.kuznetsov.itstime4service.ui.components.buttons.PrimaryButton
@@ -36,7 +38,7 @@ import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
 @Composable
 internal fun TransferContent(state: TransferUiState, actions: TransferActions, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxSize().imePadding()) {
-        ScreenTopBar(onBack = actions.back)
+        ScreenTopBar(onBack = actions.back.takeUnless { state.isApplyingImport })
         val title = when (state.step) {
             TransferStep.EXPORT_PURPOSE -> Res.string.transfer_export
             TransferStep.EXPORT -> if (state.isFullBackup) Res.string.transfer_backup else Res.string.transfer_export
@@ -181,11 +183,18 @@ internal fun TransferSecret(value: String, change: (String) -> Unit, label: Stri
 }
 
 @Composable
-internal fun SnapshotDetails(snapshot: TransferSnapshot) {
+internal fun SnapshotDetails(snapshot: TransferSnapshot, showCars: Boolean = true) {
+    if (snapshot.kind == TransferKind.BACKUP) {
+        val sold = snapshot.cars.count { (it.sold as? Presence.Present)?.value == true }
+        val date = snapshot.createdAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
+        TransferNote(stringResource(Res.string.transfer_backup_date, displayDate(date)))
+        TransferNote(stringResource(Res.string.transfer_backup_car_counts, snapshot.cars.size - sold, sold))
+    }
     TransferNote(stringResource(Res.string.transfer_counts, snapshot.cars.size, snapshot.cars.sumOf { it.tasks.size },
         snapshot.cars.sumOf { (it.history as? Presence.Present)?.value?.size ?: 0 }))
     if (snapshot.includedGroups.isEmpty()) TransferNote(stringResource(Res.string.transfer_groups_none))
     else TransferNote(snapshot.includedGroups.map { groupLabel(it) }.joinToString(" · "))
+    if (!showCars) return
     snapshot.cars.forEach { car ->
         TransferPanel(car.brand) {
             car.maintenanceDescription?.let { TransferNote(it) }

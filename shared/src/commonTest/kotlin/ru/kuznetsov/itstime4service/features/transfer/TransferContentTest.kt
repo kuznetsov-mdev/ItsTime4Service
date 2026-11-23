@@ -12,6 +12,7 @@ import ru.kuznetsov.itstime4service.data.transfer.TransferFixtures
 import ru.kuznetsov.itstime4service.data.transfer.TransferCodecImpl
 import ru.kuznetsov.itstime4service.data.transfer.TransferDocumentCodecImpl
 import ru.kuznetsov.itstime4service.domain.model.Car
+import ru.kuznetsov.itstime4service.domain.model.CarSummary
 import ru.kuznetsov.itstime4service.domain.model.MaintenanceTask
 import ru.kuznetsov.itstime4service.ui.test.UiTest
 import ru.kuznetsov.itstime4service.ui.theme.ItsTime4ServiceTheme
@@ -33,6 +34,12 @@ class TransferContentTest : UiTest() {
         texts["password"] = stringResource(Res.string.transfer_password)
         texts["confirm"] = stringResource(Res.string.transfer_password_confirm)
         texts["continue"] = stringResource(Res.string.transfer_continue)
+        texts["chooseCar"] = stringResource(Res.string.transfer_choose_car)
+        texts["update"] = stringResource(Res.string.transfer_update_task)
+        texts["taskTarget"] = stringResource(Res.string.transfer_choose_task_target)
+        texts["mapping"] = stringResource(Res.string.transfer_task_mapping, "Incoming oil", "Local oil")
+        texts["backupCounts"] = stringResource(Res.string.transfer_backup_car_counts, 1, 1)
+        texts["backupDate"] = stringResource(Res.string.transfer_backup_date, "DATE").substringBefore("DATE")
         texts["protection"] = stringResource(Res.string.transfer_protection)
         texts["confirmPlaintext"] = stringResource(Res.string.transfer_plain_confirm)
         texts["lastService"] = stringResource(Res.string.transfer_last_service)
@@ -140,6 +147,76 @@ class TransferContentTest : UiTest() {
         onNodeWithText("Task 31").performScrollTo().assertIsDisplayed()
         next.assertIsDisplayed()
         assertEquals(position, next.fetchSemanticsNode().boundsInRoot)
+    }
+
+    @Test fun carPickerComposesOnlyVisibleDestinationsAndCanReachTheLastOne() = runComposeUiTest {
+        val snapshot = TransferFixtures.car()
+        val cars = List(1000) { index -> CarSummary("local-$index", "Destination $index", 10000, false) }
+        var chosenId: String? = null
+        show({
+            TransferUiState(isLoading = false, step = TransferStep.IMPORT_SETUP, incoming = snapshot, allCars = cars)
+        }, TransferActions(target = { _, draft -> chosenId = draft.existingId }))
+        val lastDestination = hasText("Destination 999", substring = true) and isSelectable()
+
+        onNodeWithText(texts.getValue("chooseCar")).performScrollTo().performClick()
+        onNode(lastDestination).assertDoesNotExist()
+        onNode(hasScrollToIndexAction()).performScrollToIndex(cars.size)
+        onNode(lastDestination).performClick()
+        assertEquals(cars.last().id, chosenId)
+    }
+
+    @Test fun concreteTaskIsChosenOnSetupBeforeContinuing() = runComposeUiTest {
+        val snapshot = TransferFixtures.car()
+        val car = snapshot.cars.single()
+        val task = car.tasks.single()
+        val ref = EntityRef(car.id, task.id)
+        val localCar = Car("local", car.brand, 12000, null, listOf(
+            MaintenanceTask("first", task.name, 5000, null, 500),
+            MaintenanceTask("second", task.name, 15000, null, 500),
+        ))
+        var state by mutableStateOf(TransferUiState(
+            isLoading = false, step = TransferStep.IMPORT_SETUP, incoming = snapshot,
+            cars = listOf(localCar),
+            allCars = listOf(CarSummary(localCar.id, localCar.brand, localCar.mileageKm, false)),
+            targetDrafts = mapOf(car.id to ImportTargetDraft(existingId = localCar.id)),
+            decisions = ImportDecisions.initial(snapshot),
+        ))
+        var confirmedTarget: String? = null
+        show({ state }, TransferActions(
+            taskChoice = { key, choice -> state = state.copy(decisions = state.decisions.copy(taskChoices = mapOf(key to choice))) },
+            taskTarget = { key, id -> state = state.copy(decisions = state.decisions.copy(taskTargets = mapOf(key to id))) },
+            previewImport = { confirmedTarget = state.decisions.taskTargets[ref] },
+        ))
+
+        onNodeWithText(texts.getValue("update")).performScrollTo().performClick()
+        onNodeWithText(texts.getValue("taskTarget")).performScrollTo().assertIsDisplayed()
+        val candidates = onAllNodes(hasText(task.name) and isSelectable())
+        assertEquals(2, candidates.fetchSemanticsNodes().size)
+        candidates[1].performScrollTo().performClick()
+        onNodeWithText(texts.getValue("continue")).performClick()
+        assertEquals("second", confirmedTarget)
+    }
+
+    @Test fun finalBackupPreviewShowsCopyMetadataAndConcreteTaskMapping() = runComposeUiTest {
+        val snapshot = TransferFixtures.backup()
+        val active = snapshot.cars.single()
+        val incoming = active.tasks.single().copy(name = "Incoming oil")
+        val ref = EntityRef(active.id, incoming.id)
+        val target = incoming.copy(id = "local", name = "Local oil")
+        val sold = active.copy(id = "sold", brand = "Sold car", sold = Presence.Present(true), tasks = emptyList())
+        show({
+            TransferUiState(
+                isLoading = false, step = TransferStep.IMPORT_PREVIEW,
+                incoming = snapshot.copy(cars = listOf(active.copy(tasks = listOf(incoming)), sold)),
+                decisions = ImportDecisions(taskChoices = mapOf(ref to TaskChoice.UPDATE_PARAMETERS), selectedTasks = setOf(ref)),
+                importPreview = ImportPreview(listOf(active), emptyMap(), mapOf(ref to target),
+                    (snapshot.settings as Presence.Present).value),
+            )
+        })
+
+        onNodeWithText(texts.getValue("backupDate"), substring = true).performScrollTo().assertIsDisplayed()
+        onNodeWithText(texts.getValue("backupCounts")).performScrollTo().assertIsDisplayed()
+        onNodeWithText(texts.getValue("mapping")).performScrollTo().assertIsDisplayed()
     }
 
     @Test fun replacementNeedsFinalConfirmationAndCancelDoesNotApply() = runComposeUiTest {

@@ -68,8 +68,8 @@ const separate = { dataset: { transferRadio: 'decision:incoming1' }, value: 'sep
 context.wireTransfer({ querySelectorAll: selector => selector === '[data-transfer-radio]' ? [separate] : [] });
 separate.onchange();
 check(!('incoming1' in state.taskTargets), 'changing action clears update target');
-const target = { dataset: { transferRadio: 'target' }, value: 'new' };
-context.wireTransfer({ querySelectorAll: selector => selector === '[data-transfer-radio]' ? [target] : [] });
+const target = { value: 'new' };
+context.wireTransfer({ querySelectorAll: selector => selector === '[data-transfer-car-target]' ? [target] : [] });
 target.onchange();
 check(Object.keys(state.taskTargets).length === 0 && Object.keys(state.decisions).length === 0, 'target change clears all mappings');
 state.target = 'car1';

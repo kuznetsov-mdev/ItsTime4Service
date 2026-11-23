@@ -162,6 +162,31 @@ class TransferViewModelTest {
         assertEquals(TargetCar.Existing(second), preview.decisions.carTargets[source.id])
     }
 
+    @Test fun choosingAnAmbiguousWorkKeepsResolutionOnSetupAndPreviewsTheChosenTarget() = runTest {
+        val car = app.addCar("Synthetic car", tasks = listOf(
+            NewMaintenanceTask("Oil", 8000),
+            NewMaintenanceTask("Oil", 16000),
+        ))
+        val target = app.car(car)!!.tasks.single { it.intervalKm == 16000 }
+        val model = open()
+        model.onPickFile()
+        val source = model.at(TransferStep.IMPORT_SETUP).incoming!!.cars.single()
+        val ref = EntityRef(source.id, source.tasks.single().id)
+        model.onTargetDraft(source.id, ImportTargetDraft(existingId = car))
+        model.onTaskChoice(ref, TaskChoice.UPDATE_PARAMETERS)
+        model.onPrepareImport()
+        val unresolved = model.state.first { !it.isBusy }
+        assertEquals(TransferStep.IMPORT_SETUP, unresolved.step)
+        assertEquals(ImportDecisionReason.TASK_TARGET, unresolved.pending.single().reason)
+
+        model.onTaskTarget(ref, target.id)
+        model.onPrepareImport()
+        val preview = model.state.first { !it.isBusy }
+        assertEquals(TransferStep.IMPORT_PREVIEW, preview.step)
+        assertEquals(target.id, preview.importPreview!!.taskTargets.getValue(ref).id)
+        assertTrue(preview.pending.isEmpty())
+    }
+
     @Test fun skippingAllMatchesOnAnExistingCarAppliesWithoutChangingItsData() = runTest {
         val id = app.addCar("Synthetic car", tasks = listOf(NewMaintenanceTask("Oil", 8000, lastDoneKm = 30000)))
         val original = app.car(id)
@@ -338,6 +363,37 @@ class TransferViewModelTest {
         assertEquals(NotificationState.APPLIED, model.state.value.importResult!!.notifications)
         assertEquals(carId, app.summaries().single().id)
         assertEquals(2, schedules)
+    }
+
+    @Test fun backDuringPostCommitNotificationSyncPreservesImportResult() = runTest {
+        val scheduling = CompletableDeferred<Unit>()
+        val finishScheduling = CompletableDeferred<Unit>()
+        app.koin.declare<ru.kuznetsov.itstime4service.domain.repository.ReminderScheduler>(
+            object : ru.kuznetsov.itstime4service.domain.repository.ReminderScheduler {
+                override suspend fun schedule(reminders: List<ru.kuznetsov.itstime4service.domain.model.PlannedReminder>,
+                    distanceUnit: ru.kuznetsov.itstime4service.domain.model.DistanceUnit) {
+                    scheduling.complete(Unit)
+                    finishScheduling.await()
+                }
+            })
+        val model = open(TransferEntry.CarForm)
+        model.onPickFile(); model.at(TransferStep.IMPORT_SETUP)
+        val source = model.state.value.incoming!!.cars.single()
+        model.onTargetDraft(source.id, ImportTargetDraft(isNew = true, brand = "Imported", mileage = "12000"))
+        model.onPrepareImport(); model.at(TransferStep.IMPORT_PREVIEW)
+
+        model.onApplyImport()
+        scheduling.await()
+        assertEquals("Imported", app.summaries().single().brand)
+        model.onBack()
+        assertEquals(TransferStep.IMPORT_PREVIEW, model.state.value.step)
+        assertTrue(model.state.value.isBusy)
+
+        finishScheduling.complete(Unit)
+        assertEquals(NotificationState.APPLIED, model.at(TransferStep.RESULT).importResult?.notifications)
+        assertEquals(1, app.summaries().size)
+        model.onBack()
+        assertTrue(model.state.value.isClosed)
     }
 
     @Test fun cancellingReadReleasesTheHandleAndCannotPublishLateData() = runTest {

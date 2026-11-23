@@ -1,12 +1,21 @@
 package ru.kuznetsov.itstime4service.features.transfer
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import itstime4service.shared.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import ru.kuznetsov.itstime4service.domain.transfer.*
+import ru.kuznetsov.itstime4service.ui.components.buttons.OutlineButton
+import ru.kuznetsov.itstime4service.ui.components.dialogs.AppDialog
 import ru.kuznetsov.itstime4service.ui.components.dialogs.ConfirmDialog
+import ru.kuznetsov.itstime4service.ui.components.dialogs.DialogCard
+import ru.kuznetsov.itstime4service.ui.icons.ItsTime4ServiceIcons
 import ru.kuznetsov.itstime4service.ui.components.fields.AppNumberField
 import ru.kuznetsov.itstime4service.ui.components.fields.AppTextField
 import ru.kuznetsov.itstime4service.ui.format.DateInputFormat
@@ -24,7 +33,7 @@ internal fun TransferImportSetup(state: TransferUiState, actions: TransferAction
         else -> Res.string.transfer_car
     }
     TransferHeading(stringResource(title))
-    SnapshotDetails(snapshot)
+    SnapshotDetails(snapshot, showCars = state.importMode == ImportMode.REPLACE_BACKUP)
     if (snapshot.kind == TransferKind.BACKUP) {
         TransferChoice(stringResource(Res.string.transfer_merge), state.importMode == ImportMode.MERGE_BACKUP, state.isBusy) {
             actions.mode(ImportMode.MERGE_BACKUP)
@@ -34,19 +43,57 @@ internal fun TransferImportSetup(state: TransferUiState, actions: TransferAction
         }
         TransferCheck(stringResource(Res.string.transfer_restore_settings), state.decisions.restoreSettings, state.isBusy, actions.settings)
     }
-    if (state.importMode == ImportMode.REPLACE_BACKUP) TransferNote(stringResource(Res.string.transfer_replace_note))
-    else snapshot.cars.forEach { car ->
-        val draft = state.targetDrafts[car.id] ?: ImportTargetDraft()
-        TransferPanel(stringResource(Res.string.transfer_target, car.brand)) {
-            TransferChoice(stringResource(Res.string.transfer_new_car), draft.isNew, state.isBusy) {
-                actions.target(car.id, draft.copy(isNew = true, existingId = null))
-            }
-            state.allCars.forEach { target ->
-                TransferChoice(target.brand + if (target.isSold) " · " + stringResource(Res.string.car_sold) else "",
-                    !draft.isNew && draft.existingId == target.id, state.isBusy) {
-                    actions.target(car.id, draft.copy(isNew = false, existingId = target.id))
+    if (state.importMode == ImportMode.REPLACE_BACKUP) {
+        TransferNote(stringResource(Res.string.transfer_replace_note))
+        return
+    }
+
+    val carsById = remember(state.allCars) { state.allCars.associateBy { it.id } }
+    val activeById = remember(state.cars) { state.cars.associateBy { it.id } }
+    val issues = remember(state.pending) {
+        state.pending.filter { it.reason == ImportDecisionReason.TASK_TARGET || it.reason == ImportDecisionReason.DUPLICATE_TARGET }
+            .flatMap { decision -> decision.affected.map { it to decision } }.groupBy({ it.first }, { it.second })
+    }
+    var choosingCar by remember { mutableStateOf<String?>(null) }
+    choosingCar?.let { sourceId ->
+        val draft = state.targetDrafts[sourceId] ?: ImportTargetDraft()
+        AppDialog(onDismiss = { choosingCar = null }) {
+            DialogCard(ItsTime4ServiceIcons.Car, stringResource(Res.string.transfer_choose_car)) {
+                LazyColumn(Modifier.heightIn(max = 320.dp)) {
+                    item {
+                        TransferChoice(stringResource(Res.string.transfer_new_car), draft.isNew, state.isBusy) {
+                            actions.target(sourceId, draft.copy(isNew = true, existingId = null))
+                            choosingCar = null
+                        }
+                    }
+                    items(state.allCars, key = { it.id }) { target ->
+                        val status = if (target.isSold) " · " + stringResource(Res.string.car_sold) else ""
+                        val label = target.brand + " · " + distanceText(target.mileageKm, state.distanceUnit) + status
+                        TransferChoice(label, draft.existingId == target.id, state.isBusy) {
+                            actions.target(sourceId, draft.copy(isNew = false, existingId = target.id))
+                            choosingCar = null
+                        }
+                    }
+                }
+                TextButton(onClick = { choosingCar = null }) {
+                    TransferNote(stringResource(Res.string.action_cancel))
                 }
             }
+        }
+    }
+    snapshot.cars.forEach { car ->
+        val draft = state.targetDrafts[car.id] ?: ImportTargetDraft()
+        TransferPanel(stringResource(Res.string.transfer_target, car.brand)) {
+            car.maintenanceDescription?.let { TransferNote(it) }
+            val local = carsById[draft.existingId]
+            val destination = when {
+                draft.isNew -> stringResource(Res.string.transfer_new_car)
+                local != null -> local.brand + " · " + distanceText(local.mileageKm, state.distanceUnit) +
+                    if (local.isSold) " · " + stringResource(Res.string.car_sold) else ""
+                else -> stringResource(Res.string.transfer_choose_car)
+            }
+            if (state.allCars.isEmpty() && draft.isNew) TransferNote(destination)
+            else OutlineButton(destination, { choosingCar = car.id }, Modifier.fillMaxWidth(), enabled = !state.isBusy)
             if (draft.isNew) {
                 AppTextField(draft.brand, { actions.target(car.id, draft.copy(brand = it)) }, Modifier.fillMaxWidth(),
                     placeholder = stringResource(Res.string.transfer_new_brand), enabled = !state.isBusy)
@@ -54,17 +101,49 @@ internal fun TransferImportSetup(state: TransferUiState, actions: TransferAction
                 AppNumberField(draft.mileage, { actions.target(car.id, draft.copy(mileage = it)) }, Modifier.fillMaxWidth(),
                     placeholder = stringResource(Res.string.transfer_mileage), enabled = !state.isBusy)
             }
+            val localTasks = activeById[draft.existingId]?.tasks.orEmpty()
+            val tasksByName = remember(localTasks) { localTasks.groupBy { it.name } }
+            val tasksById = remember(localTasks) { localTasks.associateBy { it.id } }
             car.tasks.forEach { task ->
                 val ref = EntityRef(car.id, task.id)
-                TransferCheck(task.name, ref in state.decisions.selectedTasks, state.isBusy) { actions.importTask(ref, it) }
-                if (ref in state.decisions.selectedTasks && !draft.isNew) {
-                    val localTasks = state.cars.firstOrNull { it.id == draft.existingId }?.tasks.orEmpty()
-                    if (localTasks.any { it.id == task.id || it.name == task.name }) {
+                val selected = ref in state.decisions.selectedTasks
+                TransferCheck(task.name, selected, state.isBusy) { actions.importTask(ref, it) }
+                if (selected && !draft.isNew) {
+                    val taskIssues = issues[ref].orEmpty()
+                    val reported = taskIssues.firstOrNull { it.reason == ImportDecisionReason.TASK_TARGET }
+                    val matches = if (reported != null) reported.candidates else {
+                        val stable = if (snapshot.kind == TransferKind.BACKUP) tasksById[task.id] else null
+                        (listOfNotNull(stable) + tasksByName[task.name].orEmpty()).distinctBy { it.id }.map { candidate ->
+                            TransferTask(candidate.id, candidate.name, candidate.intervalKm, candidate.intervalMonths,
+                                candidate.icon, Presence.Present(LastService(candidate.lastDoneKm, candidate.lastDoneDate)),
+                                Presence.Present(candidate.reminderWindowKm))
+                        }
+                    }
+                    if (matches.isNotEmpty() || taskIssues.isNotEmpty()) {
                         TaskChoiceContent(state, actions, ref)
+                        if (state.decisions.taskChoices[ref] == TaskChoice.UPDATE_PARAMETERS) {
+                            if (taskIssues.any { it.reason == ImportDecisionReason.DUPLICATE_TARGET }) {
+                                TransferNote(stringResource(Res.string.transfer_duplicate_task_target), error = true)
+                            }
+                            if (matches.size == 1 && reported == null) TaskDetails(matches.single(), state)
+                            else if (matches.isNotEmpty()) TaskTargetChoices(state, actions, ref, matches)
+                            else TransferNote(stringResource(Res.string.transfer_missing_note), error = true)
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TaskTargetChoices(state: TransferUiState, actions: TransferActions, ref: EntityRef, candidates: List<TransferTask>) {
+    TransferNote(stringResource(Res.string.transfer_choose_task_target))
+    candidates.forEach { target ->
+        TransferChoice(target.name, state.decisions.taskTargets[ref] == target.id, state.isBusy) {
+            actions.taskTarget(ref, target.id)
+        }
+        TaskDetails(target, state)
     }
 }
 
@@ -114,13 +193,10 @@ internal fun TransferImportDecisions(state: TransferUiState, actions: TransferAc
                     TransferNote(stringResource(Res.string.transfer_missing_note))
                     pending.affected.forEach { ref ->
                         TaskChoiceContent(state, actions, ref)
-                        if (state.decisions.taskChoices[ref] == TaskChoice.UPDATE_PARAMETERS) {
-                            pending.candidates.forEach { target ->
-                                TransferChoice(target.name, state.decisions.taskTargets[ref] == target.id, state.isBusy) {
-                                    actions.taskTarget(ref, target.id)
-                                }
-                                TaskDetails(target, state)
-                            }
+                        if (pending.candidates.isNotEmpty() &&
+                            (pending.reason == ImportDecisionReason.TASK_TARGET ||
+                                state.decisions.taskChoices[ref] == TaskChoice.UPDATE_PARAMETERS)) {
+                            TaskTargetChoices(state, actions, ref, pending.candidates)
                         }
                     }
                 }
@@ -222,7 +298,22 @@ internal fun TransferImportPreview(state: TransferUiState, actions: TransferActi
         onConfirm = { replacing = false; actions.apply() }, onDismiss = { replacing = false })
     TransferHeading(stringResource(Res.string.transfer_preview))
     state.importSummary?.let { ImportSummaryContent(it) }
+    state.incoming?.takeIf { it.kind == TransferKind.BACKUP }?.let { SnapshotDetails(it, showCars = false) }
     state.importPreview?.let { preview ->
+        state.incoming?.cars?.forEach { incomingCar ->
+            incomingCar.tasks.forEach { incomingTask ->
+                val ref = EntityRef(incomingCar.id, incomingTask.id)
+                if (state.decisions.taskChoices[ref] == TaskChoice.UPDATE_PARAMETERS) {
+                    val target = preview.taskTargets[ref]
+                    if (target != null) {
+                        TransferPanel(incomingCar.brand) {
+                            TransferNote(stringResource(Res.string.transfer_task_mapping, incomingTask.name, target.name))
+                            TaskDetails(target, state)
+                        }
+                    }
+                }
+            }
+        }
         preview.cars.forEach { car ->
             TransferPanel(car.brand) {
                 (car.mileageKm as? Presence.Present)?.value?.let { TransferNote(distanceText(it, state.distanceUnit)) }
@@ -255,7 +346,7 @@ internal fun ImportSummaryContent(summary: ImportSummary) {
     if (summary.rollbackDisabled.isNotEmpty()) TransferNote(stringResource(Res.string.transfer_rollback_note))
 }
 
-private fun displayDate(date: LocalDate): String {
+internal fun displayDate(date: LocalDate): String {
     val format = DateInputFormat.current
     return format.visualTransformation.filter(AnnotatedString(format.digitsOf(date))).text.text
 }

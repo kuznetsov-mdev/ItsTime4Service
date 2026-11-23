@@ -273,6 +273,11 @@
     <string name="transfer_plain_confirm">Подтвердить</string>
     <string name="transfer_continue">Продолжить</string>
     <string name="transfer_preview">Проверьте перед переносом</string>
+    <string name="transfer_backup_date">Дата копии: %1$s</string>
+    <string name="transfer_backup_car_counts">Действующих авто: %1$d · проданных: %2$d</string>
+    <string name="transfer_choose_task_target">Выберите локальную работу для обновления.</string>
+    <string name="transfer_duplicate_task_target">Каждую локальную работу можно обновить только один раз за импорт.</string>
+    <string name="transfer_task_mapping">Обновление %1$s → %2$s</string>
     <string name="transfer_counts">Авто: %1$d · работы: %2$d · записи: %3$d</string>
     <string name="transfer_groups_none">Личные данные не включены</string>
     <string name="transfer_save">Сохранить файл</string>
