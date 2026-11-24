@@ -47,6 +47,7 @@ data class TransferUiState(
     val exportPreview: TransferSnapshot? = null,
     val incoming: TransferSnapshot? = null,
     val localDetails: List<TransferCar> = emptyList(),
+    val previousTaskMatches: Map<ImportTaskMatchKey, List<String>> = emptyMap(),
     val importMode: ImportMode = ImportMode.MERGE_BACKUP,
     val decisions: ImportDecisions = ImportDecisions(selectedTasks = emptySet()),
     val targetDrafts: Map<String, ImportTargetDraft> = emptyMap(),

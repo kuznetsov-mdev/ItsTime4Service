@@ -318,7 +318,7 @@ class TransferViewModelTest {
         model.onPrepareImport()
         val pending = model.at(TransferStep.IMPORT_DECISIONS)
         assertEquals(ImportDecisionReason.IDENTITY_COLLISION, pending.pending.single().reason)
-        assertEquals(TaskChoice.SKIP, pending.decisions.taskChoices[EntityRef(source.id, source.tasks.single().id)])
+        assertNull(pending.decisions.taskChoices[EntityRef(source.id, source.tasks.single().id)])
         model.onPrepareImport(); model.at(TransferStep.IMPORT_PREVIEW)
         assertEquals(0, model.state.value.importSummary!!.tasksAdded)
     }

@@ -32,6 +32,11 @@ SELECT * FROM transfer_sources ORDER BY snapshot_id;
 selectProvenance:
 SELECT * FROM transfer_provenance ORDER BY snapshot_id, entity_kind, incoming_id, target_car_id, local_id;
 
+selectPreviousTaskMatches:
+SELECT incoming_id, target_car_id, local_id FROM transfer_provenance
+WHERE snapshot_id = ? AND entity_kind = 'task' AND source_digest = ?
+ORDER BY incoming_id, target_car_id, local_id;
+
 insertSource:
 INSERT OR IGNORE INTO transfer_sources VALUES (?, ?);
 

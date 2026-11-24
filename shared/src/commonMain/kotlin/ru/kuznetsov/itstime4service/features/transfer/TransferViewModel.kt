@@ -180,7 +180,7 @@ class TransferViewModel(
         clearSession()
         mutableState.update { it.copy(step = TransferStep.IMPORT_FILE, incoming = null, localDetails = emptyList(), importResult = null,
             importSummary = null, importPreview = null, pending = emptyList(), targetDrafts = emptyMap(),
-            decisions = ImportDecisions(selectedTasks = emptySet()), failure = null, problem = null, exportSucceeded = false) }
+            previousTaskMatches = emptyMap(), decisions = ImportDecisions(selectedTasks = emptySet()), failure = null, problem = null, exportSucceeded = false) }
     }
 
     fun onPickFile() {
@@ -224,10 +224,11 @@ class TransferViewModel(
             is TransferOutcome.Success -> when (val fingerprint = repository.fingerprint(result.value)) {
                 is TransferOutcome.Failure -> fail(fingerprint.reason)
                 is TransferOutcome.Success -> {
+                    val snapshot = result.value
+                    val previousMatches = loadPreviousTaskMatches(snapshot.snapshotId, fingerprint.value) ?: return
                     loadCars()
                     sourceDigest = fingerprint.value
                     clearFile()
-                    val snapshot = result.value
                     val decisions = ImportDecisions.initial(snapshot).copy(restoreSettings = snapshot.kind == TransferKind.BACKUP)
                     val current = state.value
                     val drafts = snapshot.cars.associate { car ->
@@ -239,7 +240,8 @@ class TransferViewModel(
                     }
                     mutableState.update { it.copy(step = TransferStep.IMPORT_SETUP, incoming = snapshot,
                         importMode = if (snapshot.kind == TransferKind.BACKUP) ImportMode.MERGE_BACKUP else ImportMode.INTO_CAR,
-                        decisions = decisions, targetDrafts = drafts, pending = emptyList(), importSummary = null, importPreview = null) }
+                        decisions = decisions, targetDrafts = drafts, previousTaskMatches = previousMatches,
+                        pending = emptyList(), importSummary = null, importPreview = null) }
                 }
             }
         }
@@ -368,9 +370,31 @@ class TransferViewModel(
                 targets[car.id] = target
             }
             mutableState.update { it.copy(decisions = it.decisions.copy(carTargets = targets.toMap())) }
+        } else if (current.step == TransferStep.IMPORT_DECISIONS) {
+            mutableState.update { it.copy(decisions = it.decisions.withDisplayedDefaults(it.pending)) }
         }
         execute { prepare() }
     }
+
+    private fun ImportDecisions.withDisplayedDefaults(pending: List<PendingDecision>): ImportDecisions =
+        pending.fold(this) { choices, decision ->
+            when (decision.reason) {
+                ImportDecisionReason.PERSONAL_FIELD -> choices.copy(personalChoices = choices.personalChoices +
+                    (decision.id to (choices.personalChoices[decision.id] ?: PersonalChoice.KEEP_LOCAL)))
+                ImportDecisionReason.RELATED_SERVICE_HISTORY -> choices.copy(relatedChoices = choices.relatedChoices +
+                    (decision.id to (choices.relatedChoices[decision.id] ?: PersonalChoice.KEEP_LOCAL)))
+                ImportDecisionReason.SOLD_STATE -> choices.copy(soldChoices = choices.soldChoices +
+                    (decision.id to (choices.soldChoices[decision.id] ?: PersonalChoice.KEEP_LOCAL)))
+                ImportDecisionReason.MISSING_ENTITY, ImportDecisionReason.IDENTITY_COLLISION -> {
+                    if (decision.field == "history") choices.copy(personalChoices = choices.personalChoices +
+                        (decision.id to (choices.personalChoices[decision.id] ?: PersonalChoice.KEEP_LOCAL)))
+                    else choices.copy(taskChoices = choices.taskChoices + decision.affected.associateWith {
+                        choices.taskChoices[it] ?: TaskChoice.SKIP
+                    })
+                }
+                else -> choices
+            }
+        }
 
     private suspend fun prepare() {
         val current = state.value
@@ -385,34 +409,14 @@ class TransferViewModel(
             is TransferOutcome.Success -> when (val prepared = result.value) {
                 is PreparedImport.NeedsDecisions -> {
                     plan = null
-                    var choices = current.decisions
-                    for (decision in prepared.decisions) {
-                        choices = when (decision.reason) {
-                            ImportDecisionReason.PERSONAL_FIELD -> choices.copy(personalChoices = choices.personalChoices +
-                                (decision.id to (choices.personalChoices[decision.id] ?: PersonalChoice.KEEP_LOCAL)))
-                            ImportDecisionReason.RELATED_SERVICE_HISTORY -> choices.copy(relatedChoices = choices.relatedChoices +
-                                (decision.id to (choices.relatedChoices[decision.id] ?: PersonalChoice.KEEP_LOCAL)))
-                            ImportDecisionReason.SOLD_STATE -> choices.copy(soldChoices = choices.soldChoices +
-                                (decision.id to (choices.soldChoices[decision.id] ?: PersonalChoice.KEEP_LOCAL)))
-                            ImportDecisionReason.MISSING_ENTITY, ImportDecisionReason.IDENTITY_COLLISION -> {
-                                if (decision.field == "history") choices.copy(personalChoices = choices.personalChoices +
-                                    (decision.id to (choices.personalChoices[decision.id] ?: PersonalChoice.KEEP_LOCAL)))
-                                else choices.copy(taskChoices = choices.taskChoices + decision.affected.associateWith {
-                                    choices.taskChoices[it] ?: TaskChoice.SKIP
-                                })
-                            }
-                            else -> choices
-                        }
-                    }
                     val hasTaskTargetsToResolve = prepared.decisions.any { decision ->
                         decision.reason in setOf(ImportDecisionReason.TASK_TARGET, ImportDecisionReason.DUPLICATE_TARGET) &&
-                            decision.affected.any { choices.taskChoices[it] == TaskChoice.UPDATE_PARAMETERS }
+                            decision.affected.any { current.decisions.taskChoices[it] == TaskChoice.UPDATE_PARAMETERS }
                     }
                     mutableState.update {
                         it.copy(
                             step = if (hasTaskTargetsToResolve) TransferStep.IMPORT_SETUP else TransferStep.IMPORT_DECISIONS,
                             pending = prepared.decisions,
-                            decisions = choices,
                             importSummary = null,
                             importPreview = null,
                         )
@@ -446,10 +450,11 @@ class TransferViewModel(
                     if (result.reason == TransferFailure.StalePlan) {
                         loadCars()
                         val source = state.value.incoming!!
+                        val previousMatches = loadPreviousTaskMatches(source.snapshotId, captured.snapshotDigest)
                         plan = null
                         mutableState.update { it.copy(step = TransferStep.IMPORT_SETUP,
                             decisions = ImportDecisions.initial(source).copy(restoreSettings = it.decisions.restoreSettings),
-                            pending = emptyList(), importSummary = null, importPreview = null) }
+                            previousTaskMatches = previousMatches.orEmpty(), pending = emptyList(), importSummary = null, importPreview = null) }
                     }
                     fail(result.reason)
                 }
@@ -457,7 +462,7 @@ class TransferViewModel(
                     clearSession()
                     mutableState.update { it.copy(step = TransferStep.RESULT, importResult = result.value,
                         incoming = null, localDetails = emptyList(), pending = emptyList(), importPreview = null, targetDrafts = emptyMap(),
-                        decisions = ImportDecisions(selectedTasks = emptySet())) }
+                        previousTaskMatches = emptyMap(), decisions = ImportDecisions(selectedTasks = emptySet())) }
                 }
             }
         }
@@ -498,10 +503,12 @@ class TransferViewModel(
             TransferStep.IMPORT_DECISIONS -> TransferStep.IMPORT_SETUP
             TransferStep.IMPORT_PREVIEW -> if (current.pending.isEmpty()) TransferStep.IMPORT_SETUP else TransferStep.IMPORT_DECISIONS
         }
+        val leavesImport = target == TransferStep.IMPORT_FILE || target == TransferStep.HUB
         mutableState.update { it.copy(step = target, isBusy = false, failure = null, problem = null,
             exportPreview = null, importPreview = null, importSummary = null,
-            localDetails = if (target == TransferStep.IMPORT_FILE || target == TransferStep.HUB) emptyList() else it.localDetails,
-            incoming = if (target == TransferStep.IMPORT_FILE || target == TransferStep.HUB) null else it.incoming) }
+            localDetails = if (leavesImport) emptyList() else it.localDetails,
+            previousTaskMatches = if (leavesImport) emptyMap() else it.previousTaskMatches,
+            incoming = if (leavesImport) null else it.incoming) }
     }
 
     private fun finish() {
@@ -510,6 +517,12 @@ class TransferViewModel(
         clearSession()
         mutableState.update { it.copy(isClosed = true, isBusy = false) }
     }
+
+    private suspend fun loadPreviousTaskMatches(snapshotId: String, digest: String): Map<ImportTaskMatchKey, List<String>>? =
+        when (val matches = repository.readPreviousTaskMatches(snapshotId, digest)) {
+            is TransferOutcome.Failure -> { fail(matches.reason); null }
+            is TransferOutcome.Success -> matches.value
+        }
 
     private suspend fun loadCars() {
         val active = cars.observeCars().first()

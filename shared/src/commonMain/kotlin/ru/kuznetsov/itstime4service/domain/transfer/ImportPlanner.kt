@@ -61,7 +61,7 @@ internal class ImportPlanner(
             (car.tasks.map { it.id } + car.history.required().mapNotNull { it.taskId }).map { it to car.id }
         }.groupBy({ it.first }, { it.second }).mapValues { it.value.toSet() }
         historyOwners = current.cars.flatMap { car -> car.history.required().map { it.id to car.id } }.toMap()
-        priorMappings = current.provenance.filter { it.snapshotId == snapshot.snapshotId }
+        priorMappings = current.provenance.filter { it.snapshotId == snapshot.snapshotId && it.sourceDigest == sourceDigest }
             .groupBy { Triple(it.kind, it.incomingId, it.targetCarId) }
         instance = newId("instance")
         val cars = when (mode) {
@@ -163,16 +163,15 @@ internal class ImportPlanner(
 
     private fun mergeTasks(incoming: TransferCar, local: TransferCar, sold: Boolean): List<TransferTask> {
         val tasks = local.tasks.toMutableList()
-        val localById = local.tasks.associateBy { it.id }
-        val byName = local.tasks.groupBy { it.name }
+        val matcher = ImportTaskMatcher(local.tasks, source.kind)
         val positions = local.tasks.withIndex().associate { it.value.id to it.index }
         val used = mutableMapOf<String, EntityRef>()
         incoming.tasks.forEach { task ->
             val ref = EntityRef(incoming.id, task.id)
             if (ref !in decisions.selectedTasks) { skipped++; return@forEach }
             val provenance = previous("task", task.id, local.id)
-            val stable = if (source.kind == TransferKind.BACKUP) localById[task.id] else null
-            val candidates = (provenance.mapNotNull { localById[it.localId] } + listOfNotNull(stable) + byName[task.name].orEmpty()).distinctBy { it.id }
+            val previousTargets = matcher.previousTargets(provenance.map { it.localId })
+            val candidates = matcher.candidates(task, previousTargets)
             val choice = decisions.taskChoices[ref] ?: TaskChoice.SKIP
             if (sold) { skipped++; return@forEach }
             val explicit = decisions.taskTargets[ref]
@@ -180,7 +179,7 @@ internal class ImportPlanner(
                 need("task:${incoming.id}:${task.id}:${local.id}", setOf(ref), ImportDecisionReason.TASK_TARGET, candidates = candidates)
                 return@forEach
             }
-            if (provenance.isNotEmpty() && provenance.none { it.localId in localById } &&
+            if (provenance.isNotEmpty() && previousTargets.isEmpty() &&
                 ref !in decisions.taskChoices) {
                 need("missing:${incoming.id}:${task.id}:${local.id}", setOf(ref), ImportDecisionReason.MISSING_ENTITY)
                 return@forEach
@@ -230,7 +229,8 @@ internal class ImportPlanner(
             val service = taskService(incoming, local, task, target, true)
             val factsAccepted = decisions.personalChoices[key("service:${incoming.id}:${task.id}:${local.id}:${target.id}")] == PersonalChoice.TAKE_INCOMING ||
                 decisions.relatedChoices[key("related:${incoming.id}:${task.id}:${local.id}:${target.id}")] == PersonalChoice.TAKE_INCOMING
-            if (explicit != null || choice == TaskChoice.UPDATE_PARAMETERS || stable?.id == target.id || provenance.any { it.localId == target.id } || factsAccepted) {
+            if (explicit != null || choice == TaskChoice.UPDATE_PARAMETERS ||
+                (source.kind == TransferKind.BACKUP && task.id == target.id) || previousTargets.any { it.id == target.id } || factsAccepted) {
                 taskMap[ref] = target.id
                 targetDetails[ref] = target
                 remember("task", task.id, local.id, target.id)

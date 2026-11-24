@@ -102,8 +102,13 @@ internal fun TransferImportSetup(state: TransferUiState, actions: TransferAction
                     placeholder = stringResource(Res.string.transfer_mileage), enabled = !state.isBusy)
             }
             val localTasks = activeById[draft.existingId]?.tasks.orEmpty()
-            val tasksByName = remember(localTasks) { localTasks.groupBy { it.name } }
-            val tasksById = remember(localTasks) { localTasks.associateBy { it.id } }
+            val matcher = remember(localTasks, snapshot.kind) {
+                ImportTaskMatcher(localTasks.map { candidate ->
+                    TransferTask(candidate.id, candidate.name, candidate.intervalKm, candidate.intervalMonths, candidate.icon,
+                        Presence.Present(LastService(candidate.lastDoneKm, candidate.lastDoneDate)),
+                        Presence.Present(candidate.reminderWindowKm))
+                }, snapshot.kind)
+            }
             car.tasks.forEach { task ->
                 val ref = EntityRef(car.id, task.id)
                 val selected = ref in state.decisions.selectedTasks
@@ -111,14 +116,8 @@ internal fun TransferImportSetup(state: TransferUiState, actions: TransferAction
                 if (selected && !draft.isNew) {
                     val taskIssues = issues[ref].orEmpty()
                     val reported = taskIssues.firstOrNull { it.reason == ImportDecisionReason.TASK_TARGET }
-                    val matches = if (reported != null) reported.candidates else {
-                        val stable = if (snapshot.kind == TransferKind.BACKUP) tasksById[task.id] else null
-                        (listOfNotNull(stable) + tasksByName[task.name].orEmpty()).distinctBy { it.id }.map { candidate ->
-                            TransferTask(candidate.id, candidate.name, candidate.intervalKm, candidate.intervalMonths,
-                                candidate.icon, Presence.Present(LastService(candidate.lastDoneKm, candidate.lastDoneDate)),
-                                Presence.Present(candidate.reminderWindowKm))
-                        }
-                    }
+                    val previousIds = local?.id?.let { state.previousTaskMatches[ImportTaskMatchKey(it, task.id)] }.orEmpty()
+                    val matches = reported?.candidates ?: matcher.candidates(task, matcher.previousTargets(previousIds))
                     if (matches.isNotEmpty() || taskIssues.isNotEmpty()) {
                         TaskChoiceContent(state, actions, ref)
                         if (state.decisions.taskChoices[ref] == TaskChoice.UPDATE_PARAMETERS) {

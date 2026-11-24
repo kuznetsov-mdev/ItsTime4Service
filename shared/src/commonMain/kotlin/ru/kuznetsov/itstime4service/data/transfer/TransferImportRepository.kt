@@ -26,6 +26,12 @@ internal class TransferImportRepository(
         ImportFingerprint.snapshot(snapshot)
     }
 
+    override suspend fun readPreviousTaskMatches(snapshotId: String, snapshotDigest: String): TransferOutcome<Map<ImportTaskMatchKey, List<String>>> =
+        guarded(TransferFailure.DatabaseReadFailed) {
+            db.transferQueries.selectPreviousTaskMatches(snapshotId, snapshotDigest).executeAsList()
+                .groupBy({ ImportTaskMatchKey(it.target_car_id, it.incoming_id) }, { it.local_id })
+        }
+
     override suspend fun prepareImport(request: ImportRequest): TransferOutcome<PreparedImport> = guarded(TransferFailure.DatabaseReadFailed) {
         TransferValidator.validate(request.snapshot)
         val snapshot = TransferDocument.decode(TransferDocument.encode(request.snapshot))

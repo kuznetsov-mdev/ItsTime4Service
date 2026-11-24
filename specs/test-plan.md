@@ -409,6 +409,8 @@
 | 8 | `PrepareImportTest.skippingOneMatchDoesNotUndoAnotherMatchUpdate` проверяет сохранение новых параметров целевой работы и счётчика пропуска в обоих порядках UPDATE + SKIP. |
 | U4 | `TransferViewModelTest.backDuringPostCommitNotificationSyncPreservesImportResult` проверяет «Назад» во время синхронизации после commit. После её завершения доступен результат импорта. |
 | 8 | `TransferViewModelTest.choosingAnAmbiguousWorkKeepsResolutionOnSetupAndPreviewsTheChosenTarget` и `TransferContentTest.concreteTaskIsChosenOnSetupBeforeContinuing` покрывают выбор цели на шаге настройки и её передачу в предпросмотр. |
+| 8, § 12 | `TransferImportRegressionTest.personalDecisionsSurviveResolvingAnAmbiguousTask` проверяет показ конфликтов VIN и пробега после выбора работы, сохранение явного выбора и применение значения по умолчанию после подтверждения. |
+| 8, § 6 | `TransferImportRegressionTest.aPreviouslyImportedRenamedTaskOffersAllMatchingActions` проверяет действия на экране при повторном импорте переименованной работы и результаты пропуска, обновления и добавления отдельно. |
 | Сценарий полной копии (§ 4) | `TransferContentTest.finalBackupPreviewShowsCopyMetadataAndConcreteTaskMapping` проверяет дату копии, разбивку машин и подпись выбранного сопоставления в предпросмотре. |
 | 10 | `TransferContentTest.protectedFileShowsNoContentsAndClearsPasswordOnSubmit` и `leavingExportForPreviewDisposesPasswords` проверяют поля разблокировки и экспорта. |
 | 6, U2 | `TransferContentTest.carPickerComposesOnlyVisibleDestinationsAndCanReachTheLastOne` проверяет ленивый список с 1000 назначений и доступность последнего варианта. `TransferViewModelTest.changingDestinationResetsWorkChoicesAndContinueUsesTheNewDestination` проверяет смену назначения и сброс сопоставлений. |
