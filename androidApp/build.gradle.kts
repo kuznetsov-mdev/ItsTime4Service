@@ -19,6 +19,7 @@ kotlin {
     }
 }
 dependencies {
+    coreLibraryDesugaring(libs.android.desugarJdkLibs)
     implementation(project(":shared"))
 
     implementation(libs.androidx.activity.compose)
@@ -90,6 +91,7 @@ android {
         manifest.srcFile("src/transferCheck/AndroidManifest.xml")
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }

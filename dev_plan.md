@@ -371,6 +371,7 @@ ViewModel-ы — `StateFlow<UiState>`, экран подписывается ч�
 | 10 | `app.cash.sqldelight:sqlite-driver:2.4.0` | `androidHostTest` |
 | 10 | `org.jetbrains.compose.ui:ui-test:1.12.1` (Compose UI-тесты) | `commonTest` |
 | 10 | `org.robolectric:robolectric:4.17`, `androidx.compose.ui:ui-test-manifest:1.12.1` (UI-тесты на JVM без эмулятора) | `androidHostTest` |
+| 1.1.0 | `com.android.tools:desugar_jdk_libs:2.1.5` для Java API, используемых `kotlinx-datetime` на Android 24–25 | `androidApp`, `coreLibraryDesugaring` |
 | Export/import Task 1B / 4 | `dev.whyoleg.cryptography:cryptography-core:0.6.0`, JDK + JDK-BC + `org.bouncycastle:bcprov-jdk18on:1.83`, OpenSSL3 API + prebuilt-nativebuilds `0.6.0`, `com.ensody.nativebuilds:openssl-libcrypto` строго `3.6.5` | Этап 1B: test-only proof; этап 4: core в commonMain, явный JDK/BC в androidMain, API/nativebuilds/строгая libcrypto в iosMain. [История проверки](docs/research/transfer-format-compatibility.md) |
 | Export/import Task 4 | `org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0` | commonMain; JSON строки/вывод и ограниченный структурный reader, без нового Gradle plugin и аннотаций domain; [ADR](docs/adr/0001-transfer-json-codec.md) |
 

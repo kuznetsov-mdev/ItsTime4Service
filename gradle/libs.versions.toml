@@ -3,6 +3,7 @@ agp = "9.1.1"
 android-compileSdk = "37"
 android-minSdk = "24"
 android-targetSdk = "37"
+android-desugarJdkLibs = "2.1.5"
 androidx-activity = "1.13.0"
 androidx-appcompat = "1.8.0"
 androidx-core = "1.19.1"
@@ -27,6 +28,7 @@ bouncycastle = "1.83"
 kotlinx-serialization = "1.12.0"
 
 [libraries]
+android-desugarJdkLibs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "android-desugarJdkLibs" }
 cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptography" }
 cryptography-jdk = { module = "dev.whyoleg.cryptography:cryptography-provider-jdk", version.ref = "cryptography" }
 cryptography-jdk-bc = { module = "dev.whyoleg.cryptography:cryptography-provider-jdk-bc", version.ref = "cryptography" }
