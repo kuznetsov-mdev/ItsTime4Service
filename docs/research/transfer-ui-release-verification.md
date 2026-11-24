@@ -1,21 +1,48 @@
 # Transfer UI and release verification
 
-Date: 2026-11-19. Current implementation completes the approved 1.1.0 import/export flow and includes the four RuStore feedback fixes. Work is performed by the main session; these are self-checks, not independent review or QA. No publication or new commits are implied.
+Updated 2026-11-23 for product revision `db1567d91c5d8a3701057817fc2607cf6fd04c21`. It includes the transfer flow and four RuStore feedback fixes. Independent QA is **BLOCKED** on the iOS 27 confirmed Share to Files scenario. Repeat independent review, minimum-OS checks and user acceptance are open.
 
 ## Implemented flow
 
-- Settings and preselected-car entry, full backup and selective export; all tasks selected initially, personal groups off, explicit plaintext warning and password confirmation.
-- Header/size/version checks, password authentication before decrypted metadata, file release/cancellation, explicit destinations for every source car and confirmed new-car mileage.
-- Independent task/personal/related-history/sold decisions, safe defaults, one-to-one concrete candidates and preview of final contents, counters, settings and rollback restrictions.
+- Settings and preselected-car entry, full backup, car backup and maintenance schedule export. Selective export starts with all tasks selected. Car backup starts with personal groups and password protection enabled. Schedule export excludes personal groups and starts unprotected. Disabling protection for a personal file requires confirmation.
+- Header, size and version checks, password authentication before decrypted metadata, file release and cancellation. Each source car has its own lazy destination list, and a new car's mileage is confirmed before proceeding.
+- Separate task, personal-data, related-history and sold-state decisions. The setup step shows concrete task candidates with current intervals and last service. The final preview repeats the chosen target and shows the copy date, active/sold counts, final contents, settings and rollback restrictions.
 - Encrypted safety copy or explicit confirmed refusal before replacement, fresh database binding across the native save dialog, final replacement confirmation and atomic application.
-- Stale-plan handling, repeat protection, separate notification retry, session termination on success/Back. No password/file/snapshot/decision in routes or saved state; byte and SecretBytes cleanup.
+- Stale-plan handling, repeat protection and separate notification retry. Back is blocked while applying, including notification synchronization after commit. Back or Done from the result closes the session. Password inputs are scoped to the current step. Unlock clears the field on submit and export preview drops the input fields. File bytes and `SecretBytes` have separate operation cleanup.
 - English/Russian/Spanish resources, local units and dates, explicit reveal for hidden VIN/plate.
 
-## Evidence
+## Evidence 2026-11-23
+
+| Main-session check on `db1567d` | Recorded result |
+|---|---|
+| Full Android host suite | 727 tests, 0 failures/errors/skips |
+| Full iOS Simulator suite | 709 tests, 0 failures/errors/skips |
+| Android APKs | Debug APK and `upgradeCheck` APK built |
+| Fresh Android emulator package, 1.0.0 → 1.1.0 | The 1.0.0 app was launched before the first database read and seeded through its UI. A same-package update migrated schema 5 → 7. All legacy columns in cars, tasks, history and settings were preserved, the import entry was reachable and `integrity_check=ok`. |
+
+The source of these recorded results is the [test plan](../../specs/test-plan.md#регрессии-по-ревью-импорта-110). The isolated upgrade runner is in [run_upgrade.py](../../tools/transfer-files-check/run_upgrade.py).
+
+### Independent QA 2026-11-23
+
+| Independent check on `db1567d` | Result |
+|---|---|
+| Android host suite | Fresh XML results show 727 tests, 0 failures, errors or skips. |
+| iOS 18.3.1 Simulator native suite (22D8075) | Fresh XML results show 709 tests, 0 failures, errors or skips. The exact minimum iOS 18.2 was unavailable. |
+| iOS 27 system-file XCTest, first matrix | 6/7 passed in `result-20261123-115924-aee43e.xcresult`. `testShareToFilesHasConfirmedCompletion` stopped at `Own run directory is not exposed` before checking confirmation. |
+| iOS 27 system-file XCTest, targeted retry | `result-20261123-121910-817cf5.xcresult`, exit 65, zero screen attachments. The system share menu and Files picker opened. The test folder was unavailable, so confirmation and SHA-256 remained unverified. Product failure is unproven. |
+| Android API 35 minified system-file harness | Encrypted codec and 6/6 system cases passed, runner exit 0. Coverage includes cancelling pick, save and share, saving and opening plaintext and protected files with SHA-256 checks, and handing off a protected file to the test recipient Transfer Sink with matching SHA-256. |
+| Android product UI in the isolated `upgradeCheck` package | Both export purposes were reachable from car details. The car-copy form showed password fields, the selected task and personal groups. The Continue action remained fixed. |
+| `TransferExchangeTest` | 3/3 on each platform. Both platforms generated new local payloads and imported retained peer fixtures through SQLite. A fresh manual exchange between installed apps remains outside this run. |
+
+Independent QA verdict for `db1567d` is **BLOCKED**. Both iOS 27 attempts stopped at the test folder before reaching the system Share to Files confirmation. Physical API 24, exact minimum iOS 18.2 and fresh manual end-to-end exchange between installed apps remain open.
+
+## Historical evidence — 2026-11-19 to 2026-11-20
+
+The signed AAB, R8 runtime, system-file matrices and provider exchange below belong to earlier snapshots. The signed AAB details are recorded in the [release note](../releases/1.1.0.md#подписанный-aab-от-19112026). After the export-purpose and add-car entry changes, the preceding run covered 719 Android host tests and 27 iOS wizard tests. After unified destination confirmation, the 20 November run covered 720 Android host and 702 iOS Simulator tests. Those two runs and their build results are detailed in the [test plan](../../specs/test-plan.md#выбор-цели-экспорта-и-импорт-из-формы-авто).
 
 | Check | Result |
 |---|---|
-| Full Android host suite, final product source | 715 tests, 0 failures/errors/skips; workflow d03d426690b465c939b1849acbac5192 sequence35 |
+| Full Android host suite, 19 November snapshot | 715 tests, 0 failures/errors/skips; workflow d03d426690b465c939b1849acbac5192 sequence35 |
 | iOS18.3 native session/document/IO/UI suite | 56 tests, 0 failures/errors/skips; same sequence35 |
 | Production iOS simulator/device compilation, test compilation, debug framework | PASS, final sequence35 |
 | Native iOS UI/navigation | 9/9 PASS, included in final sequence35; also separately verified in sequence32 |
@@ -29,15 +56,15 @@ Date: 2026-11-19. Current implementation completes the approved 1.1.0 import/exp
 
 ## Bidirectional files
 
-`TransferExchangeTest`, `TransferPeerFiles` and platform artifact writers retain actual randomly encrypted Android JDK/BC and iOS OpenSSL outputs. Fixtures are synthetic and use the explicitly test-only Unicode password `Synthetic exchange ñ Тест`. Each peer provider authenticates/decodes the other platform's files. Full restoration compares cars, meaningful order, sold state, deleted-work history, settings, reminder state and valid rollback. Clean-template import requires explicit new-car mileage and keeps unknown last service. Native-dialog save/open/share additionally checks exact SHA-256 against an independently generated CommonCrypto/CryptoKit fixture; these are complementary checks.
+`TransferExchangeTest`, `TransferPeerFiles` and platform artifact writers retain actual randomly encrypted Android JDK/BC and iOS OpenSSL outputs. The synthetic fixtures exercise a Unicode password. Each peer provider authenticates and decodes the other platform's files. Full restoration compares cars, meaningful order, sold state, deleted-work history, settings, reminder state and valid rollback. Clean-template import requires explicit new-car mileage and keeps unknown last service. Native-dialog save/open/share additionally checks exact SHA-256 against an independently generated CommonCrypto/CryptoKit fixture.
 
 ## Test tools and limitations
 
-The upgrade runner never targets the normal application: it validates a generated upgradeCheck package, creates synthetic data with the real 1.0.0 UI, installs 1.1.0 with -r, and compares all legacy SQLite columns. No app data is cleared. Android R8 uses a separate non-debuggable transferReleaseCheck APK signed by the debug certificate; the recipient receipt is reset by writing an empty value before each share, then checked via its own UI rather than run-as. Test-host Kotlin sources must be registered as Kotlin sources, not Java sources.
+The upgrade runner validates a unique `upgradeCheck` package. On a fresh install it launches 1.0.0 and waits for the start screen before reading the database. It creates synthetic rows with the real 1.0.0 UI, installs 1.1.0 with `-r` and compares the legacy SQLite columns. Android R8 uses a separate non-debuggable transferReleaseCheck APK signed by the debug certificate. The recipient receipt is reset before each share and checked in the recipient UI.
 
 iOS runs are serialized by a nonblocking runner lock, use explicit boot/DeviceHub setup, per-run folders and bounded watchdogs, and retain their logs/results. The harness opens the native dialogs directly; a separate DocumentsApp launch was removed because it introduced bootstrap failures. Short own-folder names sort first; exact Back labels are distinguished from Actions Menu titles, including iOS18 without a BackButton identifier. Popover cancellation taps outside the popover. All final cited native results must report zero retained screen attachments. No screenshots are opened, exported or published.
 
-Physical API24 performance/memory/cancellation and exact minimum iOS18.2 are not verified. These remain explicit pre-release gates. No minimum-OS success or completed publication is claimed. The existing format v1, migration lineage, offline policy and dependency pins remain unchanged.
+Physical API24 performance, memory and cancellation, and the exact minimum iOS18.2 remain pre-release gates. Physical iOS device coverage is still open. See the [release checklist](../releases/1.1.0.md#перед-публикацией).
 
 The R8 runtime check exposed stripped BC reflective registrations: SHA256/AES/PBEPBKDF2 families were listed in usage.txt and absent from mapping.txt. Narrow keep rules for those three families were added to the production release rules; the minified host passed the real encrypted roundtrip and all six file cases; the rebuilt signed AAB passed signature verification. The check host also explicitly registers Kotlin sources and avoids the status-bar overlap of its first button. These host fixes are separate from product UI behavior.
 
@@ -50,25 +77,27 @@ The R8 runtime check exposed stripped BC reflective registrations: SHA256/AES/PB
 | 3 | PrepareImportTest and ApplyImportTest missingGroupDoesNotClear/provenance/explicit targets |
 | 4 | ApplyImportTest settingsAreRestoredOnMergeAndKeptOnReplacementWhenDisabled; exchange backup settings |
 | 5 | TransferSnapshotTest group/privacy cases, TransferCodecTest; ViewModel group defaults/dependencies |
-| 6 | Snapshot/import selection tests, newHistoryDoesNotInferLastServiceOrCreateUnselectedTasks, explicit target UI |
+| 6 | Snapshot/import selection tests, `newHistoryDoesNotInferLastServiceOrCreateUnselectedTasks`; `TransferContentTest.carPickerComposesOnlyVisibleDestinationsAndCanReachTheLastOne` (1,000 destinations) |
 | 7 | Destination/mileage validation, missing-group preservation, peer clean-template unknown-service import |
-| 8 | PrepareImportTest matching/update/separate/duplicate-target cases; candidate intervals and last service in UI |
+| 8 | `PrepareImportTest.skippingOneMatchDoesNotUndoAnotherMatchUpdate` checks both input orders. `TransferViewModelTest.choosingAnAmbiguousWorkKeepsResolutionOnSetupAndPreviewsTheChosenTarget` and Compose UI tests cover concrete target selection and its final preview. |
 | 9 | Related-service/history decision tests; history details absent preserves existing details on update |
-| 10 | Missing/identity/provenance conflict tests; ViewModel displayed default SKIP resolves without an extra radio tap |
+| 10 | `TransferContentTest.protectedFileShowsNoContentsAndClearsPasswordOnSubmit` and `leavingExportForPreviewDisposesPasswords`; ViewModel authentication and plaintext confirmation cases |
 | 11 | Sold-state planning tests and full-backup exchange with sold-car history |
 | 12 | validUnknownPredecessorRollbackSurvivesReplacementAndNewMarksUndo plus peer replacement rollback |
 | 13 | repeatedConfirmHasOneResultAndRestartDoesNotRepeat, source identity and operation reuse tests, ViewModel single apply |
-| 14 | Common bounded/cancellable IO tests; real system matrices and R8 crypto/files checks; see final evidence table |
+| 14 | Common bounded and cancellable I/O tests, historical system-file and R8 checks, and the [independent QA results](#independent-qa-2026-11-23). |
 | 15 | ImportNotificationsTest, pending-journal retry and ViewModel scheduler failure/retry without a second import |
-| 16 | EN/RU/ES resource parity, distance/date formatting suites, Unicode peer files, real schema5→7 installation update |
+| 16 | EN/RU/ES resource parity, distance/date formatting suites, Unicode peer files and fresh schema 5 → 7 installation update. |
 | 17 | Source review: no backup scheduler, rotation/deletion of user backups, persistent picker grants or password/key storage |
 | U1 | One import entry, kind/groups from authenticated contents, protected preview test and real codec fixtures |
 | U2 | Destination/file reset tests; earlier confirmed destinations of other cars survive a later destination edit |
 | U3 | Replace UI skips merge decisions; safety cancelled/failed never means SAVED; final summary from bound plan |
-| U4 | Result has only finish/notification retry; Back closes session and old confirmation cannot apply again |
+| U4 | `TransferViewModelTest.backDuringPostCommitNotificationSyncPreservesImportResult` and `aConfirmedPreviewAppliesOnceAndBackFromSuccessEndsTheSession` |
 | U5 | Native cancellation is separate from failure; manifests have no broad storage permissions |
 
-These checks establish software readiness on the tested environments. They do not replace the explicitly outstanding physical API24 and exact minimum-iOS checks or user acceptance.
+`TransferContentTest.finalBackupPreviewShowsCopyMetadataAndConcreteTaskMapping` covers copy date, active/sold counts and the chosen local task label in the full-backup preview.
+
+### Notes from the 19 November snapshot
 
 Final iOS18.3 diagnosis: the picker was still inside an older run folder (AX title Run-53A73B9B, Actions Menu). Its Back button had the exact label TransferFilesCheck but no BackButton identifier. Matching that exact label distinguishes it from the title/menu, restores parent navigation on iOS18, and produced the complete 7/7 result above. Earlier failed matrices remain historical; two AX UI Snapshot metadata references in one failed run were not exported or opened. The final matrices retain zero screen references.
 

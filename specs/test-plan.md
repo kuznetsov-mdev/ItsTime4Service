@@ -385,9 +385,9 @@
 - TransferContentTest (7): callbacks/disabled busy, password cleanup/disposal, скрытое содержимое до пароля, финальное подтверждение replace и cancel, отдельный retry/завершение результата.
 - TransferNavigationTest (2): настоящий Koin/SQLite/navigation, оба входа и успешный импорт с возвратом без старого подтверждения.
 - TransferExchangeTest (3 на каждой платформе): настоящие Android/iOS encrypted outputs, импорт peer backup и чистого регламента через SQLite с проверкой состава/порядка, sold/deleted history, настроек, reminder state и допустимого rollback.
-- Последний полный Android: **715/0/0/0**, native iOS18.3 transfer suite: **56/0/0/0**, Gradle workflow d03d426690b465c939b1849acbac5192 sequence35; debug APK, iOS production/test compilation и подписанный AAB PASS.
+- Прогон на снимке 19.11.2026. Android host — **715/0/0/0**, целевой native iOS 18.3 transfer suite — **56/0/0/0**, Gradle workflow `d03d426690b465c939b1849acbac5192`, проход 35. Debug APK, компиляция iOS production/test и подписанный AAB проверены на том снимке.
 - Настоящее обновление отдельного приложения 1.0.0→1.1.0, схема5→7: все legacy columns автомобиля/работы/истории/настроек сохранены, integrity_check=ok. Пользовательская установленная версия не затрагивалась.
-- R8 runtime и финальные native-dialog результаты записываются в [отчёт версии](../docs/research/transfer-ui-release-verification.md); прежние незавершённые матрицы выше являются историей, не текущим итогом. Физический API24 и точная минимальная iOS остаются отдельными обязательными gates.
+- R8 runtime и результаты нативных файловых диалогов 19.11.2026 записаны в [истории проверок](../docs/research/transfer-ui-release-verification.md#historical-evidence--2026-11-19-to-2026-11-20). Физический API 24 и точная минимальная iOS остаются отдельными обязательными проверками.
 
 ### Выбор цели экспорта и импорт из формы авто
 
@@ -404,8 +404,14 @@
 
 ### Регрессии по ревью импорта 1.1.0
 
-- `PrepareImportTest` проверяет, что UPDATE + SKIP сохраняет новые параметры локальной работы в обоих порядках обработки.
-- `TransferViewModelTest` приостанавливает уведомления после commit и проверяет, что «Назад» сохраняет доступ к результату. Отдельный сценарий проверяет разрешение неоднозначной цели на шаге настройки и передачу выбранной работы в предпросмотр.
-- `TransferContentTest` проверяет список из 1000 назначений, выбор конкретной работы перед «Продолжить», дату и разбивку автомобилей полной копии и отображение выбранной работы в итоговом плане. Сценарий ввода пароля проверяет очистку поля после отправки.
-- Изолированный `upgradeCheck` запускает чистую 1.0.0 перед чтением БД, создаёт синтетические машину, работу, запись истории и настройки, устанавливает 1.1.0 поверх неё и сравнивает старые поля после миграции.
-- Прогон 23.11.2026. Android host — 727 тестов, iOS Simulator — 709. Ошибок и пропусков нет. Debug APK и upgradeCheck APK собраны. На новом пакете Android-эмулятора чистая установка и обновление прошли, схема 5→7, все старые поля сохранены, `integrity_check=ok`.
+| Критерий | Проверка |
+|---|---|
+| 8 | `PrepareImportTest.skippingOneMatchDoesNotUndoAnotherMatchUpdate` проверяет сохранение новых параметров целевой работы и счётчика пропуска в обоих порядках UPDATE + SKIP. |
+| U4 | `TransferViewModelTest.backDuringPostCommitNotificationSyncPreservesImportResult` проверяет «Назад» во время синхронизации после commit. После её завершения доступен результат импорта. |
+| 8 | `TransferViewModelTest.choosingAnAmbiguousWorkKeepsResolutionOnSetupAndPreviewsTheChosenTarget` и `TransferContentTest.concreteTaskIsChosenOnSetupBeforeContinuing` покрывают выбор цели на шаге настройки и её передачу в предпросмотр. |
+| Сценарий полной копии (§ 4) | `TransferContentTest.finalBackupPreviewShowsCopyMetadataAndConcreteTaskMapping` проверяет дату копии, разбивку машин и подпись выбранного сопоставления в предпросмотре. |
+| 10 | `TransferContentTest.protectedFileShowsNoContentsAndClearsPasswordOnSubmit` и `leavingExportForPreviewDisposesPasswords` проверяют поля разблокировки и экспорта. |
+| 6, U2 | `TransferContentTest.carPickerComposesOnlyVisibleDestinationsAndCanReachTheLastOne` проверяет ленивый список с 1000 назначений и доступность последнего варианта. `TransferViewModelTest.changingDestinationResetsWorkChoicesAndContinueUsesTheNewDestination` проверяет смену назначения и сброс сопоставлений. |
+| 16 | Изолированный `upgradeCheck` запускает чистую 1.0.0 перед чтением БД, создаёт синтетические машину, работу, запись истории и настройки и сравнивает исходные колонки после установки 1.1.0 поверх неё. |
+
+Прогон основной сессии 23.11.2026 на `db1567d`. Android host — 727 тестов, iOS Simulator — 709. Ошибок и пропусков нет. Debug APK и `upgradeCheck` APK собраны. На новом пакете Android-эмулятора чистая установка и обновление прошли, схема 5 → 7, все исходные колонки сохранены, `integrity_check=ok`. Повторное независимое ревью, независимая приёмка и проверки минимальных ОС оцениваются отдельно. [Отчёт по ревизии](../docs/research/transfer-ui-release-verification.md#evidence-2026-11-23).
