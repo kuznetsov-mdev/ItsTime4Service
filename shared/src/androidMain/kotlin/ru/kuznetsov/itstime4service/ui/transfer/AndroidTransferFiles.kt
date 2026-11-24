@@ -26,8 +26,7 @@ class AndroidTransferFiles(context: Context) : TransferFiles {
     internal val sessionId get() = session.dialogs.sessionId
     internal var pickId: String? = null
     internal var saveId: String? = null
-    internal var shareId: String? = null
-    private var shareChosen = false
+    private var activeShare: ShareRequest? = null
     private var exposedToSystem = false
 
     internal fun attach(owner: Job, launch: (TransferFileDialogRequest) -> Unit): String {
@@ -81,27 +80,29 @@ class AndroidTransferFiles(context: Context) : TransferFiles {
         validate(bytes, fileName)
         storage.cleanExpired()
         val captured = bytes.copyOf()
-        var handedOff = false
         var file: File? = null
         try {
             file = storage.stage(captured, fileName)
-            withContext(session.main) { staged = file }
+            withContext(session.main) {
+                staged = file
+                exposedToSystem = false
+            }
             when (val reply = session.dialogs.await(TransferFileDialogKind.SHARE, fileName)) {
-                TransferFileDialogReply.Shared -> {
-                    handedOff = true
-                    TransferFileResult.Success(SharedFile)
-                }
+                TransferFileDialogReply.Shared -> TransferFileResult.Success(SharedFile)
                 is TransferFileDialogReply.Failure -> TransferFileResult.Failure(reply.reason)
                 TransferFileDialogReply.Cancelled -> TransferFileResult.Cancelled
                 is TransferFileDialogReply.Picked, is TransferFileDialogReply.SaveTarget, TransferFileDialogReply.Saved -> TransferFileResult.Failure(TransferFailure.WriteFailed)
             }
         } finally {
             captured.fill(0)
-            withContext(NonCancellable + session.main) {
-                handedOff = handedOff || shareChosen || exposedToSystem
+            val retain = withContext(NonCancellable + session.main) {
+                val exposed = exposedToSystem
+                if (exposed) activeShare?.retireSignal()
                 staged = null
+                exposedToSystem = false
+                exposed
             }
-            if (!handedOff && file != null) withContext(NonCancellable) { storage.discard(file) }
+            if (!retain && file != null) withContext(NonCancellable) { storage.discard(file) }
         }
     }
 
@@ -125,35 +126,65 @@ class AndroidTransferFiles(context: Context) : TransferFiles {
 
     internal fun shareIntent(id: String): Intent {
         val file = staged ?: throw TransferFileException(TransferFailure.FileUnavailable)
-        shareId = id
-        shareChosen = false
-        exposedToSystem = true
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.transfer-files", file)
         val send = Intent(Intent.ACTION_SEND).setType("application/octet-stream")
             .putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         send.clipData = ClipData.newRawUri("", uri)
-        AndroidShareSignals.register(id) { shareChosen = true }
-        val callback = Intent(context, TransferShareReceiver::class.java).putExtra("operation", id)
-        val sender = PendingIntent.getBroadcast(context, id.hashCode(), callback, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_MUTABLE)
+        val callback = TransferShareReceiver.callbackIntent(context, id)
+        val sender = PendingIntent.getBroadcast(context, 0, callback, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_MUTABLE)
+        val deadline = Runnable { completeShare(id, TransferFileDialogReply.Cancelled) }
+        activeShare = ShareRequest(id, sender, deadline)
+        AndroidShareSignals.register(id) { shareSelected(id) }
+        exposedToSystem = true
         return Intent.createChooser(send, null, sender.intentSender).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
     internal fun shareReturned() {
-        val id = shareId ?: return
-        shareId = null
-        handler.postDelayed({
-            AndroidShareSignals.remove(id)
-            session.dialogs.complete(id, if (shareChosen) TransferFileDialogReply.Shared else TransferFileDialogReply.Cancelled)
-        }, 250)
+        val share = activeShare ?: return
+        if (share.returned) return
+        share.returned = true
+        if (share.selected) completeShare(share.id, TransferFileDialogReply.Shared)
+        else handler.postDelayed(share.cancellationDeadline, SELECTION_WAIT_MS)
+    }
+
+    private fun shareSelected(id: String) {
+        val share = activeShare?.takeIf { it.id == id } ?: return
+        share.selected = true
+        if (share.returned) completeShare(share.id, TransferFileDialogReply.Shared)
+    }
+
+    private fun completeShare(id: String, reply: TransferFileDialogReply) {
+        val share = activeShare?.takeIf { it.id == id } ?: return
+        activeShare = null
+        handler.removeCallbacks(share.cancellationDeadline)
+        share.retireSignal()
+        session.dialogs.complete(id, reply)
     }
 
     internal fun launchFailed(id: String) {
-        AndroidShareSignals.remove(id)
-        session.dialogs.complete(id, TransferFileDialogReply.Failure(TransferFailure.FileUnavailable))
+        val failure = TransferFileDialogReply.Failure(TransferFailure.FileUnavailable)
+        if (activeShare?.id == id) {
+            exposedToSystem = false
+            completeShare(id, failure)
+        } else session.dialogs.complete(id, failure)
     }
 
     private fun validate(bytes: ByteArray, name: String) {
         if (bytes.size > TransferLimits.MAX_FILE_BYTES) throw TransferFileException(TransferFailure.LimitExceeded)
         if (!validTransferFileName(name)) throw TransferFileException(TransferFailure.WriteFailed)
+    }
+
+    private class ShareRequest(val id: String, val signal: PendingIntent, val cancellationDeadline: Runnable) {
+        var selected = false
+        var returned = false
+
+        fun retireSignal() {
+            AndroidShareSignals.remove(id)
+            signal.cancel()
+        }
+    }
+
+    private companion object {
+        const val SELECTION_WAIT_MS = 2_000L
     }
 }
